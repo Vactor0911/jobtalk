@@ -1,0 +1,40 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set Git user
+      run: |
+        git config --global user.email "vactor0911@gmail.com"
+        git config --global user.name "Vactor0911"
+
+    - name: Install dependencies
+      run: npm install
+      working-directory: ./frontend
+
+    - name: Build the app
+      run: npm run build
+      working-directory: ./frontend
+
+    - name: Set up GitHub token for authentication
+      run: |
+        git config --global url."https://${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+    - name: Deploy to GitHub Pages
+      run: npm run deploy -- --repo https://github.com/${{ github.repository }}.git
+      working-directory: ./frontend
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}

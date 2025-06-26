@@ -2,7 +2,7 @@ name: 오류 보고서
 description: 이 양식을 사용하여 오류 보고서를 작성해주세요.
 title: "[버그] "
 labels: ["버그"]
-projects: ["Vactor0911/7"]
+projects: ["Vactor0911/10"]
 body:
   - type: markdown
     attributes:

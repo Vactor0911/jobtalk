@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "rootDir": "src", // 소스
+    "outDir": "dist", // 빌드 결과
+    "strict": true, // 엄격 모드
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}

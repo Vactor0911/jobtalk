@@ -24,7 +24,7 @@ jobs:
             set -e
             cd ~/project-mw/
             git pull origin main
-            cd ./backend
+            cd ~/project-mw/backend
             npm install
             pm2 restart "project-mw"
             timeout 10s pm2 logs --lines 10

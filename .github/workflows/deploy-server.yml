@@ -26,6 +26,6 @@ jobs:
             git pull origin main
             cd backend
             npm install
-            npm run build || true
+            npm run build
             pm2 restart "project-mw"
-            timeout 10s pm2 logs --lines 10
+            pm2 logs --lines 20 --nostream

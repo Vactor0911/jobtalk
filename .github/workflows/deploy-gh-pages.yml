@@ -38,3 +38,4 @@ jobs:
         working-directory: ./frontend
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          VITE_SERVER_HOST: ${{ secrets.VITE_SERVER_HOST }}

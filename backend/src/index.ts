@@ -36,7 +36,8 @@ const FRONT_PORT = 8080; // 프론트 서버 포트 번호
 const app = express();
 app.use(
   cors({
-    origin: `http://localhost:${FRONT_PORT}`,
+    // origin: `http://localhost:${FRONT_PORT}`,
+    origin: `https://vactor0911.github.io/project-mw/`,
     credentials: true,
   })
 ); // CORS 설정, credentials는 프론트와 백엔드의 쿠키 공유를 위해 필요

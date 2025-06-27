@@ -31,8 +31,7 @@ dotenv.config();
   }
 });
 
-const PORT = 3000; // 서버가 실행될 포트 번호
-const FRONT_PORT = 8080; // 프론트 서버 포트 번호
+const PORT = Number(process.env.SERVER_PORT); // 서버가 실행될 포트 번호
 
 const app = express();
 app.use(
@@ -53,14 +52,9 @@ app.use(
         // 필요시 추가 설정
       },
     },
-    // // 개발 환경에서는 일부 설정 완화
-    // crossOriginResourcePolicy: {
-    //   policy: process.env.NODE_ENV === 'production' ? "same-site" : "cross-origin"
-    // },
-    
-    // 항상 cross-origin 허용으로 설정
+    // 개발 환경에서는 일부 설정 완화
     crossOriginResourcePolicy: {
-      policy: "cross-origin",
+      policy: process.env.NODE_ENV === 'production' ? "same-site" : "cross-origin"
     },
   })
 );

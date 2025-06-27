@@ -52,9 +52,9 @@ app.use(
         // 필요시 추가 설정
       },
     },
-    // 개발 환경에서는 일부 설정 완화
+    // 항상 cross-origin 허용으로 설정
     crossOriginResourcePolicy: {
-      policy: process.env.NODE_ENV === 'production' ? "same-site" : "cross-origin"
+      policy: "cross-origin",
     },
   })
 );
@@ -83,13 +83,21 @@ app.use("/csrf", csrfRoute); // CSRF 토큰 요청 라우트
 app.post("/test/postTest", (req: Request, res: Response) => {
   // POST 요청 테스트용 라우트
   console.log("POST 요청이 들어왔습니다:", req.body);
-  res.json({ message: "POST 요청이 성공적으로 처리되었습니다." });
+  res.status(200).json({
+    success: true,
+    message: "POST 요청이 성공적으로 처리되었습니다.",
+  });
 });
 
 app.get("/test/getTest", (req: Request, res: Response) => {
   // GET 요청 테스트용 라우트
   console.log("GET 요청이 들어왔습니다:", req.query);
-  res.json({ message: "GET 요청이 성공적으로 처리되었습니다." });
+  res.status(200).json({
+    success: true,
+    message: "GET 요청이 성공적으로 처리되었습니다.",
+  });
 });
+
+console.log("현재 NODE_ENV:", process.env.NODE_ENV);
 
 // *** 라우트 정의 끝 ***

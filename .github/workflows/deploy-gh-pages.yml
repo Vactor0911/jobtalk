@@ -27,8 +27,6 @@ jobs:
 
       - name: Build the app
         working-directory: ./frontend
-        env:
-          VITE_SERVER_HOST: ${{ secrets.VITE_SERVER_HOST }}
         run: npm run build
 
       - name: Set up GitHub token for authentication
@@ -40,3 +38,4 @@ jobs:
         working-directory: ./frontend
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          VITE_SERVER_HOST: ${{ secrets.VITE_SERVER_HOST }}

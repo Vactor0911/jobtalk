@@ -1,9 +1,9 @@
-import dotenv from "dotenv";
 import express, { Request, Response } from "express";
 import cors from "cors"; // CORS 설정을 위한 라이브러리
 import cookieParser from "cookie-parser"; // 쿠키 파싱을 위한 라이브러리
 import bodyParser from "body-parser"; // 요청 본문 파싱을 위한 라이브러리
 import helmet from "helmet"; // 보안 헤더 설정을 위한 라이브러리
+import dotenv from "dotenv"; // 환경변수 관리를 위한 라이브러리
 
 import authRoute from "./routes/authRoute"; // 사용자 계정 관련 라우트
 import csrfRoute from "./routes/csrfRoute"; // CSRF 토큰 관련 라우트
@@ -31,7 +31,7 @@ dotenv.config();
 });
 
 const PORT = 3000; // 서버가 실행될 포트 번호
-const FRONT_PORT = 4000; // 프론트 서버 포트 번호
+const FRONT_PORT = 8080; // 프론트 서버 포트 번호
 
 const app = express();
 app.use(
@@ -78,3 +78,17 @@ app.listen(PORT, "0.0.0.0", () => {
 // *** 라우트 정의 시작 ***
 app.use("/auth", authRoute); // 사용자 계정 관련 라우트
 app.use("/csrf", csrfRoute); // CSRF 토큰 요청 라우트
+
+app.post("/test/postTest", (req: Request, res: Response) => {
+  // POST 요청 테스트용 라우트
+  console.log("POST 요청이 들어왔습니다:", req.body);
+  res.json({ message: "POST 요청이 성공적으로 처리되었습니다." });
+});
+
+app.get("/test/getTest", (req: Request, res: Response) => {
+  // GET 요청 테스트용 라우트
+  console.log("GET 요청이 들어왔습니다:", req.query);
+  res.json({ message: "GET 요청이 성공적으로 처리되었습니다." });
+});
+
+// *** 라우트 정의 끝 ***

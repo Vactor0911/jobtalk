@@ -37,7 +37,7 @@ const app = express();
 app.use(
   cors({
     // origin: `http://localhost:${FRONT_PORT}`,
-    origin: 'https://project-mw.vactor0911.dev',
+    origin: ['https://project-mw.vactor0911.dev', 'https://vactor0911.github.io'],
     credentials: true,
   })
 ); // CORS 설정, credentials는 프론트와 백엔드의 쿠키 공유를 위해 필요

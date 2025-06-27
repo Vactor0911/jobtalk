@@ -42,22 +42,28 @@ app.use(
   })
 ); // CORS 설정, credentials는 프론트와 백엔드의 쿠키 공유를 위해 필요
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:"],
-      // 필요시 추가 설정
-    }
-  },
-  // 개발 환경에서는 일부 설정 완화
-  crossOriginResourcePolicy: { 
-    policy: process.env.NODE_ENV === 'production' ? "same-site" : "cross-origin" 
-  },
-}));
-
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+        // 필요시 추가 설정
+      },
+    },
+    // // 개발 환경에서는 일부 설정 완화
+    // crossOriginResourcePolicy: {
+    //   policy: process.env.NODE_ENV === 'production' ? "same-site" : "cross-origin"
+    // },
+    
+    // 항상 cross-origin 허용으로 설정
+    crossOriginResourcePolicy: {
+      policy: "cross-origin",
+    },
+  })
+);
 
 app.use(express.json()); // JSON 요청을 처리하기 위한 미들웨어
 app.use(cookieParser(process.env.SESSION_SECRET)); // 쿠키 파싱 미들웨어 등록

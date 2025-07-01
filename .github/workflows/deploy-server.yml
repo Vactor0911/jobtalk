@@ -22,10 +22,10 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             set -e
-            cd ~/project-mw/
+            cd ~/jobtalk/
             git pull origin main
             cd backend
             npm install
             npm run build
-            pm2 restart "project-mw"
+            pm2 restart "jobtalk"
             pm2 logs --lines 20 --nostream

@@ -8,7 +8,7 @@ export default defineConfig({
       jsxImportSource: "@emotion/react",
     }),
   ],
-  base: "/project-mw",
+  base: "/jobtalk",
   server: {
     port: 3000,
     allowedHosts: ["0.tcp.jp.ngrok.io"],

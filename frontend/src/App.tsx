@@ -9,6 +9,8 @@ import {
 import { theme } from "./utils/theme";
 import axiosInstance from "./utils/axiosInstance";
 import { useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { Main } from "./pages";
 
 const App = () => {
   const [testResult, setTestResult] = useState<string>("");
@@ -52,6 +54,13 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
 
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Main />} />
+          <Route path="/*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+
       {/* 테스트 렌더링 */}
       <Typography variant="h4" fontWeight={500}>
         Welcome to{" "}
@@ -61,7 +70,7 @@ const App = () => {
             fontWeight: "bold",
           }}
         >
-          Project MW
+          JobTalk
         </span>
         !
       </Typography>

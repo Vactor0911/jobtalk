@@ -12,7 +12,7 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
 
-      <BrowserRouter>
+      <BrowserRouter basename="/jobtalk">
         <Header />
         <Routes>
           <Route path="/" element={<Main />} />

@@ -1,4 +1,4 @@
-import { Stack } from "@mui/material";
+import { Box, Paper, Stack } from "@mui/material";
 import TitledContainer from "../components/TitledContainer";
 import Test from "../components/Test";
 
@@ -31,7 +31,18 @@ const Main = () => {
           flex: 1,
           maxWidth: 450,
         }}
-      ></TitledContainer>
+      >
+        <Stack height="100%">
+          {/* 공간 차지용 */}
+          <Box flex={1} />
+
+          {/* 채팅란 */}
+          <Paper
+            variant="outlined"
+            sx={{ height: "100px", borderRadius: 4 }}
+          ></Paper>
+        </Stack>
+      </TitledContainer>
     </Stack>
   );
 };

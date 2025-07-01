@@ -68,7 +68,7 @@ app.use(csrfTokenMiddleware);
 
 // 기본 라우트 설정
 app.get("/", (req, res) => {
-  res.send("Project MW Web Server!");
+  res.send("JobTalk Web Server!");
 });
 
 // 서버 시작

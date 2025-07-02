@@ -95,9 +95,11 @@ const JobSearchChat = () => {
 
     setIsLoading(true);
 
+    // loadingMsgId 변수를 try 블록 외부로 이동
+    const loadingMsgId = generateId();
+
     try {
       // 로딩 메시지 추가
-      const loadingMsgId = generateId();
       setChatMessages((prev) => [
         ...prev,
         { id: loadingMsgId, isUser: false, text: "직업을 검색 중입니다..." },
@@ -112,9 +114,7 @@ const JobSearchChat = () => {
 
         // 이전 로딩 메시지 제거하고 결과 메시지 추가
         setChatMessages((prev) => {
-          const filtered = prev.filter(
-            (msg) => msg.id !== loadingMsgId
-          );
+          const filtered = prev.filter((msg) => msg.id !== loadingMsgId);
 
           return [
             ...filtered,
@@ -139,7 +139,7 @@ const JobSearchChat = () => {
       // 이전 로딩 메시지 제거하고 오류 메시지 추가
       setChatMessages((prev) => {
         const filtered = prev.filter(
-          (msg) => msg.text !== "직업을 검색 중입니다..."
+          (msg) => msg.id !== loadingMsgId // 텍스트 대신 ID로 필터링
         );
         return [
           ...filtered,

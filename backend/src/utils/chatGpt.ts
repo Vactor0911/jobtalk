@@ -4,6 +4,12 @@ import { OpenAI } from "openai"; // OpenAI API 클라이언트 라이브러리
 // .env 파일 로드
 dotenv.config();
 
+if (!process.env.CHATGPT_API_KEY) {
+  throw new Error(
+    "CHATGPT_API_KEY is not defined in the environment variables. Please set it in your .env file."
+  );
+}
+
 const openai = new OpenAI({
   apiKey: process.env.CHATGPT_API_KEY, // ← 여기에 본인의 API 키 입력
 });

@@ -1,9 +1,5 @@
 import { Request, Response } from "express";
 import axios from "axios";
-import dotenv from "dotenv";
-
-// .env 파일 로드
-dotenv.config();
 
 const CAREER_API_BASE_URL = "https://www.career.go.kr/cnet/front/openapi";
 const API_KEY = process.env.CAREER_NET_API_KEY;

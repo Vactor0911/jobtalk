@@ -33,7 +33,7 @@ interface ChatMessage {
 }
 // 간단한 고유 ID 생성 함수
 const generateId = () =>
-  `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  `msg_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
 const JobSearchChat = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -113,7 +113,7 @@ const JobSearchChat = () => {
         // 이전 로딩 메시지 제거하고 결과 메시지 추가
         setChatMessages((prev) => {
           const filtered = prev.filter(
-            (msg) => msg.text !== "직업을 검색 중입니다..."
+            (msg) => msg.id !== loadingMsgId
           );
 
           return [
@@ -294,7 +294,7 @@ const JobSearchChat = () => {
           placeholder="직업명을 입력하세요 (예: 개발자, 의사)"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyPress}
           disabled={isLoading}
           InputProps={{
             endAdornment: (

@@ -66,28 +66,35 @@ export const searchJobs = async (req: Request, res: Response) => {
 
     // 2페이지부터 나머지 페이지 요청
     if (totalPages > 1) {
-      const promises = [];
-      for (let currentPage = 2; currentPage <= totalPages; currentPage++) {
-        promises.push(
-          axios.get(`${CAREER_API_BASE_URL}/jobs.json`, {
-            params: {
-              apiKey: API_KEY,
-              searchJobNm: keyword || "",
-              searchAptdCodes: aptdCodes || "",
-              searchThemeCode: themeCode || "",
-              pageIndex: currentPage,
-            },
-          })
+      const BATCH_SIZE = 5; // Number of pages to fetch in parallel
+      for (let i = 2; i <= totalPages; i += BATCH_SIZE) {
+        const batchPromises = [];
+        for (
+          let currentPage = i;
+          currentPage < i + BATCH_SIZE && currentPage <= totalPages;
+          currentPage++
+        ) {
+          batchPromises.push(
+            axios.get(`${CAREER_API_BASE_URL}/jobs.json`, {
+              params: {
+                apiKey: API_KEY,
+                searchJobNm: keyword || "",
+                searchAptdCodes: aptdCodes || "",
+                searchThemeCode: themeCode || "",
+                pageIndex: currentPage,
+              },
+            })
+          );
+        }
+        console.log(
+          `Fetching pages ${i} to ${Math.min(
+            i + BATCH_SIZE - 1,
+            totalPages
+          )}...`
         );
-      }
-
-      // 모든 요청 병렬 처리
-      if (promises.length > 0) {
-        console.log(`나머지 ${promises.length}개 페이지 요청 중...`);
-        const responses = await Promise.all(promises);
-
-        // 각 응답에서 직업 정보 추출하여 배열에 추가
-        responses.forEach((response) => {
+        const batchResponses = await Promise.all(batchPromises);
+        // Process each response in the batch
+        batchResponses.forEach((response) => {
           if (response.data.jobs && Array.isArray(response.data.jobs)) {
             const jobs = response.data.jobs.map((job: any) => ({
               name: job.job_nm,
@@ -122,7 +129,6 @@ export const searchJobs = async (req: Request, res: Response) => {
       uniqueCount: uniqueJobs.length,
       data: {
         jobs: uniqueJobs,
-        allJobs: allJobs,
       },
     });
     return;

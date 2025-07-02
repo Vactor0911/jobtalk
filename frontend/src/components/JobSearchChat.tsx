@@ -25,19 +25,22 @@ interface JobItem {
 
 // 채팅 메시지 타입에 페이징 정보 추가
 interface ChatMessage {
+  id: string; // 고유 ID 추가
   isUser: boolean;
   text: string;
   jobs?: JobItem[];
   visibleJobCount?: number; // 현재 보이는 직업 개수
 }
+// 간단한 고유 ID 생성 함수
+const generateId = () =>
+  `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 const JobSearchChat = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [, setError] = useState<string | null>(null);
-  const [, setJobs] = useState<JobItem[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
+      id: generateId(), // 초기 메시지에 ID 추가
       isUser: false,
       text: "안녕하세요! 관심 있는 직업을 검색해 보세요.",
     },
@@ -54,20 +57,24 @@ const JobSearchChat = () => {
   }, [chatMessages]);
 
   // 더 보기 버튼 클릭 시 호출
-  const handleLoadMore = (messageIndex: number) => {
+  const handleLoadMore = (messageId: string) => {
     setChatMessages((prev) => {
       const updated = [...prev];
-      const message = updated[messageIndex];
+      const messageIndex = updated.findIndex((msg) => msg.id === messageId);
 
-      if (message.jobs && message.visibleJobCount) {
-        // 10개씩 추가로 보여주기 (최대 직업 개수를 넘지 않도록)
-        updated[messageIndex] = {
-          ...message,
-          visibleJobCount: Math.min(
-            message.visibleJobCount + 10,
-            message.jobs.length
-          ),
-        };
+      if (messageIndex !== -1) {
+        const message = updated[messageIndex];
+
+        if (message.jobs && message.visibleJobCount) {
+          // 10개씩 추가로 보여주기 (최대 직업 개수를 넘지 않도록)
+          updated[messageIndex] = {
+            ...message,
+            visibleJobCount: Math.min(
+              message.visibleJobCount + 10,
+              message.jobs.length
+            ),
+          };
+        }
       }
 
       return updated;
@@ -81,16 +88,19 @@ const JobSearchChat = () => {
     setSearchTerm("");
 
     // 사용자 메시지 추가
-    setChatMessages((prev) => [...prev, { isUser: true, text: userMessage }]);
+    setChatMessages((prev) => [
+      ...prev,
+      { id: generateId(), isUser: true, text: userMessage },
+    ]);
 
     setIsLoading(true);
-    setError(null);
 
     try {
       // 로딩 메시지 추가
+      const loadingMsgId = generateId();
       setChatMessages((prev) => [
         ...prev,
-        { isUser: false, text: "직업을 검색 중입니다..." },
+        { id: loadingMsgId, isUser: false, text: "직업을 검색 중입니다..." },
       ]);
 
       const response = await axiosInstance.get(`/career/jobs`, {
@@ -99,7 +109,6 @@ const JobSearchChat = () => {
 
       if (response.data.success) {
         const retrievedJobs = response.data.data.jobs as JobItem[];
-        setJobs(retrievedJobs);
 
         // 이전 로딩 메시지 제거하고 결과 메시지 추가
         setChatMessages((prev) => {
@@ -110,6 +119,7 @@ const JobSearchChat = () => {
           return [
             ...filtered,
             {
+              id: generateId(), // 고유 ID 추가
               isUser: false,
               text:
                 retrievedJobs.length > 0
@@ -125,7 +135,6 @@ const JobSearchChat = () => {
       }
     } catch (err) {
       console.error("직업 검색 오류:", err);
-      setError("직업 검색 중 오류가 발생했습니다. 다시 시도해주세요.");
 
       // 이전 로딩 메시지 제거하고 오류 메시지 추가
       setChatMessages((prev) => {
@@ -135,6 +144,7 @@ const JobSearchChat = () => {
         return [
           ...filtered,
           {
+            id: generateId(), // 고유 ID 추가
             isUser: false,
             text: "직업 검색 중 오류가 발생했습니다. 다시 시도해주세요.",
           },
@@ -177,9 +187,9 @@ const JobSearchChat = () => {
           paddingBottom: "70px",
         }}
       >
-        {chatMessages.map((message, messageIndex) => (
+        {chatMessages.map((message) => (
           <Box
-            key={messageIndex}
+            key={message.id} // 메시지 고유 ID를 key로 사용
             alignSelf={message.isUser ? "flex-end" : "flex-start"}
             sx={{
               maxWidth: "85%",
@@ -215,7 +225,7 @@ const JobSearchChat = () => {
                         .slice(0, message.visibleJobCount)
                         .map((job, jobIndex) => (
                           <ListItem
-                            key={jobIndex}
+                            key={job.code}
                             disablePadding
                             sx={{
                               py: 0.5,
@@ -250,7 +260,7 @@ const JobSearchChat = () => {
                       <Button
                         size="small"
                         endIcon={<KeyboardArrowDownIcon />}
-                        onClick={() => handleLoadMore(messageIndex)}
+                        onClick={() => handleLoadMore(message.id)} // ID 기반으로 메시지 찾기
                         sx={{ mt: 1, width: "100%" }}
                         variant="outlined"
                         color="primary"

@@ -7,10 +7,9 @@ import dotenv from "dotenv"; // 환경변수 관리를 위한 라이브러리
 
 import authRoute from "./routes/authRoute"; // 사용자 계정 관련 라우트
 import csrfRoute from "./routes/csrfRoute"; // CSRF 토큰 관련 라우트
+import careerRoute from "./routes/careerRoute"; // 커리어넷 관련 API 라우트
 import { csrfTokenMiddleware } from "./utils";
-import { chatWithGPT } from "./utils/chatGpt";
-import axios from "axios";
-import careerRoute from "./routes/careerRoute";
+
 
 // .env 파일 로드
 dotenv.config();

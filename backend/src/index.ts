@@ -7,7 +7,9 @@ import dotenv from "dotenv"; // 환경변수 관리를 위한 라이브러리
 
 import authRoute from "./routes/authRoute"; // 사용자 계정 관련 라우트
 import csrfRoute from "./routes/csrfRoute"; // CSRF 토큰 관련 라우트
+import careerRoute from "./routes/careerRoute"; // 커리어넷 관련 API 라우트
 import { csrfTokenMiddleware } from "./utils";
+
 
 // .env 파일 로드
 dotenv.config();
@@ -79,6 +81,7 @@ app.listen(PORT, "0.0.0.0", () => {
 // *** 라우트 정의 시작 ***
 app.use("/auth", authRoute); // 사용자 계정 관련 라우트
 app.use("/csrf", csrfRoute); // CSRF 토큰 요청 라우트
+app.use("/career", careerRoute); // 커리어넷 관련 API 라우트
 
 app.post("/test/postTest", (req: Request, res: Response) => {
   // POST 요청 테스트용 라우트
@@ -97,7 +100,5 @@ app.get("/test/getTest", (req: Request, res: Response) => {
     message: "GET 요청이 성공적으로 처리되었습니다.",
   });
 });
-
-console.log("현재 NODE_ENV:", process.env.NODE_ENV);
 
 // *** 라우트 정의 끝 ***

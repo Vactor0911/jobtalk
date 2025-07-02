@@ -1,4 +1,4 @@
-import { Box, Paper, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import TitledContainer from "../components/TitledContainer";
 import Test from "../components/Test";
 import JobSearchChat from "../components/JobSearchChat";

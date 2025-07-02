@@ -30,6 +30,7 @@
     "jsonwebtoken": "^9.0.2",
     "mariadb": "^3.4.2",
     "nodemailer": "^6.9.8",
+    "openai": "^5.8.2",
     "uuid": "^11.1.0",
     "validator": "^13.11.0"
   },

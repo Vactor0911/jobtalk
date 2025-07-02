@@ -1,6 +1,7 @@
 import { Box, Paper, Stack } from "@mui/material";
 import TitledContainer from "../components/TitledContainer";
 import Test from "../components/Test";
+import JobSearchChat from "../components/JobSearchChat";
 
 const Main = () => {
   return (
@@ -24,8 +25,8 @@ const Main = () => {
         <Test />
       </TitledContainer>
 
-      {/* 챗봇 */}
-      <TitledContainer
+      {/* 챗봇 - 원본 */}
+      {/* <TitledContainer
         title="챗봇"
         sx={{
           flex: 1,
@@ -33,15 +34,24 @@ const Main = () => {
         }}
       >
         <Stack height="100%">
-          {/* 공간 차지용 */}
           <Box flex={1} />
 
-          {/* 채팅란 */}
           <Paper
             variant="outlined"
             sx={{ height: "100px", borderRadius: 4 }}
           ></Paper>
         </Stack>
+      </TitledContainer> */}
+
+      {/* 챗봇 - 직업 검색 테스트 */}
+      <TitledContainer
+        title="챗봇"
+        sx={{
+          flex: 1,
+          maxWidth: 450,
+        }}
+      >
+        <JobSearchChat />
       </TitledContainer>
     </Stack>
   );

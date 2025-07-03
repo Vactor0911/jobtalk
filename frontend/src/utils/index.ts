@@ -12,8 +12,8 @@ export const resetStates = async (
 ) => {
   setLoginState({} as LoginState); // 로그인 상태 초기화
   setAccessToken(""); // 토큰 초기화
-  sessionStorage.removeItem("WannaTriploginState"); // 세션 스토리지 제거
-  localStorage.removeItem("WannaTriploginState"); // 로컬 스토리지 제거
+  sessionStorage.removeItem("JobTalkloginState"); // 세션 스토리지 제거
+  localStorage.removeItem("JobTalkloginState"); // 로컬 스토리지 제거
 };
 
 /**

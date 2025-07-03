@@ -58,7 +58,9 @@ const Register = () => {
   const [passwordConfirm, setPasswordConfirm] = useState(""); // 사용자 비밀번호 재확인
   const [isPasswordVisible, setIsPasswordVisible] = useState(false); // 비밀번호 보임/숨김
   const [isPasswordConfirmVisible, setIsPasswordCheckVisible] = useState(false); // 비밀번호 확인 보임/숨김
-  const [nickName, setNickName] = useState(""); // 사용자 별명
+  const [name, setName] = useState(""); // 사용자 이름(닉네임)
+  const [certificates, setCertificates] = useState(""); // 자격증 정보 추가
+  const [interests, setInterests] = useState(""); // 관심사 정보 추가
   const [isTermAgreed, setIsTermAgreed] = useState(
     Array.from({ length: termsOfServices.length }, () => false)
   ); // 이용약관 동의 여부
@@ -108,7 +110,6 @@ const Register = () => {
         "/auth/sendVerifyEmail",
         {
           email,
-          purpose: "verifyEmailCode", // 이메일 인증번호 요청
         },
         {
           headers: {
@@ -221,10 +222,26 @@ const Register = () => {
     setIsPasswordCheckVisible(!isPasswordConfirmVisible);
   }, [isPasswordConfirmVisible]);
 
-  // 별명 입력
-  const handleNickNameChange = useCallback(
+  // 이름(닉네임) 입력
+  const handleNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setNickName(e.target.value);
+      setName(e.target.value);
+    },
+    []
+  );
+
+  // 자격증 입력
+  const handleCertificatesChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setCertificates(e.target.value);
+    },
+    []
+  );
+
+  // 관심사 입력
+  const handleInterestsChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setInterests(e.target.value);
     },
     []
   );
@@ -285,9 +302,9 @@ const Register = () => {
         return;
       }
 
-      if (!nickName) {
-        console.error("닉네임을 입력해주세요.");
-        alert("닉네임을 입력해주세요.");
+      if (!name) {
+        console.error("이름을 입력해주세요.");
+        alert("이름을 입력해주세요.");
         return;
       }
 
@@ -305,20 +322,21 @@ const Register = () => {
         // CSRF 토큰 가져오기
         const csrfToken = await getCsrfToken();
 
-        // 이용약관 동의 여부 확인
+        // 이용약관 동의 여부 확인 - privacy만 필요
         const termsData = {
-          privacy: isTermAgreed[0], // 첫 번째 항목: 개인정보 수집 및 이용약관 (필수)
-          location: isTermAgreed[1], // 두 번째 항목: 위치 정보 이용약관 (선택)
+          privacy: isTermAgreed[0], // 개인정보 수집 및 이용약관 (필수)
         };
 
-        // 서버로 회원가입 요청 전송
+        // 서버로 회원가입 요청 전송 (추가 필드 포함)
         await axiosInstance.post(
           "/auth/register",
           {
-            email: email,
-            password: password,
-            name: name,
+            email,
+            password,
+            name,
             terms: termsData,
+            certificates: certificates || null, // 자격증 정보 추가
+            interests: interests || null, // 관심사 정보 추가
           },
           {
             headers: {
@@ -335,27 +353,7 @@ const Register = () => {
         if (axios.isAxiosError(error) && error.response) {
           const errorData = error.response.data;
           console.error("서버가 오류를 반환했습니다:", errorData.message);
-
-          if (errorData.loginType) {
-            // 특정 로그인 타입이 제공된 경우
-            const loginTypeName =
-              errorData.loginType === "kakao"
-                ? "카카오"
-                : errorData.loginType === "google"
-                ? "구글"
-                : "일반";
-
-            const goToLogin = confirm(
-              `이미 ${loginTypeName} 계정으로 가입된 이메일입니다.\n로그인 페이지로 이동하시겠습니까?`
-            );
-
-            if (goToLogin) {
-              navigate("/login");
-            }
-          } else {
-            // 기존 메시지 표시
-            alert(`Error: ${errorData.message}`);
-          }
+          alert(`Error: ${errorData.message}`);
         } else {
           console.error(
             "요청을 보내는 중 오류가 발생했습니다:",
@@ -370,7 +368,9 @@ const Register = () => {
       password,
       passwordConfirm,
       isConfirmCodeChecked,
-      nickName,
+      name,
+      certificates,
+      interests,
       allRequiredAgreed,
       isTermAgreed,
       navigate,
@@ -513,11 +513,32 @@ const Register = () => {
               }
             />
 
-            {/* 별명 입력란 */}
+            {/* 이름(닉네임) 입력란 */}
             <OutlinedTextField
-              label="닉네임(별명)"
-              value={nickName}
-              onChange={handleNickNameChange}
+              label="이름(닉네임)"
+              value={name}
+              onChange={handleNameChange}
+            />
+          </Stack>
+
+          {/* 추가 정보 입력 폼 */}
+          <Stack gap={1}>
+            <SectionHeader title="추가 정보 (선택사항)" />
+
+            {/* 자격증 입력란 */}
+            <OutlinedTextField
+              label="보유 자격증"
+              value={certificates}
+              onChange={handleCertificatesChange}
+              multiline
+            />
+
+            {/* 관심분야 입력란 */}
+            <OutlinedTextField
+              label="관심 분야"
+              value={interests}
+              onChange={handleInterestsChange}
+              multiline
             />
           </Stack>
 

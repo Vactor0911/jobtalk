@@ -5,8 +5,9 @@ import Test from "../components/Test";
 import StyledPanelResizeHandle from "../components/StyledPanelResizeHandle";
 import React, { useMemo, useState } from "react";
 import JobSearchChat from "../components/JobSearchChat";
+import ChatTest from "../components/ChatTest";
 
-const Main = () => {
+const RoadMap = () => {
   // 세부사항 패널
   const detailsPanel = useMemo(() => {
     return (
@@ -51,7 +52,8 @@ const Main = () => {
         <TitledContainer
           title="챗봇"
         >
-          <JobSearchChat />
+          {/* <JobSearchChat /> */}
+          <ChatTest />
         </TitledContainer>
       </Panel>
     );
@@ -77,4 +79,4 @@ const Main = () => {
   );
 };
 
-export default Main;
+export default RoadMap;

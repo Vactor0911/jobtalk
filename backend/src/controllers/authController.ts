@@ -645,7 +645,7 @@ export const updatePassword = async (req: Request, res: Response) => {
 
     // 현재 사용자의 비밀번호 조회
     const rows = await connection.query(
-      "SELECT password, login_type FROM user WHERE user_id = ? AND state = 'active'",
+      "SELECT password FROM user WHERE user_id = ? AND state = 'active'",
       [user.userId]
     );
 
@@ -659,18 +659,6 @@ export const updatePassword = async (req: Request, res: Response) => {
     }
 
     const userInfo = rows[0];
-
-    // 소셜 로그인 사용자는 비밀번호 변경 불가
-    if (userInfo.login_type !== "normal") {
-      await connection.rollback();
-      res.status(400).json({
-        success: false,
-        message: `${
-          userInfo.login_type === "kakao" ? "카카오" : "구글"
-        } 간편 로그인 사용자는 비밀번호를 변경할 수 없습니다.`,
-      });
-      return;
-    }
 
     // 현재 비밀번호 확인
     const isPasswordValid = await bcrypt.compare(
@@ -750,7 +738,6 @@ export const deleteAccount = async (req: Request, res: Response) => {
 
     const userInfo = rows[0];
 
-    //
     if (!password) {
       await connection.rollback();
       res.status(400).json({

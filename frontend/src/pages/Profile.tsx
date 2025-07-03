@@ -154,15 +154,17 @@ const Profile = () => {
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
+
+      // 파일이 선택되지 않은 경우 종료
       if (!file) return;
 
       // 파일 타입 검증
       const allowedTypes = [
         "image/jpeg",
+        "image/jpg",
         "image/png",
-        "image/gif",
-        "image/webp",
       ];
+
       if (!allowedTypes.includes(file.type)) {
         setSnackbar({
           open: true,

@@ -5,6 +5,10 @@ import bcrypt from "bcrypt"; // 비밀번호 암호화 최신버전 express 에�
 import nodemailer from "nodemailer"; // 이메일 전송 라이브러리
 import validator from "validator"; // 유효성 검사 라이브러리
 import jwt from "jsonwebtoken"; // JWT 토큰 생성 및 검증 라이브러리
+import multer from "multer"; // 파일 업로드를 위한 라이브러리
+import fs from "fs"; // 파일 시스템 모듈
+import path from "path"; // 경로 조작을 위한 모듈
+
 const allowedSymbolsForPassword = /^[a-zA-Z0-9!@#$%^&*?]*$/; // 허용된 문자만 포함하는지 확인
 
 // 사용자 회원가입
@@ -784,4 +788,173 @@ export const deleteAccount = async (req: Request, res: Response) => {
   } finally {
     connection.release();
   }
+};
+
+// 프로필 이미지 저장 설정
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, "../../uploads/profiles");
+
+    // 디렉토리가 없으면 생성
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const user = req.user as { userUuid: string };
+    // MIME 타입에서 확장자 추출 (더 안전한 방식)
+    let ext = "";
+    switch (file.mimetype) {
+      case "image/jpeg":
+        ext = ".jpg";
+        break;
+      case "image/png":
+        ext = ".png";
+        break;
+      case "image/gif":
+        ext = ".gif";
+        break;
+      case "image/webp":
+        ext = ".webp";
+        break;
+      default:
+        ext = path.extname(file.originalname) || ".jpg"; // 기본값 제공
+    }
+
+    // 추후에 삭제 예정
+    console.log(
+      `파일 업로드: 타입=${file.mimetype}, 파일명=${file.originalname}, 사용할 확장자=${ext}`
+    );
+
+    const fileName = `${user.userUuid}${ext}`;
+    cb(null, fileName);
+  },
+});
+
+// 파일 필터
+const fileFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+) => {
+  // 이미지 파일만 허용
+  const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error(
+        "지원되지 않는 파일 형식입니다. JPG, PNG, GIF, WEBP 형식만 업로드할 수 있습니다."
+      )
+    );
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 4 * 1024 * 1024, // 4MB
+  },
+}).single("profileImage");
+
+
+// 프로필 이미지 업로드
+export const uploadProfileImage = async (req: Request, res: Response) => {
+  const user = req.user as { userId: number; userUuid: string };
+
+  upload(req, res, async (err) => {
+    if (err) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({
+          success: false,
+          message: "파일 크기는 4MB를 초과할 수 없습니다.",
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: err.message || "파일 업로드 중 오류가 발생했습니다.",
+      });
+    }
+
+    // 파일이 없는 경우
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "업로드할 파일이 없습니다.",
+      });
+    }
+
+    try {
+      // 기존 프로필 이미지 조회
+      const rows = await dbPool.query(
+        "SELECT profile_image FROM user WHERE user_id = ?",
+        [user.userId]
+      );
+
+      const oldProfileImage = rows[0]?.profile_image;
+
+      // 새 이미지 저장 전에 먼저 기존 이미지들 삭제
+      try {
+        const profileDir = path.join(__dirname, "../../uploads/profiles");
+
+        if (fs.existsSync(profileDir)) {
+          const files = fs.readdirSync(profileDir);
+          const userPrefix = user.userUuid;
+
+          files.forEach((file) => {
+            if (file.startsWith(userPrefix) && file !== req.file?.filename) {
+              const filePath = path.join(profileDir, file);
+              fs.unlinkSync(filePath);
+            }
+          });
+        }
+
+        // 1. DB에 저장된 이전 이미지 삭제 (추가 안전장치)
+        if (oldProfileImage) {
+          const oldImagePath = path.join(
+            __dirname,
+            "../../",
+            oldProfileImage.substring(1)
+          );
+
+          // 새로 업로드된 파일과 다른 경우에만 삭제
+          const newImagePath = `/uploads/profiles/${req.file.filename}`;
+          if (oldProfileImage !== newImagePath && fs.existsSync(oldImagePath)) {
+            fs.unlinkSync(oldImagePath);
+          }
+        }
+      } catch (error) {
+        console.error("기존 프로필 이미지 삭제 중 오류:", error);
+        // 이미지 삭제 실패해도 새 이미지 저장은 계속 진행
+      }
+
+      // 새 프로필 이미지 경로
+      const profileImagePath = `/uploads/profiles/${req.file.filename}`;
+
+      // DB에 프로필 이미지 경로 저장
+      await dbPool.query(
+        "UPDATE user SET profile_image = ? WHERE user_id = ?",
+        [profileImagePath, user.userId]
+      );
+
+      res.status(200).json({
+        success: true,
+        message: "프로필 이미지가 성공적으로 업로드되었습니다.",
+        data: {
+          profileImage: profileImagePath,
+        },
+      });
+    } catch (err) {
+      console.error("프로필 이미지 업로드 중 오류 발생:", err);
+      res.status(500).json({
+        success: false,
+        message: "프로필 이미지 저장 중 오류가 발생했습니다.",
+      });
+    }
+  });
 };

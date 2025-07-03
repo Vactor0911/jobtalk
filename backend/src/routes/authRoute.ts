@@ -10,6 +10,7 @@ import {
   sendVerifyEmail,
   updateNickname,
   updatePassword,
+  uploadProfileImage,
   verifyEmailCode,
 } from "../controllers/authController";
 import { authenticateToken } from "../middleware/authenticate";

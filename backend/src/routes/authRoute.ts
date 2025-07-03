@@ -1,12 +1,16 @@
 import express from "express";
 import { csrfProtection, limiter, refreshTokenLimiter } from "../utils";
 import {
+  deleteAccount,
   getUserInfo,
   login,
   logout,
   refreshToken,
   register,
   sendVerifyEmail,
+  updateNickname,
+  updatePassword,
+  uploadProfileImage,
   verifyEmailCode,
 } from "../controllers/authController";
 import { authenticateToken } from "../middleware/authenticate";
@@ -34,6 +38,16 @@ authRoute.post("/token/refresh", csrfProtection, refreshTokenLimiter, refreshTok
 // 사용자 정보 조회
 authRoute.get("/me", csrfProtection, limiter, authenticateToken, getUserInfo);
 
+// 닉네임 변경
+authRoute.patch("/me/nickname", csrfProtection, limiter, authenticateToken,  updateNickname);
 
+// 비밀번호 변경
+authRoute.patch("/me/password", csrfProtection, limiter, authenticateToken, updatePassword);
+
+// 계정 탈퇴
+authRoute.post("/me/delete", csrfProtection, limiter, authenticateToken, deleteAccount);
+
+// 프로필 이미지 업로드
+authRoute.post("/me/profile-image", csrfProtection, limiter, authenticateToken, uploadProfileImage);
 
 export default authRoute;

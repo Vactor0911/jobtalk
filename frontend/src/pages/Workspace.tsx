@@ -7,7 +7,7 @@ import React, { useMemo, useState } from "react";
 import JobSearchChat from "../components/JobSearchChat";
 import ChatTest from "../components/ChatTest";
 
-const RoadMap = () => {
+const Workspace = () => {
   // 세부사항 패널
   const detailsPanel = useMemo(() => {
     return (
@@ -79,4 +79,4 @@ const RoadMap = () => {
   );
 };
 
-export default RoadMap;
+export default Workspace;

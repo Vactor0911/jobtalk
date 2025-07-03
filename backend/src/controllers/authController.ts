@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { dbPool } from "../config/db";
 
 import bcrypt from "bcrypt"; // 비밀번호 암호화 최신버전 express 에서 가지고 있다함
-import axios from "axios";
 import nodemailer from "nodemailer"; // 이메일 전송 라이브러리
 import validator from "validator"; // 유효성 검사 라이브러리
 import jwt from "jsonwebtoken"; // JWT 토큰 생성 및 검증 라이브러리
@@ -10,7 +9,16 @@ const allowedSymbolsForPassword = /^[a-zA-Z0-9!@#$%^&*?]*$/; // 허용된 문자
 
 // 사용자 회원가입
 export const register = async (req: Request, res: Response) => {
-  const { email, password, name, terms } = req.body;
+  const {
+    email,
+    password,
+    name,
+    terms,
+    job,
+    experience,
+    certificates,
+    interests,
+  } = req.body;
   const connection = await dbPool.getConnection(); // 커넥션 획득
 
   try {
@@ -24,51 +32,48 @@ export const register = async (req: Request, res: Response) => {
 
     if (rows_email.length > 0) {
       await connection.rollback(); // 롤백
-      // 로그인 유형에 따른 메시지 생성
-      let loginTypeMsg = "";
-      const loginType = rows_email[0].login_type;
-
-      if (loginType === "kakao") {
-        loginTypeMsg = "카카오 간편 로그인";
-      } else if (loginType === "google") {
-        loginTypeMsg = "구글 간편 로그인";
-      } else {
-        loginTypeMsg = "일반 로그인";
-      }
-
       res.status(400).json({
         success: false,
-        message: `이미 가입된 이메일입니다. ${loginTypeMsg}으로 로그인해 주세요.`,
-        loginType: loginType,
+        message: "이미 가입된 이메일입니다.",
       });
       return;
     }
 
-    // 비밀번호 검증 추가
-    if (
-      !validator.isStrongPassword(password, {
-        minLength: 8,
-        minNumbers: 1,
-        minSymbols: 1,
-        minUppercase: 0,
-      }) ||
-      !allowedSymbolsForPassword.test(password) // 허용된 문자만 포함하지 않은 경우
-    ) {
-      res.status(400).json({
-        success: false,
-        message:
-          "비밀번호는 8자리 이상, 영문, 숫자, 특수문자(!@#$%^&*?)를 포함해야 합니다.",
-      });
-      return;
-    }
+    // 비밀번호 검증 추가 (필요시 주석 해제)
+    // if (
+    //   !validator.isStrongPassword(password, {
+    //     minLength: 8,
+    //     minNumbers: 1,
+    //     minSymbols: 1,
+    //     minUppercase: 0,
+    //   }) ||
+    //   !allowedSymbolsForPassword.test(password) // 허용된 문자만 포함하는지 확인
+    // ) {
+    //   res.status(400).json({
+    //     success: false,
+    //     message:
+    //       "비밀번호는 8자리 이상, 영문, 숫자, 특수문자(!@#$%^&*?)를 포함해야 합니다.",
+    //   });
+    //   return;
+    // }
 
     // Step 2: 비밀번호 암호화
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Step 3: 사용자 저장
+    // Step 3: 사용자 저장 - 추가 필드 포함
     await connection.query(
-      "INSERT INTO user (email, password, name, terms) VALUES (?, ?, ?, ?)",
-      [email, hashedPassword, name, JSON.stringify(terms, null, " ")]
+      `INSERT INTO user (email, password, name, terms, job, experience, certificates, interests) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        email,
+        hashedPassword,
+        name,
+        JSON.stringify(terms || { privacy: true }),
+        job || null, // 직업 추가
+        experience || null, // 경력 추가
+        certificates || null, // 자격증 추가
+        interests || null, // 관심사 추가
+      ]
     );
 
     await connection.commit(); // 트랜잭션 커밋
@@ -128,25 +133,7 @@ export const login = async (req: Request, res: Response) => {
 
     const user = rows[0];
 
-    // Step 2: 간편 로그인 사용자 확인
-    if (user.login_type !== "normal") {
-      let loginTypeName = "";
-      if (user.login_type === "kakao") {
-        loginTypeName = "카카오";
-      } else if (user.login_type === "google") {
-        loginTypeName = "구글";
-      } else {
-        loginTypeName = user.login_type;
-      }
-
-      res.status(400).json({
-        success: false,
-        message: `이 계정은 간편 로그인으로 연동되어 있습니다. \n${loginTypeName} 간편 로그인을 이용해주세요.`,
-      });
-      return;
-    }
-
-    // Step 3: 암호화된 비밀번호 비교
+    // Step 2: 암호화된 비밀번호 비교
     const isPasswordMatch = await bcrypt.compare(password, user.password);
 
     if (!isPasswordMatch) {
@@ -157,62 +144,53 @@ export const login = async (req: Request, res: Response) => {
       return;
     }
 
-    // Step 4: Access Token 발급
+    // Step 3: Access Token 발급
     const accessToken = jwt.sign(
       {
         userId: user.user_id,
-        userUuid: user.user_uuid, // 사용자 UUID
+        userUuid: user.user_uuid,
         name: user.name,
-        permission: user.permission,
-        login_type: "normal",
       },
       process.env.JWT_ACCESS_SECRET!,
-      { expiresIn: "30m" } // Access Token 만료 시간 30m
+      { expiresIn: "30m" }
     );
 
-    // Step 5: Refresh Token 발급
+    // Step 4: Refresh Token 발급
     const refreshToken = jwt.sign(
       {
         userId: user.user_id,
-        userUuid: user.user_uuid, // 사용자 UUID
+        userUuid: user.user_uuid,
         name: user.name,
-        permission: user.permission,
-        login_type: "normal",
       },
       process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: "7d" } // Refresh Token 만료 시간 7d
+      { expiresIn: "7d" }
     );
 
-    // Step 6: Refresh Token 저장 (DB)
+    // Step 5: Refresh Token 저장 (DB)
     await dbPool.query("UPDATE user SET refresh_token = ? WHERE email = ?", [
       refreshToken,
       email,
     ]);
 
-    // Step 7: 쿠키에 Refresh Token 저장
+    // Step 6: 쿠키에 Refresh Token 저장
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // 환경에 따라 동적 설정
-      // true: HTTPS 환경에서만 작동, 로컬 테스트에선 false로
+      secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      // 로컬 개발환경에선 반드시 lax로, 배포시 none + secure:true
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7일
     });
 
-    // Step 8: 응답 반환
+    // Step 7: 응답 반환
     res.status(200).json({
       success: true,
       message: "로그인 성공",
       name: user.name,
-      userUuid: user.user_uuid, // 사용자 UUID
-      userId: user.user_id, // 사용자 ID, 프론트에서 사용
-      permissions: user.permission, // 사용자 권한, 프론트에서 사용
-      accessToken, // Access Token 반환
-      loginType: "normal", // loginType 추가
+      userUuid: user.user_uuid,
+      userId: user.user_id,
+      accessToken,
     });
     return;
   } catch (err: any) {
-    // 에러 처리
     console.error("서버 오류 발생:", err);
     res.status(err.status || 500).json({
       success: false,
@@ -277,8 +255,7 @@ export const logout = async (req: Request, res: Response) => {
 
 // 이메일 인증 코드 전송
 export const sendVerifyEmail = async (req: Request, res: Response) => {
-  const { user_uuid, email, purpose } = req.body; // purpose : "verifyEmailCode" / "modifyInfo"
-  // 내 정보 수정 기능 추가 시 요청 컬럼 추가
+  const { email } = req.body;
 
   if (!email) {
     res
@@ -298,66 +275,32 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
     connection = await dbPool.getConnection();
     await connection.beginTransaction(); // 트랜잭션 시작
 
-    switch (purpose) {
-      case "verifyEmailCode": // 이메일 인증
-        // Step 1: 이메일 중복 확인
-        const existingUserRows = await connection.query(
-          "SELECT email, state, login_type FROM user WHERE email = ?", // state : "active" / "inactive"
-          [email]
-        );
-        const existingUser = existingUserRows[0];
+    // 이메일 중복 확인
+    const existingUserRows = await connection.query(
+      "SELECT email, state FROM user WHERE email = ?",
+      [email]
+    );
 
-        if (existingUser) {
-          if (existingUser.email === email) {
-            if (existingUser.state === "inactive") {
-              res.status(400).json({
-                success: false,
-                // 간편 로그인 사용자들의 계정 복구 방식이 필요.
-                message: "탈퇴된 계정입니다. 관리자에게 문의해주세요.",
-              });
-              return;
-            }
+    if (existingUserRows.length > 0) {
+      const existingUser = existingUserRows[0];
 
-            if (existingUserRows.length > 0) {
-              // 기존 사용자 존재 -> 로그인 유형에 따른 메시지 생성
-              let loginTypeMsg = "";
-              const loginType = existingUserRows[0].login_type;
-
-              if (loginType === "kakao") {
-                loginTypeMsg = "카카오 간편 로그인";
-              } else if (loginType === "google") {
-                loginTypeMsg = "구글 간편 로그인";
-              } else {
-                loginTypeMsg = "일반 로그인";
-              }
-
-              res.status(400).json({
-                success: false,
-                message: `이미 가입된 이메일입니다.\n${loginTypeMsg}으로 로그인해 주세요.`,
-                loginType, // 클라이언트에서 사용자가 어떤 방식으로 가입되었는지 확인할 수 있게 추가
-              });
-              return;
-            }
-          }
-        }
-        break;
-
-      //TODO : 수정 필요
-      case "modifyInfo": // 내 정보 수정
-        const modifyRows = await connection.query(
-          "SELECT email FROM user WHERE user_uuid = ? AND email = ?",
-          [user_uuid, email]
-        );
-        const modifyUser = modifyRows[0];
-
-        break;
-
-      default:
-        res.status(400).json({ success: false, message: "잘못된 요청입니다." });
+      if (existingUser.state === "inactive") {
+        res.status(400).json({
+          success: false,
+          message: "탈퇴된 계정입니다. 관리자에게 문의해주세요.",
+        });
         return;
+      }
+
+      // 이미 가입된 이메일인 경우
+      res.status(400).json({
+        success: false,
+        message: "이미 가입된 이메일입니다. 로그인해 주세요.",
+      });
+      return;
     }
 
-    // Step 1: 랜덤 인증 코드 생성
+    // 랜덤 인증 코드 생성
     const generateRandomCode = (n: number): string => {
       let str = "";
       for (let i = 0; i < n; i++) {
@@ -367,15 +310,14 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
     };
     const verificationCode = generateRandomCode(6);
 
-    // Step 2: 인증 코드 저장 (유효 기간 5분)
-    // 이건 나중에 한국 표준시로 바꿔야 함
+    // 인증 코드 저장 (유효 기간 5분)
     const expiresAt = new Date(new Date().getTime() + 5 * 60 * 1000); // 정확히 5분 후
     await connection.query(
       "INSERT INTO email_verification (email, verification_code, expires_at) VALUES (?, ?, ?)",
       [email, verificationCode, expiresAt]
     );
 
-    // Step 3: 이메일 전송
+    // 이메일 전송
     const transporter = nodemailer.createTransport({
       service: "gmail",
       host: "smtp.gmail.com",
@@ -388,20 +330,20 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
     });
 
     const mailOptions = {
-      from: `"Wanna Trip" <${process.env.NODEMAILER_USER}>`,
+      from: `"Job Talk" <${process.env.NODEMAILER_USER}>`,
       to: email,
-      subject: "[Wanna Trip] 인증번호",
+      subject: "[Job Talk] 인증번호",
       html: `
       <div style="font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif; max-width:500px; margin:0 auto;">
         <!-- 헤더 -->
         <div style="background-color:#2589ff; color:white; padding:20px; text-align:left;">
-          <h1 style="margin:0; font-size:24px; font-weight:bold;">Wanna Trip 인증번호</h1>
+          <h1 style="margin:0; font-size:24px; font-weight:bold;">Job Talk 인증번호</h1>
         </div>
         
         <!-- 본문 -->
         <div style="padding:30px 20px; background-color:white; border:1px solid #e1e1e1; border-top:none;">
           <p style="font-size:16px; color:#333; margin-bottom:30px;">
-            Wanna Trip 이메일 인증번호입니다.
+            Job Talk 이메일 인증번호입니다.
           </p>
           
           <!-- 인증번호 박스 -->
@@ -415,7 +357,7 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
             인증번호는 5분간만 유효합니다.
           </p>
           <p style="font-size:13px; color:#999; margin-top:15px;">
-            Copyright © WannaTrip Corp. All rights reserved.
+            Copyright © Job Talk Corp. All rights reserved.
           </p>
         </div>
       </div>
@@ -516,3 +458,124 @@ export const verifyEmailCode = async (req: Request, res: Response) => {
   }
 };
 
+// 엑세스 토큰 재발급
+export const refreshToken = async (req: Request, res: Response) => {
+  const { refreshToken } = req.cookies; // 쿠키에서 Refresh Token 추출
+
+  if (!refreshToken) {
+    res.status(403).json({
+      success: false,
+      message: "Refresh Token이 필요합니다.",
+    });
+    return;
+  }
+
+  try {
+    const rows = await dbPool.query(
+      "SELECT * FROM user WHERE refresh_token = ?",
+      [refreshToken]
+    );
+
+    if (rows.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "유효하지 않은 Refresh Token입니다.",
+      });
+      return;
+    }
+
+    // Refresh Token 유효성 검증 및 Access Token 재발급
+    try {
+      const decoded: any = jwt.verify(
+        refreshToken,
+        process.env.JWT_REFRESH_SECRET!
+      );
+      const newAccessToken = jwt.sign(
+        {
+          userId: decoded.userId,
+          userUuid: decoded.userUuid, // 사용자 UUID
+          name: decoded.name,
+        },
+        process.env.JWT_ACCESS_SECRET!,
+        { expiresIn: "30m" } // Access Token 만료 시간
+      );
+
+      res.status(200).json({
+        success: true,
+        message: "Access Token이 갱신되었습니다.",
+        accessToken: newAccessToken,
+        userId: decoded.userId,
+        name: decoded.name,
+      });
+    } catch (err) {
+      // Refresh Token 만료 시 DB에서 삭제
+      await dbPool.query(
+        "UPDATE user SET refresh_token = NULL WHERE refresh_token = ?",
+        [refreshToken]
+      );
+      res.status(403).json({
+        success: false,
+        message: "Refresh Token이 만료되었습니다.",
+      });
+    }
+  } catch (err) {
+    console.error("Token Refresh 처리 중 오류 발생:", err);
+    res.status(500).json({
+      success: false,
+      message: "서버 오류로 인해 토큰 갱신에 실패했습니다.",
+    });
+  }
+};
+
+// 사용자 정보 조회
+export const getUserInfo = async (req: Request, res: Response) => {
+  try {
+    // req.user는 authenticate 미들웨어에서 설정된 값
+    const user = req.user as { userId: number };
+
+    if (!user || !user.userId) {
+      res.status(401).json({
+        success: false,
+        message: "인증 정보가 유효하지 않습니다.",
+      });
+      return;
+    }
+
+    // DB에서 사용자 정보 조회
+    const rows = await dbPool.query(
+      `SELECT user_id, email, name, user_uuid, job, experience, certificates, interests 
+       FROM user WHERE user_id = ? AND state = 'active'`,
+      [user.userId]
+    );
+
+    if (rows.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "사용자 정보를 찾을 수 없습니다.",
+      });
+      return;
+    }
+
+    const userInfo = rows[0];
+
+    res.status(200).json({
+      success: true,
+      data: {
+        userId: userInfo.user_id,
+        email: userInfo.email,
+        name: userInfo.name,
+        userUuid: userInfo.user_uuid,
+        job: userInfo.job, // 직업 정보 추가
+        experience: userInfo.experience, // 경력 정보 추가
+        certificates: userInfo.certificates, // 자격증 정보 추가
+        interests: userInfo.interests, // 관심사 정보 추가
+      },
+    });
+  } catch (err) {
+    console.error("사용자 정보 조회 중 오류 발생:", err);
+    res.status(500).json({
+      success: false,
+      message: "사용자 정보 조회 중 오류가 발생했습니다.",
+    });
+  }
+};

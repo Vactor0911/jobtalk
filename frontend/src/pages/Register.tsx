@@ -81,7 +81,7 @@ const Register = () => {
   const [passwordConfirm, setPasswordConfirm] = useState(""); // 사용자 비밀번호 재확인
   const [isPasswordVisible, setIsPasswordVisible] = useState(false); // 비밀번호 보임/숨김
   const [isPasswordConfirmVisible, setIsPasswordCheckVisible] = useState(false); // 비밀번호 확인 보임/숨김
-  const [name, setName] = useState(""); // 사용자 이름(닉네임)
+  const [name, setName] = useState(""); // 사용자 별명
   const [certificates, setCertificates] = useState(""); // 자격증 정보 추가
   const [interests, setInterests] = useState(""); // 관심사 정보 추가
   const [isTermAgreed, setIsTermAgreed] = useState(
@@ -331,7 +331,7 @@ const Register = () => {
     setIsPasswordCheckVisible(!isPasswordConfirmVisible);
   }, [isPasswordConfirmVisible]);
 
-  // 이름(닉네임) 입력
+  // 별명 입력
   const handleNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setName(e.target.value);
@@ -426,10 +426,10 @@ const Register = () => {
       }
 
       if (!name) {
-        console.error("이름을 입력해주세요.");
+        console.error("별명을 입력해주세요.");
         setSnackbar({
           open: true,
-          message: "이름을 입력해주세요.",
+          message: "별명을 입력해주세요.",
           severity: "warning",
         });
         return;
@@ -572,13 +572,13 @@ const Register = () => {
             {/* 헤더 */}
             <SectionHeader title="계정 정보" />
 
-            {/* 아이디(이메일) */}
+            {/* 이메일 */}
             <Stack gap={1}>
-              {/* 아이디(이메일) 입력란 */}
+              {/* 이메일 입력란 */}
               <Stack direction="row" gap={1} mt={1}>
                 <Box flex={1}>
                   <OutlinedTextField
-                    label="아이디(이메일)"
+                    label="이메일"
                     value={email}
                     onChange={handleEmailChange}
                   />
@@ -701,9 +701,9 @@ const Register = () => {
               }
             />
 
-            {/* 이름(닉네임) 입력란 */}
+            {/* 별명 입력란 */}
             <OutlinedTextField
-              label="이름(닉네임)"
+              label="별명"
               value={name}
               onChange={handleNameChange}
             />

@@ -159,11 +159,7 @@ const Profile = () => {
       if (!file) return;
 
       // 파일 타입 검증
-      const allowedTypes = [
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-      ];
+      const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
 
       if (!allowedTypes.includes(file.type)) {
         setSnackbar({

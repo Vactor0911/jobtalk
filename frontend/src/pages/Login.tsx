@@ -246,10 +246,10 @@ const Login = () => {
             {/* 로그인 헤더 */}
             <SectionHeader title="로그인" />
 
-            {/* 아이디 입력란 */}
+            {/* 이메일 입력란 */}
             <Box mt={1}>
               <OutlinedTextField
-                label="아이디(이메일)"
+                label="이메일"
                 value={email}
                 onChange={handleEmailChange}
                 onKeyDown={handleKeyEnterDown}

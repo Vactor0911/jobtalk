@@ -25,10 +25,18 @@ import OutlinedTextField from "../components/OutlinedTextField";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import axiosInstance, { getCsrfToken } from "../utils/axiosInstance";
 import axios from "axios";
 import { useNavigate } from "react-router";
+import { jobTalkLoginStateAtom } from "../state";
+import { useAtomValue } from "jotai";
 
 // 이용약관 데이터
 interface TermsOfService {
@@ -62,6 +70,7 @@ const Register = () => {
     severity: "info" as "success" | "error" | "warning" | "info",
   });
 
+  const loginState = useAtomValue(jobTalkLoginStateAtom);
   const [email, setEmail] = useState("");
   const [isConfirmCodeSending, setIsConfirmCodeSending] = useState(false); // 인증번호 전송 중 여부
   const [isConfirmCodeSent, setIsConfirmCodeSent] = useState(false); // 인증번호 전송 여부
@@ -524,6 +533,21 @@ const Register = () => {
     },
     []
   );
+
+  // 로그인된 상태라면 이전 페이지로 이동
+  useLayoutEffect(() => {
+    if (loginState.isLoggedIn) {
+      if (window.history.length > 1) {
+        navigate(-1); // 이전 페이지로 이동
+      } else {
+        navigate("/", { replace: true }); // 이전 페이지가 없으면 홈으로 이동
+      }
+    }
+  }, [loginState.isLoggedIn, navigate]);
+
+  if (loginState.isLoggedIn) {
+    return null; // 컴포넌트 렌더링 중지
+  }
 
   return (
     <Container maxWidth="xs">

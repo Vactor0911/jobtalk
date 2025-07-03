@@ -14,11 +14,11 @@ import {
 import PlainLink from "../components/PlainLinkProps";
 import SectionHeader from "../components/SectionHeader";
 import OutlinedTextField from "../components/OutlinedTextField";
-import { useCallback, useState } from "react";
+import { useCallback, useLayoutEffect, useState } from "react";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { jobTalkLoginStateAtom } from "../state";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useNavigate } from "react-router";
 import { setAccessToken } from "../utils/accessToken";
 import axiosInstance, { getCsrfToken } from "../utils/axiosInstance";
@@ -35,6 +35,7 @@ const Login = () => {
   const navigate = useNavigate();
   const setLoginState = useSetAtom(jobTalkLoginStateAtom);
 
+  const loginState = useAtomValue(jobTalkLoginStateAtom);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -210,6 +211,21 @@ const Login = () => {
     },
     [handleLoginButtonClick]
   );
+
+  // 로그인된 상태라면 이전 페이지로 이동
+  useLayoutEffect(() => {
+    if (loginState.isLoggedIn) {
+      if (window.history.length > 1) {
+        navigate(-1); // 이전 페이지로 이동
+      } else {
+        navigate("/", { replace: true }); // 이전 페이지가 없으면 홈으로 이동
+      }
+    }
+  }, [loginState.isLoggedIn, navigate]);
+
+  if (loginState.isLoggedIn) {
+    return null; // 컴포넌트 렌더링 중지
+  }
 
   return (
     <Container maxWidth="xs">

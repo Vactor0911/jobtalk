@@ -604,4 +604,124 @@ export const updateNickname = async (req: Request, res: Response) => {
   }
 };
 
+// 비밀번호 변경
+export const updatePassword = async (req: Request, res: Response) => {
+  const { currentPassword, newPassword, confirmNewPassword } = req.body;
+  const user = req.user as { userId: number };
+  const connection = await dbPool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // 필수 입력 검증
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      await connection.rollback();
+      res.status(400).json({
+        success: false,
+        message: "모든 비밀번호 필드를 입력해주세요.",
+      });
+      return;
+    }
+
+    // 새 비밀번호 일치 여부 확인
+    if (newPassword !== confirmNewPassword) {
+      await connection.rollback();
+      res.status(400).json({
+        success: false,
+        message: "새 비밀번호가 일치하지 않습니다.",
+      });
+      return;
+    }
+
+    // // 비밀번호 복잡성 검증
+    // const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*?]).{8,}$/;
+    // if (!passwordRegex.test(newPassword)) {
+    //   res.status(400).json({
+    //     success: false,
+    //     message: "비밀번호는 8자 이상, 영문, 숫자, 특수문자를 포함해야 합니다.",
+    //   });
+    //   return;
+    // }
+
+    // 현재 사용자의 비밀번호 조회
+    const rows = await connection.query(
+      "SELECT password, login_type FROM user WHERE user_id = ? AND state = 'active'",
+      [user.userId]
+    );
+
+    if (rows.length === 0) {
+      await connection.rollback();
+      res.status(404).json({
+        success: false,
+        message: "사용자를 찾을 수 없습니다.",
+      });
+      return;
+    }
+
+    const userInfo = rows[0];
+
+    // 소셜 로그인 사용자는 비밀번호 변경 불가
+    if (userInfo.login_type !== "normal") {
+      await connection.rollback();
+      res.status(400).json({
+        success: false,
+        message: `${
+          userInfo.login_type === "kakao" ? "카카오" : "구글"
+        } 간편 로그인 사용자는 비밀번호를 변경할 수 없습니다.`,
+      });
+      return;
+    }
+
+    // 현재 비밀번호 확인
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      userInfo.password
+    );
+
+    if (!isPasswordValid) {
+      await connection.rollback();
+      res.status(401).json({
+        success: false,
+        message: "현재 비밀번호가 일치하지 않습니다.",
+      });
+      return;
+    }
+
+    // 현재 비밀번호와 새 비밀번호가 동일한지 확인
+    if (currentPassword === newPassword) {
+      await connection.rollback();
+      res.status(400).json({
+        success: false,
+        message: "새 비밀번호는 현재 비밀번호와 달라야 합니다.",
+      });
+      return;
+    }
+
+    // 새 비밀번호 암호화
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 비밀번호 업데이트
+    await connection.query("UPDATE user SET password = ? WHERE user_id = ?", [
+      hashedPassword,
+      user.userId,
+    ]);
+
+    await connection.commit();
+
+    res.status(200).json({
+      success: true,
+      message: "비밀번호가 성공적으로 변경되었습니다.",
+    });
+  } catch (err) {
+    await connection.rollback();
+    console.error("비밀번호 변경 중 오류 발생:", err);
+    res.status(500).json({
+      success: false,
+      message: "비밀번호 변경 중 오류가 발생했습니다.",
+    });
+  } finally {
+    connection.release();
+  }
+};
+
 

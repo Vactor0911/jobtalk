@@ -46,4 +46,7 @@ authRoute.patch("/me/password", csrfProtection, limiter, authenticateToken, upda
 // 계정 탈퇴
 authRoute.post("/me/delete", csrfProtection, limiter, authenticateToken, deleteAccount);
 
+// 프로필 이미지 업로드
+authRoute.post("/me/profile-image", csrfProtection, limiter, authenticateToken, uploadProfileImage);
+
 export default authRoute;

@@ -9,16 +9,7 @@ const allowedSymbolsForPassword = /^[a-zA-Z0-9!@#$%^&*?]*$/; // 허용된 문자
 
 // 사용자 회원가입
 export const register = async (req: Request, res: Response) => {
-  const {
-    email,
-    password,
-    name,
-    terms,
-    job,
-    experience,
-    certificates,
-    interests,
-  } = req.body;
+  const { email, password, name, terms, certificates, interests } = req.body;
   const connection = await dbPool.getConnection(); // 커넥션 획득
 
   try {
@@ -62,15 +53,13 @@ export const register = async (req: Request, res: Response) => {
 
     // Step 3: 사용자 저장 - 추가 필드 포함
     await connection.query(
-      `INSERT INTO user (email, password, name, terms, job, experience, certificates, interests) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO user (email, password, name, terms, certificates, interests) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
       [
         email,
         hashedPassword,
         name,
         JSON.stringify(terms || { privacy: true }),
-        job || null, // 직업 추가
-        experience || null, // 경력 추가
         certificates || null, // 자격증 추가
         interests || null, // 관심사 추가
       ]
@@ -330,33 +319,33 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
     });
 
     const mailOptions = {
-      from: `"Job Talk" <${process.env.NODEMAILER_USER}>`,
+      from: `"JobTalk" <${process.env.NODEMAILER_USER}>`,
       to: email,
-      subject: "[Job Talk] 인증번호",
+      subject: "[JobTalk] 인증번호",
       html: `
       <div style="font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif; max-width:500px; margin:0 auto;">
         <!-- 헤더 -->
-        <div style="background-color:#2589ff; color:white; padding:20px; text-align:left;">
+        <div style="background-color:#ff8551; color:white; padding:20px; text-align:left;">
           <h1 style="margin:0; font-size:24px; font-weight:bold;">Job Talk 인증번호</h1>
         </div>
         
         <!-- 본문 -->
         <div style="padding:30px 20px; background-color:white; border:1px solid #e1e1e1; border-top:none;">
-          <p style="font-size:16px; color:#333; margin-bottom:30px;">
+          <p style="font-size:16px; color:#404040; margin-bottom:30px;">
             Job Talk 이메일 인증번호입니다.
           </p>
           
           <!-- 인증번호 박스 -->
-          <div style="background-color:#f4f7fd; padding:20px; text-align:center; margin-bottom:30px; border-radius:4px;">
-            <h2 style="font-size:38px; letter-spacing:10px; color:#2589ff; margin:0; font-weight:bold;">${verificationCode}</h2>
+          <div style="background-color:#faf0e4; padding:20px; text-align:center; margin-bottom:30px; border-radius:4px;">
+            <h2 style="font-size:38px; letter-spacing:10px; color:#ff8551; margin:0; font-weight:bold;">${verificationCode}</h2>
           </div>
           
           <!-- 안내문구 -->
-          <p style="font-size:14px; color:#888; margin-top:30px; border-top:1px solid #eee; padding-top:20px;">
+          <p style="font-size:14px; color:#787878; margin-top:30px; border-top:1px solid #eee; padding-top:20px;">
             본 메일은 발신전용입니다.<br>
             인증번호는 5분간만 유효합니다.
           </p>
-          <p style="font-size:13px; color:#999; margin-top:15px;">
+          <p style="font-size:13px; color:#787878; margin-top:15px;">
             Copyright © Job Talk Corp. All rights reserved.
           </p>
         </div>

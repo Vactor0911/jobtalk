@@ -431,7 +431,12 @@ const Profile = () => {
 
   return (
     <Container maxWidth="sm">
-      <Stack minHeight="calc(100vh - 64px)" paddingY={4} gap={5}>
+      <Stack
+        minHeight="calc(100vh - 64px)"
+        paddingY={4}
+        paddingBottom={10}
+        gap={5}
+      >
         {/* 내 정보 */}
         <Stack gap={3}>
           <SectionHeader title="내정보" />

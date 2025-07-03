@@ -38,7 +38,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isLoginStateSave, setIsLoginStateSave] = useState(false);
+  const [isLoginStateSave, setIsLoginStateSave] = useState(true);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
 
   // 스낵바 상태

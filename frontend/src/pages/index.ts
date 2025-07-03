@@ -1,6 +1,6 @@
 import Main from "./Main";
 import Login from "./Login";
 import Register from "./Register";
-import RoadMap from "./RoadMap";
+import Workspace from "./Workspace";
 
-export { Main, RoadMap, Login, Register };
+export { Main, Login, Register, Workspace };

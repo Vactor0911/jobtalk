@@ -221,7 +221,10 @@ const Header = () => {
           {/* 버튼 컨테이너 */}
           <Stack>
             {/* 내 정보 */}
-            <MenuButton onClick={handleMenuClose}>
+            <MenuButton onClick={() => {
+              handleMenuClose();
+              navigate("/profile");
+            }}>
               <Typography variant="subtitle1">내 정보</Typography>
             </MenuButton>
 

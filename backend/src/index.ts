@@ -4,14 +4,13 @@ import cookieParser from "cookie-parser"; // 쿠키 파싱을 위한 라이브�
 import bodyParser from "body-parser"; // 요청 본문 파싱을 위한 라이브러리
 import helmet from "helmet"; // 보안 헤더 설정을 위한 라이브러리
 import dotenv from "dotenv"; // 환경변수 관리를 위한 라이브러리
+import path from 'path'; // 경로 조작을 위한 모듈
 
 import authRoute from "./routes/authRoute"; // 사용자 계정 관련 라우트
 import csrfRoute from "./routes/csrfRoute"; // CSRF 토큰 관련 라우트
 import careerRoute from "./routes/careerRoute"; // 커리어넷 관련 API 라우트
 import { csrfTokenMiddleware } from "./utils";
 import chatRoute from "./routes/chatRoute";
-import OpenAI from "openai";
-import { create } from "domain";
 
 // .env 파일 로드
 dotenv.config();
@@ -29,6 +28,8 @@ dotenv.config();
   "JWT_REFRESH_SECRET",
   "NODEMAILER_USER",
   "NODEMAILER_PASS",
+  "CAREER_NET_API_KEY",
+  "OPENAI_API_KEY",
 ].forEach((key) => {
   if (!process.env[key]) {
     throw new Error(`해당 환경변수가 존재하지 않습니다.: ${key}`);
@@ -66,6 +67,9 @@ app.use(
 app.use(express.json()); // JSON 요청을 처리하기 위한 미들웨어
 app.use(cookieParser(process.env.SESSION_SECRET)); // 쿠키 파싱 미들웨어 등록
 app.use(bodyParser.json()); // JSON 파싱 미들웨어 등록
+
+// 정적 파일 서비스 설정
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // CSRF 토큰 미들웨어 추가
 app.use(csrfTokenMiddleware);

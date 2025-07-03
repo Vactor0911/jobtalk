@@ -536,7 +536,7 @@ export const getUserInfo = async (req: Request, res: Response) => {
 
     // DB에서 사용자 정보 조회
     const rows = await dbPool.query(
-      `SELECT user_id, email, name, user_uuid, job, experience, certificates, interests 
+      `SELECT user_id, email, name, profile_image, user_uuid, job, experience, certificates, interests 
        FROM user WHERE user_id = ? AND state = 'active'`,
       [user.userId]
     );
@@ -558,6 +558,7 @@ export const getUserInfo = async (req: Request, res: Response) => {
         email: userInfo.email,
         name: userInfo.name,
         userUuid: userInfo.user_uuid,
+        profileImage: userInfo.profile_image || null, // 프로필 이미지 경로 추가
         job: userInfo.job, // 직업 정보 추가
         experience: userInfo.experience, // 경력 정보 추가
         certificates: userInfo.certificates, // 자격증 정보 추가
@@ -761,6 +762,45 @@ export const deleteAccount = async (req: Request, res: Response) => {
       return;
     }
 
+    // 프로필 이미지 파일 삭제 로직 추가
+    try {
+      // 사용자의 프로필 이미지 정보 가져오기
+      if (userInfo.profile_image) {
+        // DB에 저장된 경로에서 파일명 추출
+        const profileImagePath = path.join(
+          __dirname,
+          "../../",
+          userInfo.profile_image.substring(1) // 앞의 '/' 제거
+        );
+
+        // 파일이 존재하는지 확인 후 삭제
+        if (fs.existsSync(profileImagePath)) {
+          fs.unlinkSync(profileImagePath);
+          console.log(
+            `사용자 ID ${user.userId}의 프로필 이미지 삭제: ${profileImagePath}`
+          );
+        }
+
+        // 모든 종류의 프로필 이미지 삭제 (확장자 상관없이)
+        const profileDir = path.join(__dirname, "../../uploads/profiles");
+        if (fs.existsSync(profileDir)) {
+          const files = fs.readdirSync(profileDir);
+          const userPrefix = user.userUuid;
+
+          files.forEach((file) => {
+            if (file.startsWith(userPrefix)) {
+              const filePath = path.join(profileDir, file);
+              fs.unlinkSync(filePath);
+              console.log(`사용자의 추가 프로필 이미지 삭제: ${filePath}`);
+            }
+          });
+        }
+      }
+    } catch (error) {
+      // 이미지 삭제 실패해도 계정 탈퇴는 계속 진행
+      console.error("프로필 이미지 삭제 중 오류:", error);
+    }
+
     // 사용자 계정 삭제
     await connection.query("DELETE from user WHERE user_id = ?", [user.userId]);
 
@@ -860,7 +900,6 @@ const upload = multer({
     fileSize: 4 * 1024 * 1024, // 4MB
   },
 }).single("profileImage");
-
 
 // 프로필 이미지 업로드
 export const uploadProfileImage = async (req: Request, res: Response) => {

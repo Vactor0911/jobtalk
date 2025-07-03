@@ -36,5 +36,29 @@ export const theme = responsiveFontSizes(
         fontWeight: 700,
       },
     },
+    components: {
+      MuiDivider: {
+        styleOverrides: {
+          root: {
+            borderWidth: 1.2,
+            borderRadius: "50px",
+          },
+        },
+      },
+      MuiTooltip: {
+        defaultProps: {
+          arrow: true,
+          placement: "top",
+          sx: {
+            cursor: "pointer",
+          },
+        },
+        styleOverrides: {
+          tooltip: {
+            fontSize: "0.9rem",
+          },
+        },
+      },
+    },
   })
 );

@@ -839,7 +839,7 @@ const Register = () => {
             {/* 로그인 페이지 링크 */}
             <Box alignSelf="flex-end">
               <PlainLink to="/login">
-                <Typography variant="subtitle1" color="text.primary">
+                <Typography variant="subtitle1" color="text.secondary">
                   이미 계정이 있으신가요?
                 </Typography>
               </PlainLink>

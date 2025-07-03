@@ -290,13 +290,13 @@ const Login = () => {
             <Stack direction="row">
               <Stack direction="row" gap={1} alignItems="center">
                 <PlainLink to="/find-password">
-                  <Typography color="text.primary">비밀번호 찾기</Typography>
+                  <Typography color="text.secondary">비밀번호 찾기</Typography>
                 </PlainLink>
               </Stack>
 
               <Box flex={1} display="flex" justifyContent="flex-end">
                 <PlainLink to="/register">
-                  <Typography color="text.primary">회원가입</Typography>
+                  <Typography color="text.secondary">회원가입</Typography>
                 </PlainLink>
               </Box>
             </Stack>

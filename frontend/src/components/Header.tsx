@@ -382,7 +382,12 @@ const Header = () => {
             </MenuButton>
 
             {/* 내 워크스페이스 */}
-            <MenuButton onClick={handleMenuClose}>
+            <MenuButton
+              onClick={() => {
+                handleMenuClose();
+                navigate("/workspace");
+              }}
+            >
               <Typography variant="subtitle1">워크스페이스</Typography>
             </MenuButton>
 

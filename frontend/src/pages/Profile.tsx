@@ -504,7 +504,7 @@ const Profile = () => {
               type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
-              accept="image/jpeg,image/png,image/gif,image/webp"
+              accept=".png, .jpg, .jpeg"
               style={{ display: "none" }}
             />
 

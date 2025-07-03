@@ -10,10 +10,10 @@ export interface LoginState {
 
 // LocalStorage에서 상태를 불러오기
 const savedLoginState = JSON.parse(
-  localStorage.getItem("WannaTriploginState") || "{}"
+  localStorage.getItem("JobTalkloginState") || "{}"
 );
 
-export const wannaTripLoginStateAtom = atom({
+export const jobTalkLoginStateAtom = atom({
   isLoggedIn: savedLoginState.isLoggedIn || false, // 로그인 상태
   userUuid: savedLoginState.userUuid || "", // 로그인된 사용자의 UUID
   userName: savedLoginState.userName || "", // 로그인된 사용자의 이름

@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   Checkbox,
@@ -6,6 +7,7 @@ import {
   FormControlLabel,
   IconButton,
   InputAdornment,
+  Snackbar,
   Stack,
   Typography,
 } from "@mui/material";
@@ -15,13 +17,41 @@ import OutlinedTextField from "../components/OutlinedTextField";
 import { useCallback, useState } from "react";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import { jobTalkLoginStateAtom } from "../state";
+import { useSetAtom } from "jotai";
+import { useNavigate } from "react-router";
+import { setAccessToken } from "../utils/accessToken";
+import axiosInstance, { getCsrfToken } from "../utils/axiosInstance";
+
+// 로그인 상태 타입 정의 (기존 코드 참조)
+interface LoginState {
+  isLoggedIn: boolean;
+  userUuid: string;
+  email: string;
+  userName: string;
+}
 
 const Login = () => {
+  const navigate = useNavigate();
+  const setLoginState = useSetAtom(jobTalkLoginStateAtom);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isLoginStateSave, setIsLoginStateSave] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
+
+  // 스낵바 상태
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info" as "success" | "error" | "warning" | "info",
+  });
+
+  // 스낵바 닫기
+  const handleSnackbarClose = useCallback(() => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  }, []);
 
   // 이메일 입력
   const handleEmailChange = useCallback(
@@ -49,10 +79,127 @@ const Login = () => {
     setIsLoginStateSave((prev) => !prev);
   }, []);
 
+  // 로그인 성공 처리
+  const processLoginSuccess = useCallback(
+    (responseData: {
+      accessToken: string;
+      name: string;
+      userUuid: string;
+      userId: number;
+    }) => {
+      const { accessToken, name, userUuid } = responseData;
+
+      // 액세스 토큰 저장
+      setAccessToken(accessToken);
+
+      // 로그인 상태 객체 생성
+      const newLoginState: LoginState = {
+        isLoggedIn: true,
+        userUuid: userUuid,
+        email: email,
+        userName: name,
+      };
+
+      // 상태 저장
+      setLoginState(newLoginState);
+
+      // 로그인 유지 설정에 따라 스토리지에 저장
+      if (isLoginStateSave) {
+        localStorage.setItem(
+          "JobTalkloginState",
+          JSON.stringify(newLoginState)
+        );
+      } else {
+        sessionStorage.setItem(
+          "JobTalkloginState",
+          JSON.stringify(newLoginState)
+        );
+      }
+
+      // 로그인 성공 알림
+      setSnackbar({
+        open: true,
+        message: "로그인에 성공했습니다!",
+        severity: "success",
+      });
+
+      // 잠시 후 메인 페이지로 이동
+      setTimeout(() => {
+        navigate("/"); // 메인 페이지 또는 대시보드로 이동
+      }, 1000);
+    },
+    [email, isLoginStateSave, navigate, setLoginState]
+  );
+
   // 로그인 버튼 클릭
-  const handleLoginButtonClick = useCallback(() => {
-    console.log("로그인 버튼 클릭");
-  }, []);
+  const handleLoginButtonClick = useCallback(async () => {
+    // 입력 검증
+    if (!email || !password) {
+      setSnackbar({
+        open: true,
+        message: "이메일과 비밀번호를 모두 입력해주세요.",
+        severity: "warning",
+      });
+      return;
+    }
+
+    // if (!isEmailValid(email)) {
+    //   setSnackbar({
+    //     open: true,
+    //     message: "올바른 이메일 형식이 아닙니다.",
+    //     severity: "warning",
+    //   });
+    //   return;
+    // }
+
+    setIsLoginLoading(true);
+
+    try {
+      // CSRF 토큰 획득
+      const csrfToken = await getCsrfToken();
+
+      // 로그인 요청
+      const response = await axiosInstance.post(
+        "/auth/login",
+        { email, password },
+        {
+          headers: {
+            "X-CSRF-Token": csrfToken,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        // 로그인 성공 처리
+        processLoginSuccess(response.data);
+      } else {
+        setSnackbar({
+          open: true,
+          message: response.data.message || "로그인에 실패했습니다.",
+          severity: "error",
+        });
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("로그인 실패:", error);
+
+      // 오류 메시지 처리
+      let errorMessage = "로그인에 실패했습니다. 다시 시도해주세요.";
+
+      if (error.response) {
+        const serverMessage = error.response.data?.message;
+        errorMessage = serverMessage || errorMessage;
+      }
+
+      setSnackbar({
+        open: true,
+        message: errorMessage,
+        severity: "error",
+      });
+    } finally {
+      setIsLoginLoading(false);
+    }
+  }, [email, password, processLoginSuccess]);
 
   // 엔터 입력시 로그인 처리
   const handleKeyEnterDown = useCallback(
@@ -66,7 +213,11 @@ const Login = () => {
 
   return (
     <Container maxWidth="xs">
-      <Stack minHeight="calc(100vh - 64px)" justifyContent="center" paddingY={4}>
+      <Stack
+        minHeight="calc(100vh - 64px)"
+        justifyContent="center"
+        paddingY={4}
+      >
         <Stack gap={6}>
           {/* 로고 링크 버튼 */}
           <PlainLink to="/">
@@ -138,21 +289,6 @@ const Login = () => {
             </Button>
             <Stack direction="row">
               <Stack direction="row" gap={1} alignItems="center">
-                {/*
-                <PlainLink to="/">
-                  <Typography color="divider">아이디 찾기</Typography>
-                </PlainLink>
-
-                <Box
-                  width="1px"
-                  height="60%"
-                  borderRadius="50px"
-                  sx={{
-                    background: theme.palette.divider,
-                  }}
-                /> 
-                */}
-
                 <PlainLink to="/find-password">
                   <Typography color="text.primary">비밀번호 찾기</Typography>
                 </PlainLink>
@@ -167,6 +303,23 @@ const Login = () => {
           </Stack>
         </Stack>
       </Stack>
+
+      {/* 알림 스낵바 */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

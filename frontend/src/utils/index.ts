@@ -15,3 +15,24 @@ export const resetStates = async (
   sessionStorage.removeItem("WannaTriploginState"); // 세션 스토리지 제거
   localStorage.removeItem("WannaTriploginState"); // 로컬 스토리지 제거
 };
+
+/**
+ * 이메일 형식이 올바른지 확인하는 함수
+ * @param email 이메일 주소
+ * @returns 이메일 형식이 올바른지 여부
+ */
+export const isEmailValid = (email: string) => {
+  // 이메일 미입력시
+  if (!email) {
+    return false;
+  }
+
+  // 이메일 정규식 검사
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(email)) {
+    return false;
+  }
+
+  // 이메일 형식이 올바름
+  return true;
+};

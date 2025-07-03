@@ -1,3 +1,5 @@
-import Main from "./Main";
+import RoadMap from "./RoadMap";
+import Login from "./Login";
+import Register from "./Register";
 
-export { Main };
+export { RoadMap, Login, Register };

@@ -568,3 +568,40 @@ export const getUserInfo = async (req: Request, res: Response) => {
     });
   }
 };
+
+// 닉네임 변경
+export const updateNickname = async (req: Request, res: Response) => {
+  const { nickname } = req.body;
+  const user = req.user as { userId: number };
+
+  if (!nickname || nickname.trim() === "") {
+    res.status(400).json({
+      success: false,
+      message: "닉네임은 필수 입력 항목입니다.",
+    });
+    return;
+  }
+
+  try {
+    await dbPool.query(
+      "UPDATE user SET name = ? WHERE user_id = ? AND state = 'active'",
+      [nickname, user.userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "닉네임이 성공적으로 변경되었습니다.",
+      data: {
+        nickname,
+      },
+    });
+  } catch (err) {
+    console.error("닉네임 변경 중 오류 발생:", err);
+    res.status(500).json({
+      success: false,
+      message: "닉네임 변경 중 오류가 발생했습니다.",
+    });
+  }
+};
+
+

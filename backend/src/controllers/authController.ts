@@ -724,4 +724,77 @@ export const updatePassword = async (req: Request, res: Response) => {
   }
 };
 
+// 계정 탈퇴
+export const deleteAccount = async (req: Request, res: Response) => {
+  const user = req.user as { userId: number; userUuid: string };
+  const { password } = req.body;
+  const connection = await dbPool.getConnection();
 
+  try {
+    await connection.beginTransaction();
+
+    // 사용자 정보 조회
+    const rows = await connection.query(
+      "SELECT * FROM user WHERE user_id = ? AND state = 'active'",
+      [user.userId]
+    );
+
+    if (rows.length === 0) {
+      await connection.rollback();
+      res.status(404).json({
+        success: false,
+        message: "사용자를 찾을 수 없습니다.",
+      });
+      return;
+    }
+
+    const userInfo = rows[0];
+
+    //
+    if (!password) {
+      await connection.rollback();
+      res.status(400).json({
+        success: false,
+        message: "계정 탈퇴를 위해 비밀번호가 필요합니다.",
+      });
+      return;
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, userInfo.password);
+    if (!isPasswordValid) {
+      await connection.rollback();
+      res.status(401).json({
+        success: false,
+        message: "비밀번호가 일치하지 않습니다.",
+      });
+      return;
+    }
+
+    // 사용자 계정 삭제
+    await connection.query("DELETE from user WHERE user_id = ?", [user.userId]);
+
+    await connection.commit();
+
+    // 로그아웃 처리
+    res.clearCookie("csrf-token");
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "계정이 성공적으로 탈퇴되었습니다.",
+    });
+  } catch (err) {
+    await connection.rollback();
+    console.error("계정 탈퇴 중 오류 발생:", err);
+    res.status(500).json({
+      success: false,
+      message: "계정 탈퇴 중 오류가 발생했습니다.",
+    });
+  } finally {
+    connection.release();
+  }
+};

@@ -536,7 +536,7 @@ export const getUserInfo = async (req: Request, res: Response) => {
 
     // DB에서 사용자 정보 조회
     const rows = await dbPool.query(
-      `SELECT user_id, email, name, profile_image, user_uuid, job, experience, certificates, interests 
+      `SELECT user_id, email, name, profile_image, user_uuid, certificates, interests 
        FROM user WHERE user_id = ? AND state = 'active'`,
       [user.userId]
     );

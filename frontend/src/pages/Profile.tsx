@@ -1,4 +1,5 @@
 import {
+  Alert,
   Avatar,
   Box,
   Button,
@@ -7,6 +8,7 @@ import {
   Divider,
   IconButton,
   InputAdornment,
+  Snackbar,
   Stack,
   Tooltip,
   Typography,
@@ -17,7 +19,7 @@ import OutlinedTextField from "../components/OutlinedTextField";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import CreateIcon from "@mui/icons-material/Create";
 import FaceRoundedIcon from "@mui/icons-material/FaceRounded";
 import { grey } from "@mui/material/colors";
@@ -26,6 +28,16 @@ import axiosInstance, {
   SERVER_HOST,
 } from "../utils/axiosInstance";
 import imageCompression from "browser-image-compression";
+
+// 사용자 정보 인터페이스
+interface UserInfo {
+  userId: number;
+  email: string;
+  name: string;
+  profileImage: string | null;
+  certificates?: string | null;
+  interests?: string | null;
+}
 
 // 스낵바 상태 인터페이스
 interface SnackbarState {
@@ -37,12 +49,18 @@ interface SnackbarState {
 const Profile = () => {
   const theme = useTheme();
 
+  // 사용자 정보 상태
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [nickname, setNickname] = useState("");
+
   // 이미지 상태
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [imageVersion, setImageVersion] = useState(0);
 
+  // 비밀번호 상태
   const [prevPassword, setPrevPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
@@ -51,12 +69,61 @@ const Profile = () => {
   const [newPasswordConfirmVisible, setNewPasswordConfirmVisible] =
     useState(false);
 
+  // 작업 상태
+  const [isNicknameUpdating, setIsNicknameUpdating] = useState(false);
+  const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
+
   // 알림 상태
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: "",
     severity: "info",
   });
+
+  // 사용자 정보 로딩
+  const fetchUserInfo = useCallback(async () => {
+    try {
+      setIsLoading(true);
+
+      // CSRF 토큰 가져오기
+      const csrfToken = await getCsrfToken();
+
+      // 사용자 정보 조회 API 호출
+      const response = await axiosInstance.get("/auth/me", {
+        headers: { "X-CSRF-Token": csrfToken },
+      });
+
+      if (response.data.success) {
+        const userData = response.data.data;
+        setUserInfo(userData);
+        setNickname(userData.name);
+
+        // 프로필 이미지 설정
+        if (userData.profileImage) {
+          setProfileImage(`${SERVER_HOST}${userData.profileImage}`);
+        } else {
+          setProfileImage(null);
+        }
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.error("사용자 정보 조회 실패:", err);
+      setSnackbar({
+        open: true,
+        message:
+          err.response?.data?.message ||
+          "사용자 정보를 불러오는데 실패했습니다.",
+        severity: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // 컴포넌트 마운트 시 사용자 정보 로딩
+  useEffect(() => {
+    fetchUserInfo();
+  }, [fetchUserInfo]);
 
   // 프로필 이미지 클릭
   const handleProfileClick = useCallback(() => {
@@ -151,6 +218,17 @@ const Profile = () => {
           // 이미지 버전 증가 (강제 리렌더링 유도)
           setImageVersion((prev) => prev + 1);
 
+          // 헤더에 즉시 업데이트 알림
+          window.dispatchEvent(
+            new CustomEvent("profileImageUpdated", {
+              detail: {
+                profileImage: response.data.data.profileImage, // 서버에서 받은 경로
+                imageUrl: imageUrl, // 전체 URL
+                timestamp: new Date().getTime(),
+              },
+            })
+          );
+
           // 성공 메시지 표시
           setSnackbar({
             open: true,
@@ -176,6 +254,145 @@ const Profile = () => {
     []
   );
 
+  // 닉네임 변경 요청
+  const handleUpdateNickname = useCallback(async () => {
+    // 입력값 검증
+    if (!nickname.trim()) {
+      setSnackbar({
+        open: true,
+        message: "닉네임을 입력해주세요.",
+        severity: "error",
+      });
+      return;
+    }
+
+    try {
+      setIsNicknameUpdating(true);
+
+      // CSRF 토큰 가져오기
+      const csrfToken = await getCsrfToken();
+
+      // 닉네임 변경 API 호출
+      const response = await axiosInstance.patch(
+        "/auth/me/nickname",
+        { nickname },
+        { headers: { "X-CSRF-Token": csrfToken } }
+      );
+
+      if (response.data.success) {
+        setSnackbar({
+          open: true,
+          message: "닉네임이 성공적으로 변경되었습니다.",
+          severity: "success",
+        });
+
+        // 헤더에 즉시 닉네임 업데이트 알림
+        window.dispatchEvent(
+          new CustomEvent("profileNicknameUpdated", {
+            detail: {
+              nickname: nickname,
+            },
+          })
+        );
+
+        // 사용자 정보 다시 불러오기
+        fetchUserInfo();
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.error("닉네임 변경 실패:", err);
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || "닉네임 변경에 실패했습니다.",
+        severity: "error",
+      });
+    } finally {
+      setIsNicknameUpdating(false);
+    }
+  }, [nickname, fetchUserInfo]);
+
+  // 비밀번호 변경 요청
+  const handleUpdatePassword = useCallback(async () => {
+    // 입력값 검증
+    if (!prevPassword) {
+      setSnackbar({
+        open: true,
+        message: "현재 비밀번호를 입력해주세요.",
+        severity: "error",
+      });
+      return;
+    }
+
+    if (!newPassword) {
+      setSnackbar({
+        open: true,
+        message: "새 비밀번호를 입력해주세요.",
+        severity: "error",
+      });
+      return;
+    }
+
+    if (newPassword !== newPasswordConfirm) {
+      setSnackbar({
+        open: true,
+        message: "새 비밀번호와 확인 비밀번호가 일치하지 않습니다.",
+        severity: "error",
+      });
+      return;
+    }
+
+    // 현재 비밀번호와 새 비밀번호가 동일한지 확인
+    if (prevPassword === newPassword) {
+      setSnackbar({
+        open: true,
+        message: "새 비밀번호는 현재 비밀번호와 달라야 합니다.",
+        severity: "error",
+      });
+      return;
+    }
+
+    try {
+      setIsPasswordUpdating(true);
+
+      // CSRF 토큰 가져오기
+      const csrfToken = await getCsrfToken();
+
+      // 비밀번호 변경 API 호출
+      const response = await axiosInstance.patch(
+        "/auth/me/password",
+        {
+          currentPassword: prevPassword,
+          newPassword,
+          confirmNewPassword: newPasswordConfirm,
+        },
+        { headers: { "X-CSRF-Token": csrfToken } }
+      );
+
+      if (response.data.success) {
+        setSnackbar({
+          open: true,
+          message: "비밀번호가 성공적으로 변경되었습니다.",
+          severity: "success",
+        });
+
+        // 비밀번호 입력 필드 초기화
+        setPrevPassword("");
+        setNewPassword("");
+        setNewPasswordConfirm("");
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.error("비밀번호 변경 실패:", err);
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || "비밀번호 변경에 실패했습니다.",
+        severity: "error",
+      });
+    } finally {
+      setIsPasswordUpdating(false);
+    }
+  }, [prevPassword, newPassword, newPasswordConfirm]);
+
   // 기존 비밀번호 표시/숨김 버튼 클릭
   const handlePrevPasswordVisibilityButtonClick = useCallback(() => {
     setPrevPasswordVisible((prev) => !prev);
@@ -190,6 +407,27 @@ const Profile = () => {
   const handleNewPasswordConfirmVisibilityButtonClick = useCallback(() => {
     setNewPasswordConfirmVisible((prev) => !prev);
   }, []);
+
+  // 스낵바 닫기 핸들러
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  // 로딩 중 표시
+  if (isLoading) {
+    return (
+      <Container maxWidth="sm">
+        <Stack
+          height="calc(100vh - 64px)"
+          justifyContent="center"
+          alignItems="center"
+        >
+          <CircularProgress />
+          <Typography mt={2}>사용자 정보를 불러오는 중입니다...</Typography>
+        </Stack>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="sm">
@@ -289,27 +527,41 @@ const Profile = () => {
 
           <Stack gap={1}>
             {/* 이메일 */}
-            <OutlinedTextField label="이메일" disabled />
+            <OutlinedTextField
+              label="이메일"
+              value={userInfo?.email || ""}
+              disabled
+            />
 
             <Stack direction="row" gap={1}>
               {/* 닉네임 */}
-              <OutlinedTextField label="닉네임" />
+              <OutlinedTextField
+                label="닉네임"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+              />
 
               {/* 수정 버튼 */}
               <Button
                 variant="outlined"
+                onClick={handleUpdateNickname}
+                disabled={isNicknameUpdating}
                 sx={{
                   paddingX: 3,
                   borderRadius: 2,
                 }}
               >
-                <Typography
-                  variant="subtitle1"
-                  whiteSpace="nowrap"
-                  fontWeight="bold"
-                >
-                  수정
-                </Typography>
+                {isNicknameUpdating ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <Typography
+                    variant="subtitle1"
+                    whiteSpace="nowrap"
+                    fontWeight="bold"
+                  >
+                    수정
+                  </Typography>
+                )}
               </Button>
             </Stack>
           </Stack>
@@ -358,6 +610,8 @@ const Profile = () => {
             <OutlinedTextField
               label="기존 비밀번호"
               type={prevPasswordVisible ? "text" : "password"}
+              value={prevPassword}
+              onChange={(e) => setPrevPassword(e.target.value)}
               endAdornment={
                 <InputAdornment position="end">
                   <IconButton onClick={handlePrevPasswordVisibilityButtonClick}>
@@ -375,6 +629,8 @@ const Profile = () => {
             <OutlinedTextField
               label="새 비밀번호"
               type={newPasswordVisible ? "text" : "password"}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
               endAdornment={
                 <InputAdornment position="end">
                   <IconButton onClick={handleNewPasswordVisibilityButtonClick}>
@@ -392,6 +648,8 @@ const Profile = () => {
             <OutlinedTextField
               label="새 비밀번호 확인"
               type={newPasswordConfirmVisible ? "text" : "password"}
+              value={newPasswordConfirm}
+              onChange={(e) => setNewPasswordConfirm(e.target.value)}
               endAdornment={
                 <InputAdornment position="end">
                   <IconButton
@@ -409,19 +667,41 @@ const Profile = () => {
 
             <Button
               variant="outlined"
+              onClick={handleUpdatePassword}
+              disabled={isPasswordUpdating}
               sx={{
                 alignSelf: "flex-end",
                 paddingX: 4,
                 borderRadius: 2,
               }}
             >
-              <Typography variant="subtitle1" fontWeight="bold">
-                비밀번호 변경
-              </Typography>
+              {isPasswordUpdating ? (
+                <CircularProgress size={20} />
+              ) : (
+                <Typography variant="subtitle1" fontWeight="bold">
+                  비밀번호 변경
+                </Typography>
+              )}
             </Button>
           </Stack>
         </Stack>
       </Stack>
+
+      {/* 알림 스낵바 */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

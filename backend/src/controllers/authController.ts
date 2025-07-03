@@ -326,13 +326,13 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
       <div style="font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif; max-width:500px; margin:0 auto;">
         <!-- 헤더 -->
         <div style="background-color:#ff8551; color:white; padding:20px; text-align:left;">
-          <h1 style="margin:0; font-size:24px; font-weight:bold;">Job Talk 인증번호</h1>
+          <h1 style="margin:0; font-size:24px; font-weight:bold;">JobTalk 인증번호</h1>
         </div>
         
         <!-- 본문 -->
         <div style="padding:30px 20px; background-color:white; border:1px solid #e1e1e1; border-top:none;">
           <p style="font-size:16px; color:#404040; margin-bottom:30px;">
-            Job Talk 이메일 인증번호입니다.
+            JobTalk 이메일 인증번호입니다.
           </p>
           
           <!-- 인증번호 박스 -->
@@ -346,7 +346,7 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
             인증번호는 5분간만 유효합니다.
           </p>
           <p style="font-size:13px; color:#787878; margin-top:15px;">
-            Copyright © Job Talk Corp. All rights reserved.
+            Copyright © JobTalk. All rights reserved.
           </p>
         </div>
       </div>

@@ -11,15 +11,26 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useNavigate } from "react-router";
 import WorkRoundedIcon from "@mui/icons-material/WorkRounded";
 import { useAtom } from "jotai";
 import { jobTalkLoginStateAtom } from "../state";
-import axiosInstance, { getCsrfToken } from "../utils/axiosInstance";
+import axiosInstance, {
+  getCsrfToken,
+  SERVER_HOST,
+} from "../utils/axiosInstance";
 import { resetStates } from "../utils";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
+import { grey } from "@mui/material/colors";
 
 type MenuButtonProps = {
   children: ReactNode;
@@ -57,26 +68,132 @@ const Header = () => {
   const menuAnchorElement = useRef<HTMLButtonElement | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // 프로필 이미지와 닉네임 상태
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
+  const [imageVersion, setImageVersion] = useState(0);
+
+  // 사용자 정보 가져오기 함수
+  const fetchUserInfo = useCallback(async () => {
+    if (!loginState.isLoggedIn) return;
+
+    try {
+      // CSRF 토큰 가져오기
+      const csrfToken = await getCsrfToken();
+
+      // 사용자 정보 조회 API 호출
+      const response = await axiosInstance.get("/auth/me", {
+        headers: { "X-CSRF-Token": csrfToken },
+      });
+
+      if (response.data.success) {
+        const userData = response.data.data;
+
+        // 닉네임 설정 (name 필드 사용)
+        if (userData.name) {
+          setUserName(userData.name);
+        }
+
+        // 프로필 이미지 설정
+        if (userData.profileImage) {
+          // 캐시 방지를 위한 타임스탬프 추가
+          const imageUrl = `${SERVER_HOST}${
+            userData.profileImage
+          }?t=${new Date().getTime()}`;
+          setProfileImage(imageUrl);
+          setImageVersion((prev) => prev + 1);
+        } else {
+          setProfileImage(null);
+        }
+      }
+    } catch (err) {
+      console.error("사용자 정보 조회 실패:", err);
+      // 에러 발생 시 기본값으로 설정
+      setProfileImage(null);
+      setUserName(loginState.userName || "");
+    }
+  }, [loginState.isLoggedIn, loginState.userName]);
+
+  // 실시간 프로필 업데이트 이벤트 리스너
+  useEffect(() => {
+    // 프로필 이미지 업데이트 이벤트 리스너
+    const handleProfileImageUpdate = (event: CustomEvent) => {
+      const { profileImage: newImagePath, timestamp } = event.detail;
+
+      // 즉시 이미지 업데이트
+      const newImageUrl = `${SERVER_HOST}${newImagePath}?t=${timestamp}`;
+      setProfileImage(newImageUrl);
+      setImageVersion((prev) => prev + 1);
+    };
+
+    // 닉네임 업데이트 이벤트 리스너
+    const handleNicknameUpdate = (event: CustomEvent) => {
+      const { nickname } = event.detail;
+
+      // 즉시 닉네임 업데이트
+      setUserName(nickname);
+    };
+
+    // 이벤트 리스너 등록
+    window.addEventListener(
+      "profileImageUpdated",
+      handleProfileImageUpdate as EventListener
+    );
+    window.addEventListener(
+      "profileNicknameUpdated",
+      handleNicknameUpdate as EventListener
+    );
+
+    // 컴포넌트 언마운트 시 이벤트 리스너 제거
+    return () => {
+      window.removeEventListener(
+        "profileImageUpdated",
+        handleProfileImageUpdate as EventListener
+      );
+      window.removeEventListener(
+        "profileNicknameUpdated",
+        handleNicknameUpdate as EventListener
+      );
+    };
+  }, []);
+
+  // 로그인 상태가 변경될 때마다 사용자 정보 가져오기
+  useEffect(() => {
+    if (loginState.isLoggedIn) {
+      fetchUserInfo();
+    } else {
+      // 로그아웃 시 상태 초기화
+      setProfileImage(null);
+      setUserName("");
+      setImageVersion(0);
+    }
+  }, [loginState.isLoggedIn, fetchUserInfo]);
+
   // 프로필 이미지 요소
   const profileAvatar = useMemo(() => {
     return (
       <Avatar
+        key={`header-profile-${imageVersion}`} // 캐시 방지
+        src={profileImage || undefined}
         sx={{
           bgcolor: theme.palette.primary.main,
+          width: 40, // 헤더용 크기
+          height: 40,
         }}
       >
-        {loginState.userName ? (
-          loginState.userName.charAt(0)
-        ) : (
-          <PersonRoundedIcon
-            sx={{
-              fontSize: "2rem",
-            }}
-          />
-        )}
+        {!profileImage &&
+          (userName ? (
+            userName.charAt(0).toUpperCase()
+          ) : (
+            <PersonRoundedIcon
+              sx={{
+                fontSize: "1.5rem",
+              }}
+            />
+          ))}
       </Avatar>
     );
-  }, [loginState.userName, theme.palette.primary.main]);
+  }, [profileImage, userName, imageVersion, theme.palette.primary.main]);
 
   // 로고 클릭
   const handleLogoClick = useCallback(() => {
@@ -87,13 +204,17 @@ const Header = () => {
   const handleProfileButtonClick = useCallback(() => {
     // 로그인 상태이면 메뉴 열기
     if (loginState.isLoggedIn) {
-      setIsMenuOpen(true);
+      // 메뉴를 열 때 최신 프로필 이미지 가져오기
+      if (!isMenuOpen) {
+        fetchUserInfo(); // 메뉴가 열릴 때만 프로필 다시 가져오기
+      }
+      setIsMenuOpen((prev) => !prev);
       return;
     }
 
     // 로그인 상태가 아니면 로그인 페이지로 이동
     navigate("/login");
-  }, [loginState.isLoggedIn, navigate]);
+  }, [loginState.isLoggedIn, navigate, isMenuOpen, fetchUserInfo]);
 
   // 메뉴 닫기
   const handleMenuClose = useCallback(() => {
@@ -120,6 +241,11 @@ const Header = () => {
       // 로컬 상태 및 스토리지 초기화
       await resetStates(setLoginState);
 
+      // 헤더 상태도 초기화
+      setProfileImage(null);
+      setUserName("");
+      setImageVersion(0);
+
       // 메뉴 닫기
       handleMenuClose();
 
@@ -129,6 +255,9 @@ const Header = () => {
       console.error("로그아웃 중 오류 발생:", error);
       // 에러가 발생해도 일단 로그아웃 처리
       await resetStates(setLoginState);
+      setProfileImage(null);
+      setUserName("");
+      setImageVersion(0);
       navigate("/login");
     }
   }, [handleMenuClose, navigate, setLoginState]);
@@ -198,10 +327,32 @@ const Header = () => {
           {/* 헤더 */}
           <Stack direction="row" alignItems="center" gap={1}>
             {/* 프로필 이미지 */}
-            {profileAvatar}
+            <Avatar
+              key={`menu-profile-${imageVersion}`} // 캐시 방지
+              src={profileImage || undefined}
+              sx={{
+                bgcolor: theme.palette.primary.main,
+                width: 40,
+                height: 40,
+              }}
+            >
+              {!profileImage &&
+                (userName ? (
+                  userName.charAt(0).toUpperCase()
+                ) : (
+                  <PersonRoundedIcon
+                    sx={{
+                      fontSize: "1.5rem",
+                      color: grey[100],
+                    }}
+                  />
+                ))}
+            </Avatar>
 
             {/* 닉네임 */}
-            <Typography variant="h6">{loginState.userName}</Typography>
+            <Typography variant="h6">
+              {userName || loginState.userName || "사용자"}
+            </Typography>
 
             {/* 닫기 버튼 */}
             <Box marginLeft="auto">
@@ -221,10 +372,12 @@ const Header = () => {
           {/* 버튼 컨테이너 */}
           <Stack>
             {/* 내 정보 */}
-            <MenuButton onClick={() => {
-              handleMenuClose();
-              navigate("/profile");
-            }}>
+            <MenuButton
+              onClick={() => {
+                handleMenuClose();
+                navigate("/profile");
+              }}
+            >
               <Typography variant="subtitle1">내 정보</Typography>
             </MenuButton>
 

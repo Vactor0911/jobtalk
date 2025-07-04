@@ -37,6 +37,8 @@ import axios from "axios";
 import { useNavigate } from "react-router";
 import { jobTalkLoginStateAtom } from "../state";
 import { useAtomValue } from "jotai";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import StyledAutocomplete from "../components/StyledAutocomplete";
 
 // 이용약관 데이터
 interface TermsOfService {
@@ -90,6 +92,9 @@ const Register = () => {
   const [isTermExpanded, setIsTermExpanded] = useState(
     Array.from({ length: termsOfServices.length }, () => false)
   ); // 이용약관 펼치기 여부
+
+  const [isCertificatesLoading, setIsCertificatesLoading] = useState(false); // 자격증 목록 로딩 상태
+  const [isInterestsLoading, setIsInterestsLoading] = useState(false); // 관심 분야 목록 로딩 상태
 
   // 성공 Dialog 상태 추가
   const [successDialog, setSuccessDialog] = useState({
@@ -714,20 +719,81 @@ const Register = () => {
             <SectionHeader title="추가 정보 (선택사항)" />
 
             {/* 자격증 입력란 */}
-            <OutlinedTextField
-              label="보유 자격증"
-              value={certificates}
-              onChange={handleCertificatesChange}
-              multiline
-            />
+            {/* 보유 증격증 */}
+            <Stack direction="column" gap={1} alignItems="flex-start">
+              <Stack
+                direction="row"
+                width="150px"
+                paddingY={2}
+                alignItems="center"
+                gap={1}
+              >
+                {/* 컬럼명 */}
+                <Typography>보유 자격증</Typography>
 
-            {/* 관심분야 입력란 */}
-            <OutlinedTextField
-              label="관심 분야"
-              value={interests}
-              onChange={handleInterestsChange}
-              multiline
-            />
+                {/* 툴팁 */}
+                <Tooltip title="보유한 자격증을 입력해주세요.">
+                  <HelpOutlineRoundedIcon />
+                </Tooltip>
+              </Stack>
+
+              {/* 자격증 입력란 */}
+              <Box width="100%" flex={1}>
+                <StyledAutocomplete
+                  id="certificates-autocomplete"
+                  options={[
+                    "정보처리기사",
+                    "SQLD",
+                    "ADsP",
+                    "컴퓨터활용능력",
+                    "기타",
+                  ]}
+                  isLoading={isCertificatesLoading}
+                  loadingText="자격증 목록을 불러오는중..."
+                  placeholder="자격증을 입력하세요."
+                />
+              </Box>
+            </Stack>
+
+            {/* 관심 분야 */}
+            <Stack
+              direction="column"
+              gap={1}
+              alignItems="flex-start"
+            >
+              <Stack
+                direction="row"
+                width="150px"
+                paddingY={2}
+                alignItems="center"
+                gap={1}
+              >
+                {/* 컬럼명 */}
+                <Typography>관심 분야</Typography>
+
+                {/* 툴팁 */}
+                <Tooltip title="관심 있는 분야를 입력해주세요.">
+                  <HelpOutlineRoundedIcon />
+                </Tooltip>
+              </Stack>
+
+              {/* 관심 분야 입력란 */}
+              <Box width="100%" flex={1}>
+                <StyledAutocomplete
+                  id="interests-autocomplete"
+                  options={[
+                    "정보처리기사",
+                    "SQLD",
+                    "ADsP",
+                    "컴퓨터활용능력",
+                    "기타",
+                  ]}
+                  isLoading={isInterestsLoading}
+                  loadingText="관심 분야 목록을 불러오는중..."
+                  placeholder="관심 분야를 입력하세요."
+                />
+              </Box>
+            </Stack>
           </Stack>
 
           {/* 이용약관 컨테이너 */}

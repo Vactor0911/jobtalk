@@ -998,6 +998,7 @@ export const uploadProfileImage = async (req: Request, res: Response) => {
   });
 };
 
+// 자격증 정보 업데이트
 export const updateUserCertificates = async (req: Request, res: Response) => {
   try {
     const { certificates } = req.body;

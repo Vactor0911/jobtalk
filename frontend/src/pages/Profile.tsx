@@ -1,5 +1,6 @@
 import {
   Alert,
+  Autocomplete,
   Avatar,
   Box,
   Button,
@@ -10,6 +11,7 @@ import {
   InputAdornment,
   Snackbar,
   Stack,
+  TextField,
   Tooltip,
   Typography,
   useTheme,
@@ -19,7 +21,7 @@ import OutlinedTextField from "../components/OutlinedTextField";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import CreateIcon from "@mui/icons-material/Create";
 import FaceRoundedIcon from "@mui/icons-material/FaceRounded";
 import { grey } from "@mui/material/colors";
@@ -72,6 +74,8 @@ const Profile = () => {
   // 작업 상태
   const [isNicknameUpdating, setIsNicknameUpdating] = useState(false);
   const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
+  const [isCertificatesLoading, setIsCertificatesLoading] = useState(false);
+  const [isInterestsLoading, setIsInterestsLoading] = useState(false);
 
   // 알림 상태
   const [snackbar, setSnackbar] = useState<SnackbarState>({
@@ -576,30 +580,166 @@ const Profile = () => {
           <SectionHeader title="경력" variant="h6" />
 
           {/* 보유 증격증 */}
-          <Stack direction="row" gap={1}>
-            <Stack direction="row" alignItems="center" gap={1} flex={1}>
+          <Stack
+            direction={{
+              xs: "column",
+              md: "row",
+            }}
+            gap={1}
+            alignItems="flex-start"
+          >
+            <Stack
+              direction="row"
+              width="150px"
+              paddingY={2}
+              alignItems="center"
+              gap={1}
+            >
               {/* 컬럼명 */}
               <Typography>보유 자격증</Typography>
 
+              {/* 툴팁 */}
               <Tooltip title="보유한 자격증을 입력해주세요.">
                 <HelpOutlineRoundedIcon />
               </Tooltip>
             </Stack>
+
+            {/* 자격증 입력란 */}
+            <Box width="100%" flex={1}>
+              <Autocomplete
+                id="certificates-autocomplete"
+                multiple
+                options={[
+                  "정보처리기사",
+                  "SQLD",
+                  "ADsP",
+                  "컴퓨터활용능력",
+                  "기타",
+                ]}
+                getOptionLabel={(option) => option}
+                filterSelectedOptions
+                filterOptions={(options, state) => {
+                  const filtered = options.filter((option) =>
+                    option
+                      .toLowerCase()
+                      .includes(state.inputValue.toLowerCase())
+                  );
+                  return filtered.length === 0 ? [state.inputValue] : filtered;
+                }}
+                freeSolo
+                loading={isCertificatesLoading}
+                loadingText="자격증 목록을 불러오는중..."
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="자격증을 입력하세요."
+                    slotProps={{
+                      input: {
+                        ...params.InputProps,
+                        endAdornment: (
+                          <React.Fragment>
+                            {isCertificatesLoading ? (
+                              <CircularProgress size={20} />
+                            ) : null}
+                            {params.InputProps.endAdornment}
+                          </React.Fragment>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+                sx={{
+                  "& input": {
+                    flexBasis: isCertificatesLoading
+                      ? "calc(100% - 30px)"
+                      : "100%",
+                  },
+                }}
+              />
+            </Box>
           </Stack>
 
           {/* 구분선 */}
           <Divider />
 
           {/* 관심 분야 */}
-          <Stack direction="row" gap={1}>
-            <Stack direction="row" alignItems="center" gap={1} flex={1}>
+          <Stack
+            direction={{
+              xs: "column",
+              md: "row",
+            }}
+            gap={1}
+            alignItems="flex-start"
+          >
+            <Stack
+              direction="row"
+              width="150px"
+              paddingY={2}
+              alignItems="center"
+              gap={1}
+            >
               {/* 컬럼명 */}
               <Typography>관심 분야</Typography>
 
+              {/* 툴팁 */}
               <Tooltip title="관심 있는 분야를 입력해주세요.">
                 <HelpOutlineRoundedIcon />
               </Tooltip>
             </Stack>
+
+            {/* 관심 분야 입력란 */}
+            <Box width="100%" flex={1}>
+              <Autocomplete
+                id="interests-autocomplete"
+                multiple
+                options={[
+                  "정보처리기사",
+                  "SQLD",
+                  "ADsP",
+                  "컴퓨터활용능력",
+                  "기타",
+                ]}
+                getOptionLabel={(option) => option}
+                filterSelectedOptions
+                filterOptions={(options, state) => {
+                  const filtered = options.filter((option) =>
+                    option
+                      .toLowerCase()
+                      .includes(state.inputValue.toLowerCase())
+                  );
+                  return filtered.length === 0 ? [state.inputValue] : filtered;
+                }}
+                freeSolo
+                loading={isInterestsLoading}
+                loadingText="관심 분야 목록을 불러오는중..."
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="관심 분야를 입력하세요."
+                    slotProps={{
+                      input: {
+                        ...params.InputProps,
+                        endAdornment: (
+                          <React.Fragment>
+                            {isInterestsLoading ? (
+                              <CircularProgress size={20} />
+                            ) : null}
+                            {params.InputProps.endAdornment}
+                          </React.Fragment>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+                sx={{
+                  "& input": {
+                    flexBasis: isInterestsLoading
+                      ? "calc(100% - 30px)"
+                      : "100%",
+                  },
+                }}
+              />
+            </Box>
           </Stack>
         </Stack>
 

@@ -344,22 +344,6 @@ const Register = () => {
     []
   );
 
-  // 자격증 입력
-  const handleCertificatesChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setCertificates(e.target.value);
-    },
-    []
-  );
-
-  // 관심사 입력
-  const handleInterestsChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setInterests(e.target.value);
-    },
-    []
-  );
-
   // 이용약관 전체 동의 버튼 클릭
   const handleTermAgreeAllButtonClick = useCallback(() => {
     const newCondition = isTermAgreed.some((agreed) => agreed) ? false : true;

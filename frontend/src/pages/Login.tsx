@@ -230,9 +230,11 @@ const Login = () => {
   return (
     <Container maxWidth="xs">
       <Stack
+        component="form"
         minHeight="calc(100vh - 64px)"
         justifyContent="center"
         paddingY={4}
+        paddingBottom={10}
       >
         <Stack gap={6}>
           {/* 로고 링크 버튼 */}
@@ -247,7 +249,7 @@ const Login = () => {
             <SectionHeader title="로그인" />
 
             {/* 로그인 폼 */}
-            <Stack component="form" mt={1} gap={1}>
+            <Stack mt={1} gap={1}>
               {/* 이메일 입력란 */}
               <OutlinedTextField
                 label="이메일"

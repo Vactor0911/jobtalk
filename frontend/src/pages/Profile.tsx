@@ -1,6 +1,5 @@
 import {
   Alert,
-  Autocomplete,
   Avatar,
   Box,
   Button,
@@ -11,7 +10,6 @@ import {
   InputAdornment,
   Snackbar,
   Stack,
-  TextField,
   Tooltip,
   Typography,
   useTheme,
@@ -30,6 +28,7 @@ import axiosInstance, {
   SERVER_HOST,
 } from "../utils/axiosInstance";
 import imageCompression from "browser-image-compression";
+import StyledAutocomplete from "../components/StyledAutocomplete";
 
 // 사용자 정보 인터페이스
 interface UserInfo {
@@ -606,9 +605,8 @@ const Profile = () => {
 
             {/* 자격증 입력란 */}
             <Box width="100%" flex={1}>
-              <Autocomplete
+              <StyledAutocomplete
                 id="certificates-autocomplete"
-                multiple
                 options={[
                   "정보처리기사",
                   "SQLD",
@@ -616,45 +614,9 @@ const Profile = () => {
                   "컴퓨터활용능력",
                   "기타",
                 ]}
-                getOptionLabel={(option) => option}
-                filterSelectedOptions
-                filterOptions={(options, state) => {
-                  const filtered = options.filter((option) =>
-                    option
-                      .toLowerCase()
-                      .includes(state.inputValue.toLowerCase())
-                  );
-                  return filtered.length === 0 ? [state.inputValue] : filtered;
-                }}
-                freeSolo
-                loading={isCertificatesLoading}
+                isLoading={isCertificatesLoading}
                 loadingText="자격증 목록을 불러오는중..."
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder="자격증을 입력하세요."
-                    slotProps={{
-                      input: {
-                        ...params.InputProps,
-                        endAdornment: (
-                          <React.Fragment>
-                            {isCertificatesLoading ? (
-                              <CircularProgress size={20} />
-                            ) : null}
-                            {params.InputProps.endAdornment}
-                          </React.Fragment>
-                        ),
-                      },
-                    }}
-                  />
-                )}
-                sx={{
-                  "& input": {
-                    flexBasis: isCertificatesLoading
-                      ? "calc(100% - 30px)"
-                      : "100%",
-                  },
-                }}
+                placeholder="자격증을 입력하세요."
               />
             </Box>
           </Stack>
@@ -689,9 +651,8 @@ const Profile = () => {
 
             {/* 관심 분야 입력란 */}
             <Box width="100%" flex={1}>
-              <Autocomplete
+              <StyledAutocomplete
                 id="interests-autocomplete"
-                multiple
                 options={[
                   "정보처리기사",
                   "SQLD",
@@ -699,45 +660,9 @@ const Profile = () => {
                   "컴퓨터활용능력",
                   "기타",
                 ]}
-                getOptionLabel={(option) => option}
-                filterSelectedOptions
-                filterOptions={(options, state) => {
-                  const filtered = options.filter((option) =>
-                    option
-                      .toLowerCase()
-                      .includes(state.inputValue.toLowerCase())
-                  );
-                  return filtered.length === 0 ? [state.inputValue] : filtered;
-                }}
-                freeSolo
-                loading={isInterestsLoading}
+                isLoading={isInterestsLoading}
                 loadingText="관심 분야 목록을 불러오는중..."
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder="관심 분야를 입력하세요."
-                    slotProps={{
-                      input: {
-                        ...params.InputProps,
-                        endAdornment: (
-                          <React.Fragment>
-                            {isInterestsLoading ? (
-                              <CircularProgress size={20} />
-                            ) : null}
-                            {params.InputProps.endAdornment}
-                          </React.Fragment>
-                        ),
-                      },
-                    }}
-                  />
-                )}
-                sx={{
-                  "& input": {
-                    flexBasis: isInterestsLoading
-                      ? "calc(100% - 30px)"
-                      : "100%",
-                  },
-                }}
+                placeholder="관심 분야를 입력하세요."
               />
             </Box>
           </Stack>

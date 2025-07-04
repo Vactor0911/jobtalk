@@ -246,75 +246,84 @@ const Login = () => {
             {/* 로그인 헤더 */}
             <SectionHeader title="로그인" />
 
-            {/* 이메일 입력란 */}
-            <Box mt={1}>
+            {/* 로그인 폼 */}
+            <Stack component="form" mt={1} gap={1}>
+              {/* 이메일 입력란 */}
               <OutlinedTextField
                 label="이메일"
                 value={email}
                 onChange={handleEmailChange}
                 onKeyDown={handleKeyEnterDown}
               />
-            </Box>
 
-            {/* 비밀번호 입력란 */}
-            <OutlinedTextField
-              label="비밀번호"
-              value={password}
-              onChange={handlePasswordChange}
-              onKeyDown={handleKeyEnterDown}
-              type={isPasswordVisible ? "text" : "password"}
-              endAdornment={
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={handlePasswordVisibilityChange}
-                    edge="end"
-                  >
-                    {isPasswordVisible ? (
-                      <VisibilityIcon />
-                    ) : (
-                      <VisibilityOffIcon />
-                    )}
-                  </IconButton>
-                </InputAdornment>
-              }
-            />
-
-            {/* 로그인 상태 유지 체크박스 */}
-            <Box>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    name="로그인 상태 유지"
-                    checked={isLoginStateSave}
-                    onChange={handleLoginStateSaveChange}
-                  />
+              {/* 비밀번호 입력란 */}
+              <OutlinedTextField
+                label="비밀번호"
+                value={password}
+                onChange={handlePasswordChange}
+                onKeyDown={handleKeyEnterDown}
+                type={isPasswordVisible ? "text" : "password"}
+                endAdornment={
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={handlePasswordVisibilityChange}
+                      edge="end"
+                    >
+                      {isPasswordVisible ? (
+                        <VisibilityIcon />
+                      ) : (
+                        <VisibilityOffIcon />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
                 }
-                label="로그인 상태 유지"
               />
-            </Box>
 
-            {/* 로그인 버튼 */}
-            <Button
-              variant="contained"
-              onClick={handleLoginButtonClick}
-              loading={isLoginLoading}
-            >
-              <Typography variant="h5" color="white">
-                로그인
-              </Typography>
-            </Button>
+              {/* 로그인 상태 유지 체크박스 */}
+              <Box>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      name="로그인 상태 유지"
+                      checked={isLoginStateSave}
+                      onChange={handleLoginStateSaveChange}
+                    />
+                  }
+                  label="로그인 상태 유지"
+                />
+              </Box>
+
+              {/* 로그인 버튼 */}
+              <Button
+                variant="contained"
+                onClick={handleLoginButtonClick}
+                loading={isLoginLoading}
+              >
+                <Typography variant="h5" color="white">
+                  로그인
+                </Typography>
+              </Button>
+            </Stack>
+
+            {/* 리다이렉트 링크 */}
             <Stack direction="row">
-              <Stack direction="row" gap={1} alignItems="center">
+              <Stack
+                width="100%"
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                gap={1}
+              >
+                {/* 비밀번호 찾기 */}
                 <PlainLink to="/find-password">
                   <Typography color="text.secondary">비밀번호 찾기</Typography>
                 </PlainLink>
-              </Stack>
 
-              <Box flex={1} display="flex" justifyContent="flex-end">
+                {/* 회원가입 */}
                 <PlainLink to="/register">
                   <Typography color="text.secondary">회원가입</Typography>
                 </PlainLink>
-              </Box>
+              </Stack>
             </Stack>
           </Stack>
         </Stack>

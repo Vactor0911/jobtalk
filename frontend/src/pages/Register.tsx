@@ -25,10 +25,20 @@ import OutlinedTextField from "../components/OutlinedTextField";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import axiosInstance, { getCsrfToken } from "../utils/axiosInstance";
 import axios from "axios";
 import { useNavigate } from "react-router";
+import { jobTalkLoginStateAtom } from "../state";
+import { useAtomValue } from "jotai";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import StyledAutocomplete from "../components/StyledAutocomplete";
 
 // 이용약관 데이터
 interface TermsOfService {
@@ -62,6 +72,7 @@ const Register = () => {
     severity: "info" as "success" | "error" | "warning" | "info",
   });
 
+  const loginState = useAtomValue(jobTalkLoginStateAtom);
   const [email, setEmail] = useState("");
   const [isConfirmCodeSending, setIsConfirmCodeSending] = useState(false); // 인증번호 전송 중 여부
   const [isConfirmCodeSent, setIsConfirmCodeSent] = useState(false); // 인증번호 전송 여부
@@ -72,7 +83,7 @@ const Register = () => {
   const [passwordConfirm, setPasswordConfirm] = useState(""); // 사용자 비밀번호 재확인
   const [isPasswordVisible, setIsPasswordVisible] = useState(false); // 비밀번호 보임/숨김
   const [isPasswordConfirmVisible, setIsPasswordCheckVisible] = useState(false); // 비밀번호 확인 보임/숨김
-  const [name, setName] = useState(""); // 사용자 이름(닉네임)
+  const [name, setName] = useState(""); // 사용자 별명
   const [certificates, setCertificates] = useState(""); // 자격증 정보 추가
   const [interests, setInterests] = useState(""); // 관심사 정보 추가
   const [isTermAgreed, setIsTermAgreed] = useState(
@@ -81,6 +92,9 @@ const Register = () => {
   const [isTermExpanded, setIsTermExpanded] = useState(
     Array.from({ length: termsOfServices.length }, () => false)
   ); // 이용약관 펼치기 여부
+
+  const [isCertificatesLoading, setIsCertificatesLoading] = useState(false); // 자격증 목록 로딩 상태
+  const [isInterestsLoading, setIsInterestsLoading] = useState(false); // 관심 분야 목록 로딩 상태
 
   // 성공 Dialog 상태 추가
   const [successDialog, setSuccessDialog] = useState({
@@ -322,26 +336,10 @@ const Register = () => {
     setIsPasswordCheckVisible(!isPasswordConfirmVisible);
   }, [isPasswordConfirmVisible]);
 
-  // 이름(닉네임) 입력
+  // 별명 입력
   const handleNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setName(e.target.value);
-    },
-    []
-  );
-
-  // 자격증 입력
-  const handleCertificatesChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setCertificates(e.target.value);
-    },
-    []
-  );
-
-  // 관심사 입력
-  const handleInterestsChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setInterests(e.target.value);
     },
     []
   );
@@ -417,10 +415,10 @@ const Register = () => {
       }
 
       if (!name) {
-        console.error("이름을 입력해주세요.");
+        console.error("별명을 입력해주세요.");
         setSnackbar({
           open: true,
-          message: "이름을 입력해주세요.",
+          message: "별명을 입력해주세요.",
           severity: "warning",
         });
         return;
@@ -525,15 +523,29 @@ const Register = () => {
     []
   );
 
+  // 로그인된 상태라면 이전 페이지로 이동
+  useLayoutEffect(() => {
+    if (loginState.isLoggedIn) {
+      if (window.history.length > 1) {
+        navigate(-1); // 이전 페이지로 이동
+      } else {
+        navigate("/", { replace: true }); // 이전 페이지가 없으면 홈으로 이동
+      }
+    }
+  }, [loginState.isLoggedIn, navigate]);
+
+  if (loginState.isLoggedIn) {
+    return null; // 컴포넌트 렌더링 중지
+  }
+
   return (
     <Container maxWidth="xs">
       <Stack
-        minHeight="100vh"
+        component="form"
+        minHeight="calc(100vh - 64px)"
         justifyContent="center"
-        sx={{
-          paddingY: 4,
-          paddingBottom: 10,
-        }}
+        paddingY={4}
+        paddingBottom={10}
       >
         <Stack gap={4}>
           {/* 로고 링크 버튼 */}
@@ -548,13 +560,13 @@ const Register = () => {
             {/* 헤더 */}
             <SectionHeader title="계정 정보" />
 
-            {/* 아이디(이메일) */}
+            {/* 이메일 */}
             <Stack gap={1}>
-              {/* 아이디(이메일) 입력란 */}
+              {/* 이메일 입력란 */}
               <Stack direction="row" gap={1} mt={1}>
                 <Box flex={1}>
                   <OutlinedTextField
-                    label="아이디(이메일)"
+                    label="이메일"
                     value={email}
                     onChange={handleEmailChange}
                   />
@@ -677,9 +689,9 @@ const Register = () => {
               }
             />
 
-            {/* 이름(닉네임) 입력란 */}
+            {/* 별명 입력란 */}
             <OutlinedTextField
-              label="이름(닉네임)"
+              label="별명"
               value={name}
               onChange={handleNameChange}
             />
@@ -690,20 +702,77 @@ const Register = () => {
             <SectionHeader title="추가 정보 (선택사항)" />
 
             {/* 자격증 입력란 */}
-            <OutlinedTextField
-              label="보유 자격증"
-              value={certificates}
-              onChange={handleCertificatesChange}
-              multiline
-            />
+            {/* 보유 증격증 */}
+            <Stack direction="column" gap={1} alignItems="flex-start">
+              <Stack
+                direction="row"
+                width="150px"
+                paddingY={2}
+                alignItems="center"
+                gap={1}
+              >
+                {/* 컬럼명 */}
+                <Typography>보유 자격증</Typography>
 
-            {/* 관심분야 입력란 */}
-            <OutlinedTextField
-              label="관심 분야"
-              value={interests}
-              onChange={handleInterestsChange}
-              multiline
-            />
+                {/* 툴팁 */}
+                <Tooltip title="보유한 자격증을 입력해주세요.">
+                  <HelpOutlineRoundedIcon />
+                </Tooltip>
+              </Stack>
+
+              {/* 자격증 입력란 */}
+              <Box width="100%" flex={1}>
+                <StyledAutocomplete
+                  id="certificates-autocomplete"
+                  options={[
+                    "정보처리기사",
+                    "SQLD",
+                    "ADsP",
+                    "컴퓨터활용능력",
+                    "기타",
+                  ]}
+                  isLoading={isCertificatesLoading}
+                  loadingText="자격증 목록을 불러오는중..."
+                  placeholder="자격증을 입력하세요."
+                />
+              </Box>
+            </Stack>
+
+            {/* 관심 분야 */}
+            <Stack direction="column" gap={1} alignItems="flex-start">
+              <Stack
+                direction="row"
+                width="150px"
+                paddingY={2}
+                alignItems="center"
+                gap={1}
+              >
+                {/* 컬럼명 */}
+                <Typography>관심 분야</Typography>
+
+                {/* 툴팁 */}
+                <Tooltip title="관심 있는 분야를 입력해주세요.">
+                  <HelpOutlineRoundedIcon />
+                </Tooltip>
+              </Stack>
+
+              {/* 관심 분야 입력란 */}
+              <Box width="100%" flex={1}>
+                <StyledAutocomplete
+                  id="interests-autocomplete"
+                  options={[
+                    "정보처리기사",
+                    "SQLD",
+                    "ADsP",
+                    "컴퓨터활용능력",
+                    "기타",
+                  ]}
+                  isLoading={isInterestsLoading}
+                  loadingText="관심 분야 목록을 불러오는중..."
+                  placeholder="관심 분야를 입력하세요."
+                />
+              </Box>
+            </Stack>
           </Stack>
 
           {/* 이용약관 컨테이너 */}

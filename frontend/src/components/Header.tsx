@@ -29,8 +29,7 @@ import axiosInstance, {
 } from "../utils/axiosInstance";
 import { resetStates } from "../utils";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
-import { grey } from "@mui/material/colors";
+import FaceRoundedIcon from "@mui/icons-material/FaceRounded";
 
 type MenuButtonProps = {
   children: ReactNode;
@@ -185,9 +184,9 @@ const Header = () => {
           (userName ? (
             userName.charAt(0).toUpperCase()
           ) : (
-            <PersonRoundedIcon
+            <FaceRoundedIcon
               sx={{
-                fontSize: "1.5rem",
+                fontSize: "2rem",
               }}
             />
           ))}
@@ -327,27 +326,7 @@ const Header = () => {
           {/* 헤더 */}
           <Stack direction="row" alignItems="center" gap={1}>
             {/* 프로필 이미지 */}
-            <Avatar
-              key={`menu-profile-${imageVersion}`} // 캐시 방지
-              src={profileImage || undefined}
-              sx={{
-                bgcolor: theme.palette.primary.main,
-                width: 40,
-                height: 40,
-              }}
-            >
-              {!profileImage &&
-                (userName ? (
-                  userName.charAt(0).toUpperCase()
-                ) : (
-                  <PersonRoundedIcon
-                    sx={{
-                      fontSize: "1.5rem",
-                      color: grey[100],
-                    }}
-                  />
-                ))}
-            </Avatar>
+            {profileAvatar}
 
             {/* 닉네임 */}
             <Typography variant="h6">
@@ -382,7 +361,12 @@ const Header = () => {
             </MenuButton>
 
             {/* 내 워크스페이스 */}
-            <MenuButton onClick={handleMenuClose}>
+            <MenuButton
+              onClick={() => {
+                handleMenuClose();
+                navigate("/workspace");
+              }}
+            >
               <Typography variant="subtitle1">워크스페이스</Typography>
             </MenuButton>
 

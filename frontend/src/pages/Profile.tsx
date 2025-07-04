@@ -19,7 +19,7 @@ import OutlinedTextField from "../components/OutlinedTextField";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import CreateIcon from "@mui/icons-material/Create";
 import FaceRoundedIcon from "@mui/icons-material/FaceRounded";
 import { grey } from "@mui/material/colors";
@@ -28,6 +28,7 @@ import axiosInstance, {
   SERVER_HOST,
 } from "../utils/axiosInstance";
 import imageCompression from "browser-image-compression";
+import StyledAutocomplete from "../components/StyledAutocomplete";
 
 // 사용자 정보 인터페이스
 interface UserInfo {
@@ -72,6 +73,8 @@ const Profile = () => {
   // 작업 상태
   const [isNicknameUpdating, setIsNicknameUpdating] = useState(false);
   const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
+  const [isCertificatesLoading, setIsCertificatesLoading] = useState(false);
+  const [isInterestsLoading, setIsInterestsLoading] = useState(false);
 
   // 알림 상태
   const [snackbar, setSnackbar] = useState<SnackbarState>({
@@ -154,15 +157,13 @@ const Profile = () => {
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
+
+      // 파일이 선택되지 않은 경우 종료
       if (!file) return;
 
       // 파일 타입 검증
-      const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-      ];
+      const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+
       if (!allowedTypes.includes(file.type)) {
         setSnackbar({
           open: true,
@@ -431,7 +432,12 @@ const Profile = () => {
 
   return (
     <Container maxWidth="sm">
-      <Stack minHeight="calc(100vh - 64px)" paddingY={4} gap={5}>
+      <Stack
+        minHeight="calc(100vh - 64px)"
+        paddingY={4}
+        paddingBottom={10}
+        gap={5}
+      >
         {/* 내 정보 */}
         <Stack gap={3}>
           <SectionHeader title="내정보" />
@@ -499,7 +505,7 @@ const Profile = () => {
               type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
-              accept="image/jpeg,image/png,image/gif,image/webp"
+              accept=".png, .jpg, .jpeg"
               style={{ display: "none" }}
             />
 
@@ -573,30 +579,92 @@ const Profile = () => {
           <SectionHeader title="경력" variant="h6" />
 
           {/* 보유 증격증 */}
-          <Stack direction="row" gap={1}>
-            <Stack direction="row" alignItems="center" gap={1} flex={1}>
+          <Stack
+            direction={{
+              xs: "column",
+              md: "row",
+            }}
+            gap={1}
+            alignItems="flex-start"
+          >
+            <Stack
+              direction="row"
+              width="150px"
+              paddingY={2}
+              alignItems="center"
+              gap={1}
+            >
               {/* 컬럼명 */}
               <Typography>보유 자격증</Typography>
 
+              {/* 툴팁 */}
               <Tooltip title="보유한 자격증을 입력해주세요.">
                 <HelpOutlineRoundedIcon />
               </Tooltip>
             </Stack>
+
+            {/* 자격증 입력란 */}
+            <Box width="100%" flex={1}>
+              <StyledAutocomplete
+                id="certificates-autocomplete"
+                options={[
+                  "정보처리기사",
+                  "SQLD",
+                  "ADsP",
+                  "컴퓨터활용능력",
+                  "기타",
+                ]}
+                isLoading={isCertificatesLoading}
+                loadingText="자격증 목록을 불러오는중..."
+                placeholder="자격증을 입력하세요."
+              />
+            </Box>
           </Stack>
 
           {/* 구분선 */}
           <Divider />
 
           {/* 관심 분야 */}
-          <Stack direction="row" gap={1}>
-            <Stack direction="row" alignItems="center" gap={1} flex={1}>
+          <Stack
+            direction={{
+              xs: "column",
+              md: "row",
+            }}
+            gap={1}
+            alignItems="flex-start"
+          >
+            <Stack
+              direction="row"
+              width="150px"
+              paddingY={2}
+              alignItems="center"
+              gap={1}
+            >
               {/* 컬럼명 */}
               <Typography>관심 분야</Typography>
 
+              {/* 툴팁 */}
               <Tooltip title="관심 있는 분야를 입력해주세요.">
                 <HelpOutlineRoundedIcon />
               </Tooltip>
             </Stack>
+
+            {/* 관심 분야 입력란 */}
+            <Box width="100%" flex={1}>
+              <StyledAutocomplete
+                id="interests-autocomplete"
+                options={[
+                  "정보처리기사",
+                  "SQLD",
+                  "ADsP",
+                  "컴퓨터활용능력",
+                  "기타",
+                ]}
+                isLoading={isInterestsLoading}
+                loadingText="관심 분야 목록을 불러오는중..."
+                placeholder="관심 분야를 입력하세요."
+              />
+            </Box>
           </Stack>
         </Stack>
 

@@ -16,7 +16,7 @@ const savedLoginState = JSON.parse(
 export const jobTalkLoginStateAtom = atom({
   isLoggedIn: savedLoginState.isLoggedIn || false, // 로그인 상태
   userUuid: savedLoginState.userUuid || "", // 로그인된 사용자의 UUID
-  userName: savedLoginState.userName || "", // 로그인된 사용자의 이름
+  userName: savedLoginState.userName || "", // 로그인된 사용자의 별명
 } as LoginState);
 
 // 인증 초기화 완료 상태를 추적하는 atom

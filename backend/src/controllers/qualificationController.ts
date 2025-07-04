@@ -328,3 +328,28 @@ export const searchQualificationsFromDB = async (
     });
   }
 };
+
+// 모든 자격증 종목 조회 API
+export const getAllQualifications = async (req: Request, res: Response) => {
+  try {
+    const qualifications = await dbPool.query(
+      "SELECT jmfldnm FROM qualifications ORDER BY jmfldnm"
+    );
+
+    res.status(200).json({
+      success: true,
+      totalCount: qualifications.length,
+      data: {
+        qualifications: qualifications.map((q: any) => q.jmfldnm),
+      },
+      message: "모든 자격증 종목 조회를 완료했습니다.",
+    });
+  } catch (error: any) {
+    console.error("자격증 조회 오류:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "자격증 조회에 실패했습니다.",
+      error: error.message,
+    });
+  }
+};

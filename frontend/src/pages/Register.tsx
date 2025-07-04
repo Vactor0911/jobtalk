@@ -557,12 +557,11 @@ const Register = () => {
   return (
     <Container maxWidth="xs">
       <Stack
-        minHeight="100vh"
+        component="form"
+        minHeight="calc(100vh - 64px)"
         justifyContent="center"
-        sx={{
-          paddingY: 4,
-          paddingBottom: 10,
-        }}
+        paddingY={4}
+        paddingBottom={10}
       >
         <Stack gap={4}>
           {/* 로고 링크 버튼 */}
@@ -756,11 +755,7 @@ const Register = () => {
             </Stack>
 
             {/* 관심 분야 */}
-            <Stack
-              direction="column"
-              gap={1}
-              alignItems="flex-start"
-            >
+            <Stack direction="column" gap={1} alignItems="flex-start">
               <Stack
                 direction="row"
                 width="150px"

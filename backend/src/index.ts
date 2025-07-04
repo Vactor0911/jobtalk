@@ -11,6 +11,9 @@ import csrfRoute from "./routes/csrfRoute"; // CSRF 토큰 관련 라우트
 import careerRoute from "./routes/careerRoute"; // 커리어넷 관련 API 라우트
 import { csrfTokenMiddleware } from "./utils";
 import chatRoute from "./routes/chatRoute";
+import qualificationRoute from "./routes/qualificationRoute";
+import { dbPool } from "./config/db";
+import { syncQualificationsToDatabase } from "./controllers/qualificationController";
 
 // .env 파일 로드
 dotenv.config();
@@ -74,6 +77,25 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // CSRF 토큰 미들웨어 추가
 app.use(csrfTokenMiddleware);
 
+// 서버 시작 후 자격증 데이터 확인 및 동기화
+const initializeQualifications = async () => {
+  try {
+    // DB에 자격증 데이터가 있는지 확인
+    const result = await dbPool.query("SELECT COUNT(*) as count FROM qualifications");
+    const count = result[0]?.count || 0;
+
+    if (count === 0) {
+      console.log("자격증 데이터가 없습니다. 동기화를 시작합니다...");
+      await syncQualificationsToDatabase();
+      console.log("자격증 데이터 동기화 완료!");
+    } else {
+      console.log(`자격증 데이터 ${count}개가 이미 존재합니다.`);
+    }
+  } catch (error) {
+    console.error("자격증 데이터 초기화 오류:", error);
+  }
+};
+
 // 기본 라우트 설정
 app.get("/", (req, res) => {
   res.send("JobTalk Web Server!");
@@ -82,6 +104,9 @@ app.get("/", (req, res) => {
 // 서버 시작
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`서버가 ${PORT}번 포트에서 실행 중입니다.`);
+
+  // 자격증 데이터 초기화 (비동기)
+  initializeQualifications();
 });
 
 // *** 라우트 정의 시작 ***
@@ -89,6 +114,7 @@ app.use("/auth", authRoute); // 사용자 계정 관련 라우트
 app.use("/csrf", csrfRoute); // CSRF 토큰 요청 라우트
 app.use("/career", careerRoute); // 커리어넷 관련 API 라우트
 app.use("/chat", chatRoute); // 챗봇 관련 API 라우트
+app.use("/qualification", qualificationRoute); // 자격증 관련 API 라우트 추가
 
 app.post("/test/postTest", (req: Request, res: Response) => {
   // POST 요청 테스트용 라우트

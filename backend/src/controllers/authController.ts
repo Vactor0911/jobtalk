@@ -997,3 +997,28 @@ export const uploadProfileImage = async (req: Request, res: Response) => {
     }
   });
 };
+
+// 자격증 정보 업데이트
+export const updateUserCertificates = async (req: Request, res: Response) => {
+  try {
+    const { certificates } = req.body;
+    const userId = req.user?.userId;
+
+    // 자격증 정보 업데이트 로직 - 컬럼명 수정
+    await dbPool.query("UPDATE user SET certificates = ? WHERE user_id = ?", [
+      certificates,
+      userId,
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: "자격증 정보가 업데이트되었습니다.",
+    });
+  } catch (error) {
+    console.error("자격증 업데이트 오류:", error);
+    res.status(500).json({
+      success: false,
+      message: "자격증 정보 업데이트에 실패했습니다.",
+    });
+  }
+};

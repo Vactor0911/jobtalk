@@ -34,11 +34,13 @@
     "nodemailer": "^6.9.8",
     "openai": "^5.8.2",
     "uuid": "^11.1.0",
-    "validator": "^13.11.0"
+    "validator": "^13.11.0",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^24.0.4",
+    "@types/xml2js": "^0.4.14",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",

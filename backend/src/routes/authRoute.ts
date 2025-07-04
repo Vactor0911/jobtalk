@@ -10,6 +10,7 @@ import {
   sendVerifyEmail,
   updateNickname,
   updatePassword,
+  updateUserCertificates,
   uploadProfileImage,
   verifyEmailCode,
 } from "../controllers/authController";
@@ -49,5 +50,8 @@ authRoute.post("/me/delete", csrfProtection, limiter, authenticateToken, deleteA
 
 // 프로필 이미지 업로드
 authRoute.post("/me/profile-image", csrfProtection, limiter, authenticateToken, uploadProfileImage);
+
+// 자격증 정보 업데이트
+authRoute.patch("/me/certificates", csrfProtection, limiter, authenticateToken, updateUserCertificates);
 
 export default authRoute;

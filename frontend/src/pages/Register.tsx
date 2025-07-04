@@ -39,6 +39,7 @@ import { jobTalkLoginStateAtom } from "../state";
 import { useAtomValue } from "jotai";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import StyledAutocomplete from "../components/StyledAutocomplete";
+import CertificateSelect from "../components/CertificateSelect";
 
 // 이용약관 데이터
 interface TermsOfService {
@@ -93,17 +94,14 @@ const Register = () => {
   ); // 이용약관 펼치기 여부
 
   // 자격증 관련 상태 추가
-  const [certificateOptions, setCertificateOptions] = useState<string[]>([]);
-  const [certificateSearchTerm, setCertificateSearchTerm] = useState("");
   const [selectedCertificates, setSelectedCertificates] = useState<string[]>(
     []
   );
-  const [isCertificatesLoading, setIsCertificatesLoading] = useState(false); // 자격증 목록 로딩 상태
 
   // 관심사 관련
   const [isInterestsLoading, setIsInterestsLoading] = useState(false); // 관심 분야 목록 로딩 상태
   const [interests, setInterests] = useState(""); // 관심사 정보 추가
-  
+
   // 성공 Dialog 상태 추가
   const [successDialog, setSuccessDialog] = useState({
     open: false,
@@ -543,59 +541,7 @@ const Register = () => {
       setSnackbar((prev) => ({ ...prev, open: false }));
     },
     []
-  );
-
-  // 자격증 선택 변경 핸들러 추가
-  const handleCertificateChange = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (_event: any, newValue: string[]) => {
-      setSelectedCertificates(newValue);
-    },
-    []
-  );
-
-  // 자격증 검색 함수 추가
-  const searchCertificates = useCallback(async (searchTerm: string) => {
-    if (searchTerm.length < 2) {
-      setCertificateOptions([]);
-      return;
-    }
-
-    try {
-      setIsCertificatesLoading(true);
-
-      const csrfToken = await getCsrfToken();
-      const response = await axiosInstance.get("/qualification/search", {
-        params: { keyword: searchTerm },
-        headers: { "X-CSRF-Token": csrfToken },
-      });
-
-      if (response.data.success) {
-        const qualifications = response.data.data.qualifications.map(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (q: any) => q.name
-        );
-        setCertificateOptions(qualifications);
-      }
-    } catch (error) {
-      console.error("자격증 검색 오류:", error);
-      setSnackbar({
-        open: true,
-        message: "자격증 검색에 실패했습니다.",
-        severity: "error",
-      });
-    } finally {
-      setIsCertificatesLoading(false);
-    }
-  }, []);
-
-  // 유효하지 않은 자격증 입력 핸들러
-  const handleInvalidCertificateInput = useCallback((inputValue: string) => {
-    setConfirmDialog({
-      open: true,
-      inputValue: inputValue,
-    });
-  }, []);
+  )
 
   // 확인 다이얼로그에서 "예" 선택 시
   const handleConfirmAddCertificate = useCallback(() => {
@@ -613,17 +559,6 @@ const Register = () => {
   const handleCancelAddCertificate = useCallback(() => {
     setConfirmDialog({ open: false, inputValue: "" });
   }, []);
-
-  // 자격증 검색어 변경시 디바운스 적용
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (certificateSearchTerm) {
-        searchCertificates(certificateSearchTerm);
-      }
-    }, 150);
-
-    return () => clearTimeout(timeoutId);
-  }, [certificateSearchTerm, searchCertificates]);
 
   // 로그인된 상태라면 이전 페이지로 이동
   useLayoutEffect(() => {
@@ -824,21 +759,7 @@ const Register = () => {
 
               {/* 자격증 입력란 */}
               <Box width="100%" flex={1}>
-                <StyledAutocomplete
-                  id="certificates-autocomplete"
-                  options={certificateOptions}
-                  value={selectedCertificates}
-                  onChange={handleCertificateChange}
-                  isLoading={isCertificatesLoading}
-                  loadingText="자격증 목록을 불러오는중..."
-                  placeholder="자격증을 입력하세요."
-                  onInputChange={(_event, newInputValue) => {
-                    setCertificateSearchTerm(newInputValue);
-                  }}
-                  onInvalidInput={handleInvalidCertificateInput}
-                  freeSolo={false} // 자유 입력 비활성화
-                  multiple
-                />
+                <CertificateSelect />
               </Box>
             </Stack>
 

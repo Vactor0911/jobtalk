@@ -5,6 +5,11 @@ import {
   Button,
   CircularProgress,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   IconButton,
   InputAdornment,
@@ -76,12 +81,39 @@ const Profile = () => {
   const [isCertificatesLoading, setIsCertificatesLoading] = useState(false);
   const [isInterestsLoading, setIsInterestsLoading] = useState(false);
 
+  // 자격증 검색 상태 추가
+  const [certificateOptions, setCertificateOptions] = useState<string[]>([]);
+  const [certificateSearchTerm, setCertificateSearchTerm] = useState("");
+  const [selectedCertificates, setSelectedCertificates] = useState<string[]>(
+    []
+  ); // 선택된 자격증 목록
+  const [initialCertificates, setInitialCertificates] = useState<string[]>([]); // 초기값 저장
+  const [isCertificatesUpdating, setIsCertificatesUpdating] = useState(false); // 자격증 업데이트 상태 추가
+
   // 알림 상태
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: "",
     severity: "info",
   });
+
+  // 확인 다이얼로그 상태 추가
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    inputValue: string;
+  }>({
+    open: false,
+    inputValue: "",
+  });
+
+  // 자격증 선택 변경 핸들러 추가
+  const handleCertificateChange = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (_event: any, newValue: string[]) => {
+      setSelectedCertificates(newValue);
+    },
+    []
+  );
 
   // 사용자 정보 로딩
   const fetchUserInfo = useCallback(async () => {
@@ -100,6 +132,18 @@ const Profile = () => {
         const userData = response.data.data;
         setUserInfo(userData);
         setNickname(userData.name);
+
+        // 기존 자격증 정보가 있다면 배열로 변환하여 설정
+        if (userData.certificates) {
+          const certArray = userData.certificates
+            .split(", ")
+            .filter((cert: string) => cert.trim());
+          setSelectedCertificates(certArray);
+          setInitialCertificates(certArray); // 초기값도 저장
+        } else {
+          setSelectedCertificates([]);
+          setInitialCertificates([]);
+        }
 
         // 프로필 이미지 설정
         if (userData.profileImage) {
@@ -122,6 +166,53 @@ const Profile = () => {
       setIsLoading(false);
     }
   }, []);
+
+  // 자격증 업데이트 함수
+  const updateCertificates = useCallback(async () => {
+    // 기존 자격증과 동일한지 확인
+    const currentCertificatesString = selectedCertificates.sort().join(", ");
+    const initialCertificatesString = initialCertificates.sort().join(", ");
+
+    if (currentCertificatesString === initialCertificatesString) {
+      setSnackbar({
+        open: true,
+        message: "기존 자격증과 동일합니다.",
+        severity: "error",
+      });
+      return;
+    }
+
+    try {
+      setIsCertificatesUpdating(true);
+
+      const csrfToken = await getCsrfToken();
+      const response = await axiosInstance.patch(
+        "/auth/me/certificates",
+        { certificates: selectedCertificates.join(", ") },
+        { headers: { "X-CSRF-Token": csrfToken } }
+      );
+
+      if (response.data.success) {
+        setSnackbar({
+          open: true,
+          message: "자격증 정보가 성공적으로 업데이트되었습니다.",
+          severity: "success",
+        });
+
+        // 초기값 업데이트 (변경사항 추적을 위해)
+        setInitialCertificates([...selectedCertificates]);
+      }
+    } catch (error) {
+      console.error("자격증 업데이트 오류:", error);
+      setSnackbar({
+        open: true,
+        message: "자격증 정보 업데이트에 실패했습니다.",
+        severity: "error",
+      });
+    } finally {
+      setIsCertificatesUpdating(false);
+    }
+  }, [initialCertificates, selectedCertificates]);
 
   // 컴포넌트 마운트 시 사용자 정보 로딩
   useEffect(() => {
@@ -267,6 +358,16 @@ const Profile = () => {
       return;
     }
 
+    // 기존 닉네임과 동일한지 확인 - 추가된 부분
+    if (nickname.trim() === userInfo?.name) {
+      setSnackbar({
+        open: true,
+        message: "기존 닉네임과 동일합니다.",
+        severity: "error",
+      });
+      return;
+    }
+
     try {
       setIsNicknameUpdating(true);
 
@@ -310,7 +411,7 @@ const Profile = () => {
     } finally {
       setIsNicknameUpdating(false);
     }
-  }, [nickname, fetchUserInfo]);
+  }, [nickname, userInfo?.name, fetchUserInfo]);
 
   // 비밀번호 변경 요청
   const handleUpdatePassword = useCallback(async () => {
@@ -394,7 +495,7 @@ const Profile = () => {
     }
   }, [prevPassword, newPassword, newPasswordConfirm]);
 
-  // 기존 비밀번호 표시/숨김 버튼 클릭
+  // 현재 비밀번호 표시/숨김 버튼 클릭
   const handlePrevPasswordVisibilityButtonClick = useCallback(() => {
     setPrevPasswordVisible((prev) => !prev);
   }, []);
@@ -413,6 +514,77 @@ const Profile = () => {
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
+
+  // 자격증 검색 함수
+  const searchCertificates = useCallback(async (searchTerm: string) => {
+    if (searchTerm.length < 2) {
+      setCertificateOptions([]);
+      return;
+    }
+
+    try {
+      setIsCertificatesLoading(true);
+
+      const csrfToken = await getCsrfToken();
+      const response = await axiosInstance.get("/qualification/search", {
+        params: { keyword: searchTerm },
+        headers: { "X-CSRF-Token": csrfToken },
+      });
+
+      if (response.data.success) {
+        const qualifications = response.data.data.qualifications.map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (q: any) => q.name
+        );
+        setCertificateOptions(qualifications);
+      }
+    } catch (error) {
+      console.error("자격증 검색 오류:", error);
+      setSnackbar({
+        open: true,
+        message: "자격증 검색에 실패했습니다.",
+        severity: "error",
+      });
+    } finally {
+      setIsCertificatesLoading(false);
+    }
+  }, []);
+
+  // 자격증 검색어 변경시 디바운스 적용
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (certificateSearchTerm) {
+        searchCertificates(certificateSearchTerm);
+      }
+    }, 150);
+
+    return () => clearTimeout(timeoutId);
+  }, [certificateSearchTerm, searchCertificates]);
+
+  // 유효하지 않은 자격증 입력 핸들러
+  const handleInvalidCertificateInput = useCallback((inputValue: string) => {
+    setConfirmDialog({
+      open: true,
+      inputValue: inputValue,
+    });
+  }, []);
+
+  // 확인 다이얼로그에서 "예" 선택 시
+  const handleConfirmAddCertificate = useCallback(() => {
+    const { inputValue } = confirmDialog;
+    if (inputValue) {
+      // 기존 선택된 자격증에 추가
+      const newCertificates = [...selectedCertificates, inputValue];
+      const uniqueCertificates = [...new Set(newCertificates)]; // 중복 제거
+      setSelectedCertificates(uniqueCertificates);
+    }
+    setConfirmDialog({ open: false, inputValue: "" });
+  }, [confirmDialog, selectedCertificates]);
+
+  // 확인 다이얼로그에서 "아니오" 선택 시
+  const handleCancelAddCertificate = useCallback(() => {
+    setConfirmDialog({ open: false, inputValue: "" });
+  }, []);
 
   // 로딩 중 표시
   if (isLoading) {
@@ -603,22 +775,51 @@ const Profile = () => {
               </Tooltip>
             </Stack>
 
-            {/* 자격증 입력란 */}
-            <Box width="100%" flex={1}>
-              <StyledAutocomplete
-                id="certificates-autocomplete"
-                options={[
-                  "정보처리기사",
-                  "SQLD",
-                  "ADsP",
-                  "컴퓨터활용능력",
-                  "기타",
-                ]}
-                isLoading={isCertificatesLoading}
-                loadingText="자격증 목록을 불러오는중..."
-                placeholder="자격증을 입력하세요."
-              />
-            </Box>
+            {/* 자격증 입력란과 수정 버튼을 함께 배치 */}
+            <Stack direction="row" gap={1} width="100%" flex={1}>
+              {/* 자격증 입력란 */}
+              <Box width="100%" flex={1}>
+                <StyledAutocomplete
+                  id="certificates-autocomplete"
+                  options={certificateOptions}
+                  value={selectedCertificates}
+                  onChange={handleCertificateChange}
+                  isLoading={isCertificatesLoading}
+                  loadingText="자격증 목록을 불러오는중..."
+                  placeholder="자격증을 입력하세요."
+                  onInputChange={(_event, newInputValue) => {
+                    setCertificateSearchTerm(newInputValue);
+                  }}
+                  onInvalidInput={handleInvalidCertificateInput}
+                  freeSolo={false} // 자유 입력 비활성화
+                  multiple
+                />
+              </Box>
+
+              {/* 자격증 수정 버튼 */}
+              <Button
+                variant="outlined"
+                onClick={updateCertificates}
+                disabled={isCertificatesUpdating}
+                sx={{
+                  paddingX: 3,
+                  borderRadius: 2,
+                  minWidth: "80px",
+                }}
+              >
+                {isCertificatesUpdating ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <Typography
+                    variant="subtitle1"
+                    whiteSpace="nowrap"
+                    fontWeight="bold"
+                  >
+                    수정
+                  </Typography>
+                )}
+              </Button>
+            </Stack>
           </Stack>
 
           {/* 구분선 */}
@@ -674,9 +875,9 @@ const Profile = () => {
           <SectionHeader title="비밀번호 변경" variant="h6" />
 
           <Stack gap={1}>
-            {/* 기존 비밀번호 */}
+            {/* 현재 비밀번호 */}
             <OutlinedTextField
-              label="기존 비밀번호"
+              label="현재 비밀번호"
               type={prevPasswordVisible ? "text" : "password"}
               value={prevPassword}
               onChange={(e) => setPrevPassword(e.target.value)}
@@ -770,6 +971,78 @@ const Profile = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* 확인 다이얼로그 추가 */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={handleCancelAddCertificate}
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-description"
+      >
+        <DialogTitle id="confirm-dialog-title">자격증 등록 확인</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirm-dialog-description">
+            <Typography
+              component="span"
+              sx={{
+                color: "primary.main", // 입력한 자격증 이름 강조색
+                fontWeight: "bold",
+                backgroundColor: "rgba(25, 118, 210, 0.1)", // 연한 파란색 배경
+                padding: "2px 6px",
+                borderRadius: "4px",
+                mx: 0.5,
+              }}
+            >
+              "{confirmDialog.inputValue}"
+            </Typography>
+            은(는)
+            <Typography
+              component="span"
+              sx={{
+                color: "#1565C0", // 공공데이터포털 파란색
+                fontWeight: "bold",
+                backgroundColor: "rgba(21, 101, 192, 0.1)", // 연한 파란색 배경
+                padding: "2px 6px",
+                borderRadius: "4px",
+                mx: 0.5,
+              }}
+            >
+              한국산업인력공단 국가자격 종목
+            </Typography>
+            에 등록되어 있지 않은 자격증입니다.
+            <br />
+            등록하시면,
+            <Typography
+              component="span"
+              sx={{
+                color: "error.main", // 더 강한 경고색 (빨간색)
+                fontWeight: "bold",
+                backgroundColor: "rgba(244, 67, 54, 0.1)", // 연한 빨간색 배경
+                padding: "2px 6px",
+                borderRadius: "4px",
+                mx: 0.5,
+              }}
+            >
+              로드맵 생성 시 불이익
+            </Typography>
+            이 발생할 수 있습니다.
+            <br />
+            정말 등록하시겠습니까?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelAddCertificate} color="primary">
+            아니오
+          </Button>
+          <Button
+            onClick={handleConfirmAddCertificate}
+            color="primary"
+            autoFocus
+          >
+            예
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

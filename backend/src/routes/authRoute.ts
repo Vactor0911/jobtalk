@@ -7,6 +7,7 @@ import {
   logout,
   refreshToken,
   register,
+  resetPassword,
   sendVerifyEmail,
   updateNickname,
   updatePassword,
@@ -53,5 +54,8 @@ authRoute.post("/me/profile-image", csrfProtection, limiter, authenticateToken, 
 
 // 자격증 정보 업데이트
 authRoute.patch("/me/certificates", csrfProtection, limiter, authenticateToken, updateUserCertificates);
+
+// 비밀번호 찾기(재설정)
+authRoute.post("/resetPassword", csrfProtection, resetPassword);
 
 export default authRoute;

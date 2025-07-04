@@ -193,6 +193,7 @@ const Register = () => {
         "/auth/sendVerifyEmail",
         {
           email,
+          purpose: "register",
         },
         {
           headers: {
@@ -290,6 +291,7 @@ const Register = () => {
         {
           email,
           code: confirmCode,
+          purpose: "register",
         },
         {
           headers: {

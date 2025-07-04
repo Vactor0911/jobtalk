@@ -248,7 +248,7 @@ export const logout = async (req: Request, res: Response) => {
 
 // 이메일 인증 코드 전송
 export const sendVerifyEmail = async (req: Request, res: Response) => {
-  const { email } = req.body;
+  const { email, purpose } = req.body; // purpose 변수 추가
 
   if (!email) {
     res
@@ -263,20 +263,58 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
     return;
   }
 
+  // purpose 유효성 검사 추가
+  const validPurposes = ["register", "resetPassword"];
+  if (!purpose || !validPurposes.includes(purpose)) {
+    res.status(400).json({
+      success: false,
+      message: "유효한 목적을 지정해주세요. (register 또는 resetPassword)",
+    });
+    return;
+  }
+
   let connection;
   try {
     connection = await dbPool.getConnection();
     await connection.beginTransaction(); // 트랜잭션 시작
 
-    // 이메일 중복 확인
+    // 이메일 중복 확인 로직을 purpose에 따라 다르게 처리
     const existingUserRows = await connection.query(
       "SELECT email, state FROM user WHERE email = ?",
       [email]
     );
 
-    if (existingUserRows.length > 0) {
-      const existingUser = existingUserRows[0];
+    if (purpose === "register") {
+      // 회원가입 목적인 경우
+      if (existingUserRows.length > 0) {
+        const existingUser = existingUserRows[0];
 
+        if (existingUser.state === "inactive") {
+          res.status(400).json({
+            success: false,
+            message: "탈퇴된 계정입니다. 관리자에게 문의해주세요.",
+          });
+          return;
+        }
+
+        // 이미 가입된 이메일인 경우
+        res.status(400).json({
+          success: false,
+          message: "이미 가입된 이메일입니다. 로그인해 주세요.",
+        });
+        return;
+      }
+    } else if (purpose === "resetPassword") {
+      // 비밀번호 찾기 목적인 경우
+      if (existingUserRows.length === 0) {
+        res.status(400).json({
+          success: false,
+          message: "등록되지 않은 이메일입니다. 회원가입을 진행해주세요.",
+        });
+        return;
+      }
+
+      const existingUser = existingUserRows[0];
       if (existingUser.state === "inactive") {
         res.status(400).json({
           success: false,
@@ -284,13 +322,6 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
         });
         return;
       }
-
-      // 이미 가입된 이메일인 경우
-      res.status(400).json({
-        success: false,
-        message: "이미 가입된 이메일입니다. 로그인해 주세요.",
-      });
-      return;
     }
 
     // 랜덤 인증 코드 생성
@@ -303,14 +334,14 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
     };
     const verificationCode = generateRandomCode(6);
 
-    // 인증 코드 저장 (유효 기간 5분)
+    // 인증 코드 저장 (유효 기간 5분) - purpose도 함께 저장
     const expiresAt = new Date(new Date().getTime() + 5 * 60 * 1000); // 정확히 5분 후
     await connection.query(
-      "INSERT INTO email_verification (email, verification_code, expires_at) VALUES (?, ?, ?)",
-      [email, verificationCode, expiresAt]
+      "INSERT INTO email_verification (email, verification_code, expires_at, purpose) VALUES (?, ?, ?, ?)",
+      [email, verificationCode, expiresAt, purpose]
     );
 
-    // 이메일 전송
+    // 이메일 전송 - purpose에 따라 다른 제목과 내용
     const transporter = nodemailer.createTransport({
       service: "gmail",
       host: "smtp.gmail.com",
@@ -322,21 +353,40 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
       },
     });
 
+    // purpose에 따른 이메일 내용 변경
+    const getEmailContent = (purpose: string, verificationCode: string) => {
+      if (purpose === "resetPassword") {
+        return {
+          subject: "[JobTalk] 비밀번호 재설정 인증번호",
+          title: "JobTalk 비밀번호 재설정",
+          description: "JobTalk 비밀번호 재설정을 위한 인증번호입니다.",
+        };
+      } else {
+        return {
+          subject: "[JobTalk] 회원가입 인증번호",
+          title: "JobTalk 회원가입 인증번호",
+          description: "JobTalk 회원가입을 위한 이메일 인증번호입니다.",
+        };
+      }
+    };
+
+    const emailContent = getEmailContent(purpose, verificationCode);
+
     const mailOptions = {
       from: `"JobTalk" <${process.env.NODEMAILER_USER}>`,
       to: email,
-      subject: "[JobTalk] 인증번호",
+      subject: emailContent.subject,
       html: `
       <div style="font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif; max-width:500px; margin:0 auto;">
         <!-- 헤더 -->
         <div style="background-color:#ff8551; color:white; padding:20px; text-align:left;">
-          <h1 style="margin:0; font-size:24px; font-weight:bold;">JobTalk 인증번호</h1>
+          <h1 style="margin:0; font-size:24px; font-weight:bold;">${emailContent.title}</h1>
         </div>
         
         <!-- 본문 -->
         <div style="padding:30px 20px; background-color:white; border:1px solid #e1e1e1; border-top:none;">
           <p style="font-size:16px; color:#404040; margin-bottom:30px;">
-            JobTalk 이메일 인증번호입니다.
+            ${emailContent.description}
           </p>
           
           <!-- 인증번호 박스 -->
@@ -360,9 +410,16 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
     await transporter.sendMail(mailOptions);
 
     await connection.commit(); // 트랜잭션 커밋
+
+    // purpose에 따른 다른 응답 메시지
+    const responseMessage =
+      purpose === "resetPassword"
+        ? "비밀번호 재설정을 위한 인증번호가 이메일로 발송되었습니다."
+        : "회원가입을 위한 인증번호가 이메일로 발송되었습니다.";
+
     res.status(200).json({
       success: true,
-      message: "인증번호가 이메일로 발송되었습니다.",
+      message: responseMessage,
     });
   } catch (err) {
     if (connection) await connection.rollback(); // 트랜잭션 롤백
@@ -377,7 +434,7 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
 
 // 인증번호 검증
 export const verifyEmailCode = async (req: Request, res: Response) => {
-  const { email, code } = req.body;
+  const { email, code, purpose } = req.body; // purpose 추가
 
   if (!email) {
     res.status(400).json({ success: false, message: "이메일을 입력해주세요." });
@@ -402,11 +459,21 @@ export const verifyEmailCode = async (req: Request, res: Response) => {
     return;
   }
 
+  // purpose 유효성 검사
+  const validPurposes = ["register", "resetPassword"];
+  if (!purpose || !validPurposes.includes(purpose)) {
+    res.status(400).json({
+      success: false,
+      message: "유효한 목적을 지정해주세요. (register 또는 resetPassword)",
+    });
+    return;
+  }
+
   try {
-    // 인증 코드 검증
+    // 인증 코드 검증 - purpose도 함께 확인
     const [record] = await dbPool.query(
-      "SELECT verification_code, expires_at FROM email_verification WHERE email = ? ORDER BY created_at DESC LIMIT 1",
-      [email]
+      "SELECT verification_code, expires_at, purpose FROM email_verification WHERE email = ? AND purpose = ? ORDER BY created_at DESC LIMIT 1",
+      [email, purpose]
     );
 
     if (!record) {
@@ -416,7 +483,19 @@ export const verifyEmailCode = async (req: Request, res: Response) => {
       return;
     }
 
-    const { verification_code: storedCode, expires_at: expiresAt } = record;
+    const {
+      verification_code: storedCode,
+      expires_at: expiresAt,
+      purpose: storedPurpose,
+    } = record;
+
+    // purpose 일치 확인
+    if (storedPurpose !== purpose) {
+      res
+        .status(400)
+        .json({ success: false, message: "인증 목적이 일치하지 않습니다." });
+      return;
+    }
 
     if (
       new Date(new Date().getTime() + 9 * 60 * 60 * 1000) >
@@ -436,13 +515,21 @@ export const verifyEmailCode = async (req: Request, res: Response) => {
     }
 
     // 인증 성공
-    await dbPool.query("DELETE FROM email_verification WHERE email = ?", [
-      email,
-    ]); // 검증 후 데이터 삭제
+    await dbPool.query(
+      "DELETE FROM email_verification WHERE email = ? AND purpose = ?",
+      [email, purpose]
+    ); // 검증 후 해당 purpose의 데이터만 삭제
 
-    res
-      .status(200)
-      .json({ success: true, message: "인증번호가 확인되었습니다." });
+    const responseMessage =
+      purpose === "resetPassword"
+        ? "비밀번호 재설정 인증이 완료되었습니다."
+        : "이메일 인증이 완료되었습니다.";
+
+    res.status(200).json({
+      success: true,
+      message: responseMessage,
+      purpose: purpose, // 프론트엔드에서 다음 단계 결정을 위해 purpose 반환
+    });
   } catch (err) {
     console.error("Error verifying code:", err);
     res
@@ -1021,4 +1108,79 @@ export const updateUserCertificates = async (req: Request, res: Response) => {
       message: "자격증 정보 업데이트에 실패했습니다.",
     });
   }
+};
+
+// 비밀번호 재설정
+export const resetPassword = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    res.status(400).json({
+      success: false,
+      message: "이메일, 비밀번호는 필수 입력 항목입니다.",
+    });
+    return;
+  }
+
+  if (!validator.isEmail(email)) {
+    res
+      .status(400)
+      .json({ success: false, message: "유효한 이메일 주소를 입력하세요." });
+    return;
+  }
+
+  // 비밀번호 검증 추가 (필요시 주석 해제)
+  // if (
+  //   !validator.isStrongPassword(password, {
+  //     minLength: 8,
+  //     minNumbers: 1,
+  //     minSymbols: 1,
+  //     minUppercase: 0,
+  //   }) ||
+  //   !allowedSymbolsForPassword.test(password) // 허용된 문자만 포함하는지 확인
+  // ) {
+  //   res.status(400).json({
+  //     success: false,
+  //     message:
+  //       "비밀번호는 8자리 이상, 영문, 숫자, 특수문자(!@#$%^&*?)를 포함해야 합니다.",
+  //   });
+  //   return;
+  // }
+
+  // Step 1: 사용자 조회
+  dbPool
+    .query("SELECT * FROM user WHERE email = ?", [email])
+    .then((rows: any[]) => {
+      if (rows.length === 0) {
+        return Promise.reject({
+          status: 404,
+          message: "일치하는 사용자를 찾을 수 없습니다.",
+        });
+      }
+
+      // Step 2: 비밀번호 암호화
+      return bcrypt.hash(password, 10).then((hashedPassword) => {
+        return dbPool.query("UPDATE user SET password = ? WHERE email = ?", [
+          hashedPassword,
+          email,
+        ]);
+      });
+    })
+    .then(() => {
+      res.status(200).json({
+        success: true,
+        message: "비밀번호가 성공적으로 변경되었습니다.",
+      });
+    })
+    .catch((err) => {
+      if (err.status) {
+        res.status(err.status).json({ success: false, message: err.message });
+      } else {
+        console.error("비밀번호 변경 중 서버 오류:", err);
+        res.status(500).json({
+          success: false,
+          message: "비밀번호 변경 중 서버 오류가 발생했습니다.",
+        });
+      }
+    });
 };

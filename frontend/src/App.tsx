@@ -11,6 +11,8 @@ import {
 } from "./pages";
 import Header from "./components/Header";
 import TokenRefresher from "./components/TokenRefresher";
+import FindPassword from "./pages/FindPassword";
+import ChangePassword from "./pages/ChangePassword";
 
 const App = () => {
   return (
@@ -27,6 +29,8 @@ const App = () => {
             <Route path="/profile" element={<Profile />} />
             <Route path="/workspace" element={<MyWorkspace />} />
             <Route path="/workspace/:workspaceId" element={<Workspace />} />
+            <Route path="/change-password" element={<ChangePassword />} />
+            <Route path="/find-password" element={<FindPassword />} />
             <Route path="/*" element={<Navigate to="/" replace />} />
           </Routes>
         </TokenRefresher>

@@ -36,3 +36,36 @@ export const isEmailValid = (email: string) => {
   // 이메일 형식이 올바름
   return true;
 };
+
+/**
+ * 랜덤 색상 코드를 반환하는 함수
+ * @param seed 랜덤 시드를 지정할 수 있는 선택적 매개변수
+ * @returns 랜덤 색상 코드
+ */
+export const getRandomColor = (seed?: string | number): string => {
+  // 사용할 색상 배열
+  const COLORS = [
+    "#A7C7FF",
+    "#FFF6A3",
+    "#FFB6E1",
+    "#FFB6B6",
+    "#FFD59E",
+    "#D6FFB7",
+    "#B6FFE4",
+    "#B6D9FF",
+    "#D9B6FF",
+  ];
+
+  // 랜덤 색상 반환
+  if (seed) {
+    if (typeof seed === "string") {
+      const index = seed.length % COLORS.length;
+      return COLORS[index];
+    } else if (typeof seed === "number") {
+      return COLORS[seed % COLORS.length];
+    }
+  }
+
+  const randInt = Math.floor(Math.random() * COLORS.length);
+  return COLORS[randInt];
+};

@@ -84,8 +84,7 @@ const Register = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false); // 비밀번호 보임/숨김
   const [isPasswordConfirmVisible, setIsPasswordCheckVisible] = useState(false); // 비밀번호 확인 보임/숨김
   const [name, setName] = useState(""); // 사용자 별명
-  const [certificates, setCertificates] = useState(""); // 자격증 정보 추가
-  const [interests, setInterests] = useState(""); // 관심사 정보 추가
+
   const [isTermAgreed, setIsTermAgreed] = useState(
     Array.from({ length: termsOfServices.length }, () => false)
   ); // 이용약관 동의 여부
@@ -93,13 +92,31 @@ const Register = () => {
     Array.from({ length: termsOfServices.length }, () => false)
   ); // 이용약관 펼치기 여부
 
+  // 자격증 관련 상태 추가
+  const [certificateOptions, setCertificateOptions] = useState<string[]>([]);
+  const [certificateSearchTerm, setCertificateSearchTerm] = useState("");
+  const [selectedCertificates, setSelectedCertificates] = useState<string[]>(
+    []
+  );
   const [isCertificatesLoading, setIsCertificatesLoading] = useState(false); // 자격증 목록 로딩 상태
-  const [isInterestsLoading, setIsInterestsLoading] = useState(false); // 관심 분야 목록 로딩 상태
 
+  // 관심사 관련
+  const [isInterestsLoading, setIsInterestsLoading] = useState(false); // 관심 분야 목록 로딩 상태
+  const [interests, setInterests] = useState(""); // 관심사 정보 추가
+  
   // 성공 Dialog 상태 추가
   const [successDialog, setSuccessDialog] = useState({
     open: false,
     message: "",
+  });
+
+  // 확인 다이얼로그 상태 추가
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    inputValue: string;
+  }>({
+    open: false,
+    inputValue: "",
   });
 
   // 인증번호 입력 타이머 - 인증번호 전송 후 5분 카운트다운
@@ -459,7 +476,10 @@ const Register = () => {
             password,
             name,
             terms: termsData,
-            certificates: certificates || null, // 자격증 정보 추가
+            certificates:
+              selectedCertificates.length > 0
+                ? selectedCertificates.join(", ")
+                : null, // 수정된 부분
             interests: interests || null, // 관심사 정보 추가
           },
           {
@@ -505,10 +525,10 @@ const Register = () => {
       passwordConfirm,
       isConfirmCodeChecked,
       name,
-      certificates,
-      interests,
       allRequiredAgreed,
       isTermAgreed,
+      selectedCertificates,
+      interests,
     ]
   );
 
@@ -522,6 +542,86 @@ const Register = () => {
     },
     []
   );
+
+  // 자격증 선택 변경 핸들러 추가
+  const handleCertificateChange = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (_event: any, newValue: string[]) => {
+      setSelectedCertificates(newValue);
+    },
+    []
+  );
+
+  // 자격증 검색 함수 추가
+  const searchCertificates = useCallback(async (searchTerm: string) => {
+    if (searchTerm.length < 2) {
+      setCertificateOptions([]);
+      return;
+    }
+
+    try {
+      setIsCertificatesLoading(true);
+
+      const csrfToken = await getCsrfToken();
+      const response = await axiosInstance.get("/qualification/search", {
+        params: { keyword: searchTerm },
+        headers: { "X-CSRF-Token": csrfToken },
+      });
+
+      if (response.data.success) {
+        const qualifications = response.data.data.qualifications.map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (q: any) => q.name
+        );
+        setCertificateOptions(qualifications);
+      }
+    } catch (error) {
+      console.error("자격증 검색 오류:", error);
+      setSnackbar({
+        open: true,
+        message: "자격증 검색에 실패했습니다.",
+        severity: "error",
+      });
+    } finally {
+      setIsCertificatesLoading(false);
+    }
+  }, []);
+
+  // 유효하지 않은 자격증 입력 핸들러
+  const handleInvalidCertificateInput = useCallback((inputValue: string) => {
+    setConfirmDialog({
+      open: true,
+      inputValue: inputValue,
+    });
+  }, []);
+
+  // 확인 다이얼로그에서 "예" 선택 시
+  const handleConfirmAddCertificate = useCallback(() => {
+    const { inputValue } = confirmDialog;
+    if (inputValue) {
+      // 기존 선택된 자격증에 추가
+      const newCertificates = [...selectedCertificates, inputValue];
+      const uniqueCertificates = [...new Set(newCertificates)]; // 중복 제거
+      setSelectedCertificates(uniqueCertificates);
+    }
+    setConfirmDialog({ open: false, inputValue: "" });
+  }, [confirmDialog, selectedCertificates]);
+
+  // 확인 다이얼로그에서 "아니오" 선택 시
+  const handleCancelAddCertificate = useCallback(() => {
+    setConfirmDialog({ open: false, inputValue: "" });
+  }, []);
+
+  // 자격증 검색어 변경시 디바운스 적용
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (certificateSearchTerm) {
+        searchCertificates(certificateSearchTerm);
+      }
+    }, 150);
+
+    return () => clearTimeout(timeoutId);
+  }, [certificateSearchTerm, searchCertificates]);
 
   // 로그인된 상태라면 이전 페이지로 이동
   useLayoutEffect(() => {
@@ -724,16 +824,18 @@ const Register = () => {
               <Box width="100%" flex={1}>
                 <StyledAutocomplete
                   id="certificates-autocomplete"
-                  options={[
-                    "정보처리기사",
-                    "SQLD",
-                    "ADsP",
-                    "컴퓨터활용능력",
-                    "기타",
-                  ]}
+                  options={certificateOptions}
+                  value={selectedCertificates}
+                  onChange={handleCertificateChange}
                   isLoading={isCertificatesLoading}
                   loadingText="자격증 목록을 불러오는중..."
                   placeholder="자격증을 입력하세요."
+                  onInputChange={(_event, newInputValue) => {
+                    setCertificateSearchTerm(newInputValue);
+                  }}
+                  onInvalidInput={handleInvalidCertificateInput}
+                  freeSolo={false} // 자유 입력 비활성화
+                  multiple
                 />
               </Box>
             </Stack>
@@ -761,10 +863,10 @@ const Register = () => {
                 <StyledAutocomplete
                   id="interests-autocomplete"
                   options={[
-                    "정보처리기사",
-                    "SQLD",
-                    "ADsP",
-                    "컴퓨터활용능력",
+                    "관심 분야 1",
+                    "관심 분야 2",
+                    "관심 분야 3",
+                    "관심 분야 4",
                     "기타",
                   ]}
                   isLoading={isInterestsLoading}
@@ -959,6 +1061,78 @@ const Register = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* 확인 다이얼로그 추가 */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={handleCancelAddCertificate}
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-description"
+      >
+        <DialogTitle id="confirm-dialog-title">자격증 등록 확인</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="confirm-dialog-description">
+            <Typography
+              component="span"
+              sx={{
+                color: "primary.main",
+                fontWeight: "bold",
+                backgroundColor: "rgba(25, 118, 210, 0.1)",
+                padding: "2px 6px",
+                borderRadius: "4px",
+                mx: 0.5,
+              }}
+            >
+              "{confirmDialog.inputValue}"
+            </Typography>
+            은(는)
+            <Typography
+              component="span"
+              sx={{
+                color: "#1565C0",
+                fontWeight: "bold",
+                backgroundColor: "rgba(21, 101, 192, 0.1)",
+                padding: "2px 6px",
+                borderRadius: "4px",
+                mx: 0.5,
+              }}
+            >
+              한국산업인력공단 국가자격 종목
+            </Typography>
+            에 등록되어 있지 않은 자격증입니다.
+            <br />
+            등록하시면,
+            <Typography
+              component="span"
+              sx={{
+                color: "error.main",
+                fontWeight: "bold",
+                backgroundColor: "rgba(244, 67, 54, 0.1)",
+                padding: "2px 6px",
+                borderRadius: "4px",
+                mx: 0.5,
+              }}
+            >
+              로드맵 생성 시 불이익
+            </Typography>
+            이 발생할 수 있습니다.
+            <br />
+            정말 등록하시겠습니까?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelAddCertificate} color="primary">
+            아니오
+          </Button>
+          <Button
+            onClick={handleConfirmAddCertificate}
+            color="primary"
+            autoFocus
+          >
+            예
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

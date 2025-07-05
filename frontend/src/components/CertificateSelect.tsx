@@ -1,5 +1,5 @@
 import { Autocomplete, CircularProgress, TextField } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import axiosInstance from "../utils/axiosInstance";
 
 interface CertificateSelectProps {
@@ -14,6 +14,15 @@ const CertificateSelect = (props: CertificateSelectProps) => {
   const [options, setOptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 키 입력 핸들러
+  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
+    // Enter 키 입력시 기본 동작 방지
+    if (event.key === "Backspace") {
+      event.stopPropagation();
+    }
+  }, []);
+
+  // 자격증 목록 불러오기
   const fetchCertificates = async () => {
     try {
       setIsLoading(true);
@@ -32,6 +41,7 @@ const CertificateSelect = (props: CertificateSelectProps) => {
     }
   };
 
+  // 컴포넌트 마운트시 자격증 목록 불러오기
   useEffect(() => {
     fetchCertificates();
   }, []);
@@ -60,6 +70,7 @@ const CertificateSelect = (props: CertificateSelectProps) => {
         <TextField
           {...params}
           placeholder="자격증을 입력하세요."
+          onKeyDown={handleKeyDown}
           slotProps={{
             input: {
               ...params.InputProps,

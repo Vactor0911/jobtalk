@@ -93,7 +93,7 @@ const Register = () => {
     Array.from({ length: termsOfServices.length }, () => false)
   ); // 이용약관 펼치기 여부
 
-  // 자격증 관련 상태 추가
+  // 자격증
   const [selectedCertificates, setSelectedCertificates] = useState<string[]>(
     []
   );
@@ -106,15 +106,6 @@ const Register = () => {
   const [successDialog, setSuccessDialog] = useState({
     open: false,
     message: "",
-  });
-
-  // 확인 다이얼로그 상태 추가
-  const [confirmDialog, setConfirmDialog] = useState<{
-    open: boolean;
-    inputValue: string;
-  }>({
-    open: false,
-    inputValue: "",
   });
 
   // 인증번호 입력 타이머 - 인증번호 전송 후 5분 카운트다운
@@ -405,6 +396,14 @@ const Register = () => {
     navigate("/login"); // Dialog 닫을 때 로그인 페이지로 이동
   }, [navigate]);
 
+  // 선택된 자격증 목록 변경
+  const handleSelectedCertificatesChange = useCallback(
+    (_event: React.SyntheticEvent, value: string[]) => {
+      setSelectedCertificates(value);
+    },
+    []
+  );
+
   // 회원가입 버튼 클릭
   const handleRegisterButtonClick = useCallback(
     async (e: React.FormEvent) => {
@@ -541,24 +540,7 @@ const Register = () => {
       setSnackbar((prev) => ({ ...prev, open: false }));
     },
     []
-  )
-
-  // 확인 다이얼로그에서 "예" 선택 시
-  const handleConfirmAddCertificate = useCallback(() => {
-    const { inputValue } = confirmDialog;
-    if (inputValue) {
-      // 기존 선택된 자격증에 추가
-      const newCertificates = [...selectedCertificates, inputValue];
-      const uniqueCertificates = [...new Set(newCertificates)]; // 중복 제거
-      setSelectedCertificates(uniqueCertificates);
-    }
-    setConfirmDialog({ open: false, inputValue: "" });
-  }, [confirmDialog, selectedCertificates]);
-
-  // 확인 다이얼로그에서 "아니오" 선택 시
-  const handleCancelAddCertificate = useCallback(() => {
-    setConfirmDialog({ open: false, inputValue: "" });
-  }, []);
+  );
 
   // 로그인된 상태라면 이전 페이지로 이동
   useLayoutEffect(() => {
@@ -759,7 +741,10 @@ const Register = () => {
 
               {/* 자격증 입력란 */}
               <Box width="100%" flex={1}>
-                <CertificateSelect />
+                <CertificateSelect
+                  value={selectedCertificates}
+                  onChange={handleSelectedCertificatesChange}
+                />
               </Box>
             </Stack>
 
@@ -943,12 +928,7 @@ const Register = () => {
       </Stack>
 
       {/* 성공 Dialog */}
-      <Dialog
-        open={successDialog.open}
-        onClose={handleSuccessDialogClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
+      <Dialog open={successDialog.open} onClose={handleSuccessDialogClose}>
         <DialogTitle id="alert-dialog-title">회원가입 완료</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
@@ -984,78 +964,6 @@ const Register = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-
-      {/* 확인 다이얼로그 추가 */}
-      <Dialog
-        open={confirmDialog.open}
-        onClose={handleCancelAddCertificate}
-        aria-labelledby="confirm-dialog-title"
-        aria-describedby="confirm-dialog-description"
-      >
-        <DialogTitle id="confirm-dialog-title">자격증 등록 확인</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="confirm-dialog-description">
-            <Typography
-              component="span"
-              sx={{
-                color: "primary.main",
-                fontWeight: "bold",
-                backgroundColor: "rgba(25, 118, 210, 0.1)",
-                padding: "2px 6px",
-                borderRadius: "4px",
-                mx: 0.5,
-              }}
-            >
-              "{confirmDialog.inputValue}"
-            </Typography>
-            은(는)
-            <Typography
-              component="span"
-              sx={{
-                color: "#1565C0",
-                fontWeight: "bold",
-                backgroundColor: "rgba(21, 101, 192, 0.1)",
-                padding: "2px 6px",
-                borderRadius: "4px",
-                mx: 0.5,
-              }}
-            >
-              한국산업인력공단 국가자격 종목
-            </Typography>
-            에 등록되어 있지 않은 자격증입니다.
-            <br />
-            등록하시면,
-            <Typography
-              component="span"
-              sx={{
-                color: "error.main",
-                fontWeight: "bold",
-                backgroundColor: "rgba(244, 67, 54, 0.1)",
-                padding: "2px 6px",
-                borderRadius: "4px",
-                mx: 0.5,
-              }}
-            >
-              로드맵 생성 시 불이익
-            </Typography>
-            이 발생할 수 있습니다.
-            <br />
-            정말 등록하시겠습니까?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelAddCertificate} color="primary">
-            아니오
-          </Button>
-          <Button
-            onClick={handleConfirmAddCertificate}
-            color="primary"
-            autoFocus
-          >
-            예
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Container>
   );
 };

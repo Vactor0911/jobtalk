@@ -4,10 +4,12 @@ import axiosInstance from "../utils/axiosInstance";
 
 interface CertificateSelectProps {
   id?: string;
+  value?: string[];
+  onChange?: (event: React.SyntheticEvent, value: string[]) => void;
 }
 
 const CertificateSelect = (props: CertificateSelectProps) => {
-  const { id } = props;
+  const { id, value, onChange } = props;
 
   const [options, setOptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,6 +39,8 @@ const CertificateSelect = (props: CertificateSelectProps) => {
   return (
     <Autocomplete
       id={id}
+      {...(value && { value })}
+      {...(onChange && { onChange })}
       multiple
       options={options}
       getOptionLabel={(option) => option || ""}

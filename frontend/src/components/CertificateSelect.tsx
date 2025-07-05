@@ -60,7 +60,7 @@ const CertificateSelect = (props: CertificateSelectProps) => {
           option?.toLowerCase().includes(state.inputValue.toLowerCase())
         );
         return filtered.length === 0 && state.inputValue
-          ? [state.inputValue]
+          ? [`직접 입력 : ${state.inputValue}`]
           : filtered;
       }}
       freeSolo

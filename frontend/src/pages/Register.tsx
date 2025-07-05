@@ -38,7 +38,6 @@ import { useNavigate } from "react-router";
 import { jobTalkLoginStateAtom } from "../state";
 import { useAtomValue } from "jotai";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
-import StyledAutocomplete from "../components/StyledAutocomplete";
 import CertificateSelect from "../components/CertificateSelect";
 
 // 이용약관 데이터
@@ -97,10 +96,6 @@ const Register = () => {
   const [selectedCertificates, setSelectedCertificates] = useState<string[]>(
     []
   );
-
-  // 관심사 관련
-  const [isInterestsLoading, setIsInterestsLoading] = useState(false); // 관심 분야 목록 로딩 상태
-  const [interests, setInterests] = useState(""); // 관심사 정보 추가
 
   // 성공 Dialog 상태 추가
   const [successDialog, setSuccessDialog] = useState({
@@ -479,7 +474,6 @@ const Register = () => {
               selectedCertificates.length > 0
                 ? selectedCertificates.join(", ")
                 : null, // 수정된 부분
-            interests: interests || null, // 관심사 정보 추가
           },
           {
             headers: {
@@ -527,7 +521,6 @@ const Register = () => {
       allRequiredAgreed,
       isTermAgreed,
       selectedCertificates,
-      interests,
     ]
   );
 
@@ -744,42 +737,6 @@ const Register = () => {
                 <CertificateSelect
                   value={selectedCertificates}
                   onChange={handleSelectedCertificatesChange}
-                />
-              </Box>
-            </Stack>
-
-            {/* 관심 분야 */}
-            <Stack direction="column" gap={1} alignItems="flex-start">
-              <Stack
-                direction="row"
-                width="150px"
-                paddingY={2}
-                alignItems="center"
-                gap={1}
-              >
-                {/* 컬럼명 */}
-                <Typography>관심 분야</Typography>
-
-                {/* 툴팁 */}
-                <Tooltip title="관심 있는 분야를 입력해주세요.">
-                  <HelpOutlineRoundedIcon />
-                </Tooltip>
-              </Stack>
-
-              {/* 관심 분야 입력란 */}
-              <Box width="100%" flex={1}>
-                <StyledAutocomplete
-                  id="interests-autocomplete"
-                  options={[
-                    "관심 분야 1",
-                    "관심 분야 2",
-                    "관심 분야 3",
-                    "관심 분야 4",
-                    "기타",
-                  ]}
-                  isLoading={isInterestsLoading}
-                  loadingText="관심 분야 목록을 불러오는중..."
-                  placeholder="관심 분야를 입력하세요."
                 />
               </Box>
             </Stack>

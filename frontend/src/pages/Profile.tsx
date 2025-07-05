@@ -5,7 +5,6 @@ import {
   Button,
   CircularProgress,
   Container,
-  Divider,
   IconButton,
   InputAdornment,
   Snackbar,
@@ -28,7 +27,6 @@ import axiosInstance, {
   SERVER_HOST,
 } from "../utils/axiosInstance";
 import imageCompression from "browser-image-compression";
-import StyledAutocomplete from "../components/StyledAutocomplete";
 import CertificateSelect from "../components/CertificateSelect";
 
 // 사용자 정보 인터페이스
@@ -717,51 +715,6 @@ const Profile = () => {
                 )}
               </Button>
             </Stack>
-          </Stack>
-
-          {/* 구분선 */}
-          <Divider />
-
-          {/* 관심 분야 */}
-          <Stack
-            direction={{
-              xs: "column",
-              md: "row",
-            }}
-            gap={1}
-            alignItems="flex-start"
-          >
-            <Stack
-              direction="row"
-              width="150px"
-              paddingY={2}
-              alignItems="center"
-              gap={1}
-            >
-              {/* 컬럼명 */}
-              <Typography>관심 분야</Typography>
-
-              {/* 툴팁 */}
-              <Tooltip title="관심 있는 분야를 입력해주세요.">
-                <HelpOutlineRoundedIcon />
-              </Tooltip>
-            </Stack>
-
-            {/* 관심 분야 입력란 */}
-            <Box width="100%" flex={1}>
-              <StyledAutocomplete
-                id="interests-autocomplete"
-                options={[
-                  "정보처리기사",
-                  "SQLD",
-                  "ADsP",
-                  "컴퓨터활용능력",
-                  "기타",
-                ]}
-                loadingText="관심 분야 목록을 불러오는중..."
-                placeholder="관심 분야를 입력하세요."
-              />
-            </Box>
           </Stack>
         </Stack>
 

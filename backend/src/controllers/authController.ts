@@ -13,7 +13,7 @@ const allowedSymbolsForPassword = /^[a-zA-Z0-9!@#$%^&*?]*$/; // 허용된 문자
 
 // 사용자 회원가입
 export const register = async (req: Request, res: Response) => {
-  const { email, password, name, terms, certificates, interests } = req.body;
+  const { email, password, name, terms, certificates } = req.body;
   const connection = await dbPool.getConnection(); // 커넥션 획득
 
   try {
@@ -57,15 +57,14 @@ export const register = async (req: Request, res: Response) => {
 
     // Step 3: 사용자 저장 - 추가 필드 포함
     await connection.query(
-      `INSERT INTO user (email, password, name, terms, certificates, interests) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO user (email, password, name, terms, certificates) 
+       VALUES (?, ?, ?, ?, ?)`,
       [
         email,
         hashedPassword,
         name,
         JSON.stringify(terms || { privacy: true }),
         certificates || null, // 자격증 추가
-        interests || null, // 관심사 추가
       ]
     );
 
@@ -623,7 +622,7 @@ export const getUserInfo = async (req: Request, res: Response) => {
 
     // DB에서 사용자 정보 조회
     const rows = await dbPool.query(
-      `SELECT user_id, email, name, profile_image, user_uuid, certificates, interests 
+      `SELECT user_id, email, name, profile_image, user_uuid, certificates 
        FROM user WHERE user_id = ? AND state = 'active'`,
       [user.userId]
     );
@@ -649,7 +648,6 @@ export const getUserInfo = async (req: Request, res: Response) => {
         job: userInfo.job, // 직업 정보 추가
         experience: userInfo.experience, // 경력 정보 추가
         certificates: userInfo.certificates, // 자격증 정보 추가
-        interests: userInfo.interests, // 관심사 정보 추가
       },
     });
   } catch (err) {

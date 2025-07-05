@@ -31,8 +31,6 @@ export const chatTest = async (req: Request, res: Response) => {
             4) 선택된 직업별로 JSON 형식의 로드맵을 생성하세요.
               - 기술: 나무위키·공식 문서 URL 포함
               - 자격증: 시험 접수 페이지 URL 포함
-          답변은 항상 "~요" 체로, 3~5줄 내외로 간결하게 작성하세요.
-          모든 화폐는 반드시 원화(₩)로 표시하세요.
         `,
       },
       {
@@ -48,13 +46,15 @@ export const chatTest = async (req: Request, res: Response) => {
         content: `안녕하세요! 진로 상담을 받고 싶습니다. 
         제가 보유한 자격증은 ${certificates}이고, 
         관심 분야는 ${interests}입니다. 
-        ${message}`,
+        ${message}
+        답변은 항상 "~요" 체로, 3~5줄 내외로 간결하게 작성하세요.`,
       });
     } else {
       // 이후 대화에서는 메시지만 추가
       inputMessages.push({
         role: "user",
-        content: message,
+        content: `${message}
+        답변은 항상 "~요" 체로, 3~5줄 내외로 간결하게 작성하세요.`,
       });
     }
 

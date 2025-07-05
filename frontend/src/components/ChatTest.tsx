@@ -44,6 +44,8 @@ const ChatTest = () => {
       const response = await axiosInstance.post(`/chat/test`, {
         message: input,
         previousResponseId: responseId, // 직전 응답 ID 전달
+        interests: "정보기술(IT)", // 관심분야
+        certificates: "정보처리기사, SQLD", // 보유 자격증
       });
 
       if (response.data.success) {
@@ -82,10 +84,13 @@ const ChatTest = () => {
       />
 
       {/* 메시지 기록 */}
-      <Stack gap={2} sx={{
-        overflowY: "scroll",
-        height: "calc(100vh - 300px)", // Adjust height as needed
-      }}>
+      <Stack
+        gap={2}
+        sx={{
+          overflowY: "scroll",
+          height: "calc(100vh - 300px)", // Adjust height as needed
+        }}
+      >
         {messages.map((message, index) => (
           <Paper
             elevation={3}

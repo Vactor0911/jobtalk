@@ -5,11 +5,6 @@ import {
   Checkbox,
   Collapse,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   FormControlLabel,
   IconButton,
   InputAdornment,
@@ -96,12 +91,6 @@ const Register = () => {
   const [selectedCertificates, setSelectedCertificates] = useState<string[]>(
     []
   );
-
-  // 성공 Dialog 상태 추가
-  const [successDialog, setSuccessDialog] = useState({
-    open: false,
-    message: "",
-  });
 
   // 인증번호 입력 타이머 - 인증번호 전송 후 5분 카운트다운
   useEffect(() => {
@@ -385,12 +374,6 @@ const Register = () => {
     (term, index) => term.isOptional || isTermAgreed[index]
   );
 
-  // 성공 Dialog 닫기 핸들러
-  const handleSuccessDialogClose = useCallback(() => {
-    setSuccessDialog((prev) => ({ ...prev, open: false }));
-    navigate("/login"); // Dialog 닫을 때 로그인 페이지로 이동
-  }, [navigate]);
-
   // 선택된 자격증 목록 변경
   const handleSelectedCertificatesChange = useCallback(
     (_event: React.SyntheticEvent, value: string[]) => {
@@ -415,6 +398,7 @@ const Register = () => {
         return;
       }
 
+      // 이메일 인증 확인
       if (!isConfirmCodeChecked) {
         console.error("이메일 인증을 완료해주세요.");
         setSnackbar({
@@ -425,6 +409,7 @@ const Register = () => {
         return;
       }
 
+      // 별명 입력 확인
       if (!name) {
         console.error("별명을 입력해주세요.");
         setSnackbar({
@@ -435,6 +420,7 @@ const Register = () => {
         return;
       }
 
+      // 비밀번호와 비밀번호 재확인 일치 확인
       if (password !== passwordConfirm) {
         setSnackbar({
           open: true,
@@ -444,6 +430,7 @@ const Register = () => {
         return;
       }
 
+      // 이용약관 필수 동의 확인
       if (!allRequiredAgreed) {
         setSnackbar({
           open: true,
@@ -481,13 +468,8 @@ const Register = () => {
             },
           }
         );
-
-        // 성공 Dialog 표시 (Snackbar 대신)
-        setSuccessDialog({
-          open: true,
-          message: "회원가입이 성공적으로 완료되었습니다!",
-        });
-        // navigate("/login") 코드 제거 - Dialog 닫을 때 이동하도록 수정
+        
+        navigate("/login", { replace: true });
       } catch (error) {
         // 에러 처리
         if (axios.isAxiosError(error) && error.response) {
@@ -521,6 +503,7 @@ const Register = () => {
       allRequiredAgreed,
       isTermAgreed,
       selectedCertificates,
+      navigate,
     ]
   );
 
@@ -886,27 +869,6 @@ const Register = () => {
           </Stack>
         </Stack>
       </Stack>
-
-      {/* 성공 Dialog */}
-      <Dialog open={successDialog.open} onClose={handleSuccessDialogClose}>
-        <DialogTitle id="alert-dialog-title">회원가입 완료</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            {successDialog.message}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", padding: 2 }}>
-          <Button
-            onClick={handleSuccessDialogClose}
-            color="primary"
-            variant="contained"
-            autoFocus
-            sx={{ minWidth: "200px", py: 1 }}
-          >
-            로그인 페이지로 이동
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Snackbar 컴포넌트 추가 */}
       <Snackbar

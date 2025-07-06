@@ -340,7 +340,7 @@ const FindPassword = () => {
               <Box alignSelf="flex-end">
                 <PlainLink to="/login">
                   <Typography variant="subtitle1" color="text.secondary">
-                    로그인 페이지로 이동
+                    로그인으로 돌아가기
                   </Typography>
                 </PlainLink>
               </Box>

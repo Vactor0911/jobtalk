@@ -861,9 +861,6 @@ export const deleteAccount = async (req: Request, res: Response) => {
         // 파일이 존재하는지 확인 후 삭제
         if (fs.existsSync(profileImagePath)) {
           fs.unlinkSync(profileImagePath);
-          console.log(
-            `사용자 ID ${user.userId}의 프로필 이미지 삭제: ${profileImagePath}`
-          );
         }
 
         // 모든 종류의 프로필 이미지 삭제 (확장자 상관없이)
@@ -876,7 +873,6 @@ export const deleteAccount = async (req: Request, res: Response) => {
             if (file.startsWith(userPrefix)) {
               const filePath = path.join(profileDir, file);
               fs.unlinkSync(filePath);
-              console.log(`사용자의 추가 프로필 이미지 삭제: ${filePath}`);
             }
           });
         }

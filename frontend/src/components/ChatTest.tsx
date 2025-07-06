@@ -51,7 +51,6 @@ const ChatTest = () => {
       if (response.data.success) {
         messages.push(response.data.answer);
         setResponseId(response.data.responseId); // 응답 ID 저장
-        console.log("응답:", response.data);
       } else {
         messages.push("메시지 전송 실패");
       }

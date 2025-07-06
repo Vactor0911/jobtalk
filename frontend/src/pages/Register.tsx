@@ -732,12 +732,17 @@ const Register = () => {
               </Stack>
 
               {/* 자격증 입력란 */}
-              <Box width="100%" flex={1}>
+              <Stack width="100%" flex={1} gap={0.5}>
                 <CertificateSelect
                   value={selectedCertificates}
                   onChange={handleSelectedCertificatesChange}
                 />
-              </Box>
+
+                {/* 안내 문구 */}
+                <Typography variant="subtitle2" color="text.secondary">
+                  직접 입력 시 결과가 부정확해질 수 있습니다.
+                </Typography>
+              </Stack>
             </Stack>
           </Stack>
 

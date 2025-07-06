@@ -681,7 +681,6 @@ const Profile = () => {
               </Tooltip>
             </Stack>
 
-            {/* 자격증 입력란과 수정 버튼을 함께 배치 */}
             <Stack width="100%" flex={1} gap={0.5}>
               <Stack direction="row" gap={1}>
                 {/* 자격증 입력란 */}
@@ -717,6 +716,7 @@ const Profile = () => {
                 </Button>
               </Stack>
 
+              {/* 안내 문구 */}
               <Typography
                 variant="subtitle2"
                 color="text.secondary"

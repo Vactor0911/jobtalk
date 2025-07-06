@@ -59,6 +59,13 @@ export const theme = responsiveFontSizes(
           },
         },
       },
+      MuiTypography: {
+        styleOverrides: {
+          root: {
+            wordBreak: "keep-all",
+          },
+        },
+      },
     },
   })
 );

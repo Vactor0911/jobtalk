@@ -709,12 +709,11 @@ const Register = () => {
             />
           </Stack>
 
-          {/* 추가 정보 입력 폼 */}
+          {/* 자격증 입력 폼 */}
           <Stack gap={1}>
-            <SectionHeader title="추가 정보 (선택사항)" />
+            <SectionHeader title="자격증 (선택사항)" />
 
             {/* 자격증 입력란 */}
-            {/* 보유 증격증 */}
             <Stack direction="column" gap={1} alignItems="flex-start">
               <Stack
                 direction="row"
@@ -849,7 +848,6 @@ const Register = () => {
                     in={isTermExpanded[index]}
                     collapsedSize={60}
                     sx={{
-                      maxHeight: "150px",
                       overflowY: "auto",
                     }}
                   >

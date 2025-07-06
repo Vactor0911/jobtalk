@@ -1,7 +1,6 @@
 import { Stack } from "@mui/material";
 import TitledContainer from "../components/TitledContainer";
 import { Panel, PanelGroup } from "react-resizable-panels";
-import Test from "../components/Test";
 import StyledPanelResizeHandle from "../components/StyledPanelResizeHandle";
 import ChatTest from "../components/ChatTest";
 
@@ -31,7 +30,7 @@ const Workspace = () => {
           }}
         >
           <TitledContainer title="로드맵">
-            <Test />
+            {/* TODO: 로드맵 뷰어 구현 */}
           </TitledContainer>
         </Panel>
 

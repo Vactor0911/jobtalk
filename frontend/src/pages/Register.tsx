@@ -709,12 +709,11 @@ const Register = () => {
             />
           </Stack>
 
-          {/* 추가 정보 입력 폼 */}
+          {/* 자격증 입력 폼 */}
           <Stack gap={1}>
-            <SectionHeader title="추가 정보 (선택사항)" />
+            <SectionHeader title="자격증 (선택사항)" />
 
             {/* 자격증 입력란 */}
-            {/* 보유 증격증 */}
             <Stack direction="column" gap={1} alignItems="flex-start">
               <Stack
                 direction="row"
@@ -733,12 +732,17 @@ const Register = () => {
               </Stack>
 
               {/* 자격증 입력란 */}
-              <Box width="100%" flex={1}>
+              <Stack width="100%" flex={1} gap={0.5}>
                 <CertificateSelect
                   value={selectedCertificates}
                   onChange={handleSelectedCertificatesChange}
                 />
-              </Box>
+
+                {/* 안내 문구 */}
+                <Typography variant="subtitle2" color="text.secondary">
+                  직접 입력 시 결과가 부정확해질 수 있습니다.
+                </Typography>
+              </Stack>
             </Stack>
           </Stack>
 
@@ -849,7 +853,6 @@ const Register = () => {
                     in={isTermExpanded[index]}
                     collapsedSize={60}
                     sx={{
-                      maxHeight: "150px",
                       overflowY: "auto",
                     }}
                   >

@@ -651,10 +651,10 @@ const Profile = () => {
           </Stack>
         </Stack>
 
-        {/* 경력 */}
+        {/* 자격증 */}
         <Stack gap={3}>
           {/* 헤더 */}
-          <SectionHeader title="경력" variant="h6" />
+          <SectionHeader title="자격증" variant="h6" />
 
           {/* 보유 증격증 */}
           <Stack
@@ -681,39 +681,48 @@ const Profile = () => {
               </Tooltip>
             </Stack>
 
-            {/* 자격증 입력란과 수정 버튼을 함께 배치 */}
-            <Stack direction="row" gap={1} width="100%" flex={1}>
-              {/* 자격증 입력란 */}
-              <Box width="100%" flex={1}>
-                <CertificateSelect
-                  value={selectedCertificates}
-                  onChange={handleSelectedCertificatesChange}
-                />
-              </Box>
+            <Stack width="100%" flex={1} gap={0.5}>
+              <Stack direction="row" gap={1}>
+                {/* 자격증 입력란 */}
+                <Box width="100%" flex={1}>
+                  <CertificateSelect
+                    value={selectedCertificates}
+                    onChange={handleSelectedCertificatesChange}
+                  />
+                </Box>
 
-              {/* 자격증 수정 버튼 */}
-              <Button
-                variant="outlined"
-                onClick={handleUpdateCertificatesButtonClick}
-                disabled={isCertificatesUpdating}
-                sx={{
-                  paddingX: 3,
-                  borderRadius: 2,
-                  minWidth: "80px",
-                }}
+                {/* 자격증 수정 버튼 */}
+                <Button
+                  variant="outlined"
+                  onClick={handleUpdateCertificatesButtonClick}
+                  disabled={isCertificatesUpdating}
+                  sx={{
+                    paddingX: 3,
+                    borderRadius: 2,
+                    minWidth: "80px",
+                  }}
+                >
+                  {isCertificatesUpdating ? (
+                    <CircularProgress size={20} />
+                  ) : (
+                    <Typography
+                      variant="subtitle1"
+                      whiteSpace="nowrap"
+                      fontWeight="bold"
+                    >
+                      수정
+                    </Typography>
+                  )}
+                </Button>
+              </Stack>
+
+              {/* 안내 문구 */}
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
               >
-                {isCertificatesUpdating ? (
-                  <CircularProgress size={20} />
-                ) : (
-                  <Typography
-                    variant="subtitle1"
-                    whiteSpace="nowrap"
-                    fontWeight="bold"
-                  >
-                    수정
-                  </Typography>
-                )}
-              </Button>
+                직접 입력 시 결과가 부정확해질 수 있습니다.
+              </Typography>
             </Stack>
           </Stack>
         </Stack>

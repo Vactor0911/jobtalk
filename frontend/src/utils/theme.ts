@@ -56,6 +56,7 @@ export const theme = responsiveFontSizes(
         styleOverrides: {
           tooltip: {
             fontSize: "0.9rem",
+            wordBreak: "keep-all",
           },
         },
       },

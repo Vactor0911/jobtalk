@@ -1,8 +1,9 @@
 import {
+  Button,
   Grid,
+  keyframes,
   List,
   ListItem,
-  ListItemIcon,
   Paper,
   Stack,
   Tooltip,
@@ -11,6 +12,19 @@ import {
 import interests from "../../assets/interests.json";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import CircleRoundedIcon from "@mui/icons-material/CircleRounded";
+import EastRoundedIcon from "@mui/icons-material/EastRounded";
+
+const arrowHoverAnimation = keyframes`
+  0% {
+    transform: translate(120%, -50%);
+  }
+  50% {
+    transform: translate(150%, -50%);
+  }
+  100% {
+    transform: translate(120%, -50%);
+  }
+`;
 
 const InterestsView = () => {
   return (
@@ -28,14 +42,14 @@ const InterestsView = () => {
             variant="outlined"
             sx={{
               height: "100%",
-              background: "#e8e8e8",
+              background: "#f5f5f5",
               borderRadius: 3,
               "&:hover": {
                 boxShadow: 7,
               },
             }}
           >
-            <Stack padding={2} paddingY={1}>
+            <Stack padding={3} gap={1} height="100%">
               {/* 헤더 */}
               <Stack direction="row" alignItems="center" color={interest.color}>
                 <Typography variant="h6">{interest.name}</Typography>
@@ -51,15 +65,59 @@ const InterestsView = () => {
               </Stack>
 
               {/* 예시 직종 */}
-              <List>
+              <List dense>
                 {interest.examples.map((example, index) => (
-                  <ListItem key={`${interest.name}-${index}`}>
-                    <ListItemIcon>
-                      <CircleRoundedIcon />
-                    </ListItemIcon>
+                  <ListItem
+                    key={`${interest.name}-${index}`}
+                    disablePadding
+                    sx={{
+                      paddingLeft: 1,
+                    }}
+                  >
+                    <CircleRoundedIcon
+                      sx={{
+                        fontSize: "0.5rem",
+                        marginRight: 1,
+                      }}
+                    />
+                    <Typography variant="subtitle1" color="text.secondary">
+                      {example}
+                    </Typography>
                   </ListItem>
                 ))}
               </List>
+
+              {/* 선택하기 버튼 */}
+              <Button
+                variant="contained"
+                sx={{
+                  marginTop: "auto",
+                  borderRadius: 3,
+                  boxShadow: 1,
+                  "--variant-containedBg": `${interest.color} !important`,
+                  "&:hover .MuiSvgIcon-root": {
+                    animation: `${arrowHoverAnimation} 0.75s ease-in-out infinite`,
+                  },
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  color="white"
+                  position="relative"
+                >
+                  선택하기
+                  {/* 화살표 아이콘 */}
+                  <EastRoundedIcon
+                    sx={{
+                      position: "absolute",
+                      top: "50%",
+                      right: 0,
+                      transform: "translate(120%, -50%)",
+                    }}
+                  />
+                </Typography>
+              </Button>
             </Stack>
           </Paper>
         </Grid>

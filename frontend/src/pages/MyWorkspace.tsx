@@ -35,7 +35,7 @@ const WORKSPACES = [
 ];
 
 const MyWorkspace = () => {
-  const [workspaces, setWorkspaces] = useState(WORKSPACES);
+  const [workspaces] = useState(WORKSPACES);
 
   return (
     <Container maxWidth="xl">

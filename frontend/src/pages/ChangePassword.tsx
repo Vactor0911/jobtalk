@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Box,
   Button,
@@ -7,11 +7,6 @@ import {
   InputAdornment,
   Stack,
   Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
 } from "@mui/material";
 import OutlinedTextField from "../components/OutlinedTextField";
 import PlainLink from "../components/PlainLinkProps";
@@ -30,18 +25,13 @@ const ChangePassword = () => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
 
-  // 성공 Dialog 상태 추가
-  const [successDialog, setSuccessDialog] = useState({
-    open: false,
-    message: "",
-  });
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isPasswordConfirmVisible, setIsPasswordCheckVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   // 이메일 정보 가져오기 (location.state에서)
   useEffect(() => {
@@ -107,7 +97,7 @@ const ChangePassword = () => {
       const csrfToken = await getCsrfToken();
 
       // 비밀번호 재설정 요청
-      await axiosInstance.post(
+      const response = await axiosInstance.post(
         "/auth/resetPassword",
         {
           email,
@@ -120,11 +110,16 @@ const ChangePassword = () => {
         }
       );
 
-      // 성공 Dialog 표시
-      setSuccessDialog({
-        open: true,
-        message: "비밀번호가 성공적으로 변경되었습니다!",
-      });
+      // 비밀번호 재설정 성공
+      if (response.data.success) {
+        enqueueSnackbar("비밀번호가 성공적으로 변경되었습니다.", {
+          variant: "success",
+        });
+        // 비밀번호 변경 후 로그인 페이지로 리다이렉트
+        navigate("/login", { replace: true });
+      } else {
+        throw new Error(response.data.message || "비밀번호 변경 실패");
+      }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         enqueueSnackbar(
@@ -146,13 +141,14 @@ const ChangePassword = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [email, enqueueSnackbar, password, passwordConfirm]);
+  }, [email, enqueueSnackbar, navigate, password, passwordConfirm]);
 
-  // 성공 Dialog 닫기 핸들러
-  const handleSuccessDialogClose = useCallback(() => {
-    setSuccessDialog((prev) => ({ ...prev, open: false }));
-    navigate("/login"); // Dialog 닫을 때 로그인 페이지로 이동
-  }, [navigate]);
+  // 페이지 마운트 시 비밀번호 입력란 포커스
+  useEffect(() => {
+    if (passwordInputRef.current) {
+      passwordInputRef.current.focus();
+    }
+  }, []);
 
   return (
     <Container maxWidth="xs">
@@ -174,7 +170,7 @@ const ChangePassword = () => {
             {/* 비밀번호 변경 헤더 */}
             <SectionHeader title="비밀번호 변경" />
 
-            <Stack gap={2}>
+            <Stack component="form" gap={2}>
               {/* 이메일 입력란 (읽기 전용) */}
               <Stack gap={1}>
                 <Stack direction="row" gap={1}>
@@ -191,6 +187,7 @@ const ChangePassword = () => {
 
               {/* 비밀번호 입력란 */}
               <OutlinedTextField
+                inputRef={passwordInputRef}
                 label="새 비밀번호"
                 value={password}
                 onChange={handlePasswordChange}
@@ -245,7 +242,7 @@ const ChangePassword = () => {
                 }}
               >
                 <Typography variant="h6" color="white">
-                  {isSubmitting ? "변경 중..." : "비밀번호 변경"}
+                  비밀번호 변경
                 </Typography>
               </Button>
 
@@ -264,32 +261,6 @@ const ChangePassword = () => {
           </Stack>
         </Stack>
       </Stack>
-
-      {/* 성공 Dialog */}
-      <Dialog
-        open={successDialog.open}
-        onClose={handleSuccessDialogClose}
-        aria-labelledby="success-dialog-title"
-        aria-describedby="success-dialog-description"
-      >
-        <DialogTitle id="success-dialog-title">비밀번호 변경 완료</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="success-dialog-description">
-            {successDialog.message}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", padding: 2 }}>
-          <Button
-            onClick={handleSuccessDialogClose}
-            color="primary"
-            variant="contained"
-            autoFocus
-            sx={{ minWidth: "200px", py: 1 }}
-          >
-            로그인 페이지로 이동
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Container>
   );
 };

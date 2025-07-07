@@ -47,7 +47,7 @@ const TEMP_QUALIFICATIONS = [
 // 임시 자격증 데이터를 DB에 저장하는 함수
 const loadTempQualifications = async (connection: any) => {
   try {
-    console.log("⚠️ 임시 자격증 데이터 로드 시작...");
+    console.log("임시 자격증 데이터 로드 시작...");
 
     // 트랜잭션 시작
     await connection.beginTransaction();
@@ -66,7 +66,7 @@ const loadTempQualifications = async (connection: any) => {
       count++;
     }
 
-    console.log(`✅ ${count}개 임시 자격증 데이터 DB 저장 완료`);
+    console.log(`${count}개 임시 자격증 데이터 DB 저장 완료`);
 
     // 트랜잭션 커밋
     await connection.commit();
@@ -113,8 +113,8 @@ export const syncQualificationsToDatabase = async () => {
       });
 
       const fullUrl = `${QUALIFICATION_API_BASE_URL}/getList?${queryParams.toString()}`;
-      console.log("📍 요청 URL:", fullUrl);
-      console.log("📍 서비스키 인코딩 상태:", API_KEY.substring(0, 30) + "...");
+      console.log("요청 URL:", fullUrl);
+      console.log("서비스키 인코딩 상태:", API_KEY.substring(0, 30) + "...");
 
       try {
         // 공공데이터 포털 API 호출
@@ -126,8 +126,8 @@ export const syncQualificationsToDatabase = async () => {
           },
         });
 
-        console.log("✅ API 응답 상태:", response.status);
-        console.log("📄 응답 데이터 타입:", typeof response.data);
+        console.log("API 응답 상태:", response.status);
+        console.log("응답 데이터 타입:", typeof response.data);
 
         // HTML 응답인지 확인
         const responseData = response.data;
@@ -138,12 +138,12 @@ export const syncQualificationsToDatabase = async () => {
             responseData.includes("<meta") ||
             responseData.includes("<head"))
         ) {
-          console.log("⚠️ API가 XML 대신 HTML 페이지를 반환했습니다");
+          console.log("API가 XML 대신 HTML 페이지를 반환했습니다");
           console.log(
-            "⚠️ 이는 API 키가 아직 완전히 활성화되지 않았음을 의미합니다"
+            "이는 API 키가 아직 완전히 활성화되지 않았음을 의미합니다"
           );
           console.log(
-            "📄 HTML 응답 (처음 100자):",
+            "HTML 응답 (처음 100자):",
             responseData.substring(0, 100)
           );
 
@@ -161,11 +161,11 @@ export const syncQualificationsToDatabase = async () => {
 
         // 에러 체크
         const header = parsedData?.response?.header;
-        console.log("📋 API 헤더:", header);
+        console.log("API 헤더:", header);
 
         if (header?.resultCode !== "00") {
-          console.error(`❌ API 오류 (${qualgbcd}):`, header?.resultMsg);
-          console.error("❌ 전체 헤더 정보:", header);
+          console.error(`API 오류 (${qualgbcd}):`, header?.resultMsg);
+          console.error("전체 헤더 정보:", header);
           continue;
         }
 
@@ -173,8 +173,8 @@ export const syncQualificationsToDatabase = async () => {
         const responseBody = parsedData?.response?.body;
         const items = responseBody?.items;
 
-        console.log("📦 Items 데이터 존재:", !!items);
-        console.log("📦 Items 타입:", typeof items);
+        console.log("Items 데이터 존재:", !!items);
+        console.log("Items 타입:", typeof items);
 
         if (items) {
           let qualifications = [];
@@ -185,7 +185,7 @@ export const syncQualificationsToDatabase = async () => {
             qualifications = [items.item];
           }
 
-          console.log("📊 원시 자격증 데이터 개수:", qualifications.length);
+          console.log("원시 자격증 데이터 개수:", qualifications.length);
 
           // 종목코드와 종목명만 추출
           const processedData = qualifications
@@ -197,25 +197,25 @@ export const syncQualificationsToDatabase = async () => {
 
           allQualifications = allQualifications.concat(processedData);
           console.log(
-            `✅ ${qualgbcd} - ${processedData.length}개 데이터 수집 완료`
+            `${qualgbcd} - ${processedData.length}개 데이터 수집 완료`
           );
 
           // 샘플 데이터 출력
           if (processedData.length > 0) {
-            console.log("📋 샘플 데이터:", processedData.slice(0, 3));
+            console.log("샘플 데이터:", processedData.slice(0, 3));
           }
         } else {
-          console.log("❌ Items 데이터가 없습니다.");
+          console.log("Items 데이터가 없습니다.");
         }
       } catch (apiError: any) {
-        console.error(`❌ ${qualgbcd} API 호출 실패:`, apiError.message);
+        console.error(`${qualgbcd} API 호출 실패:`, apiError.message);
         if (apiError.response) {
-          console.error("❌ 응답 상태:", apiError.response.status);
-          console.error("❌ 응답 데이터:", apiError.response.data);
+          console.error("응답 상태:", apiError.response.status);
+          console.error("응답 데이터:", apiError.response.data);
         }
 
         // API 오류 발생 - 임시 데이터 사용으로 전환
-        console.log("⚠️ API 오류로 인해 임시 데이터를 사용합니다.");
+        console.log("API 오류로 인해 임시 데이터를 사용합니다.");
         return await loadTempQualifications(connection);
       }
     }
@@ -237,7 +237,7 @@ export const syncQualificationsToDatabase = async () => {
 
     // 데이터가 없으면 임시 데이터 사용
     if (uniqueQualifications.length === 0) {
-      console.log("⚠️ API에서 가져온 데이터가 없어 임시 데이터를 사용합니다.");
+      console.log("API에서 가져온 데이터가 없어 임시 데이터를 사용합니다.");
       return await loadTempQualifications(connection);
     }
 
@@ -273,7 +273,7 @@ export const syncQualificationsToDatabase = async () => {
     console.error("자격증 데이터 동기화 오류:", error.message);
 
     // 어떤 이유든 오류가 발생하면 임시 데이터 로드
-    console.log("⚠️ 오류 발생으로 임시 데이터를 사용합니다.");
+    console.log("오류 발생으로 임시 데이터를 사용합니다.");
     try {
       return await loadTempQualifications(connection);
     } catch (tempError: any) {

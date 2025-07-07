@@ -1,20 +1,13 @@
 import {
-  Alert,
   Box,
   Button,
   Checkbox,
   Collapse,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   FormControlLabel,
   IconButton,
   InputAdornment,
   Paper,
-  Snackbar,
   Stack,
   Tooltip,
   Typography,
@@ -39,6 +32,7 @@ import { jobTalkLoginStateAtom } from "../state";
 import { useAtomValue } from "jotai";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import CertificateSelect from "../components/CertificateSelect";
+import { useSnackbar } from "notistack";
 
 // 이용약관 데이터
 interface TermsOfService {
@@ -64,13 +58,7 @@ const termsOfServices: TermsOfService[] = [
 
 const Register = () => {
   const navigate = useNavigate();
-
-  // Snackbar 상태 추가
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "info" as "success" | "error" | "warning" | "info",
-  });
+  const { enqueueSnackbar } = useSnackbar();
 
   const loginState = useAtomValue(jobTalkLoginStateAtom);
   const [email, setEmail] = useState("");
@@ -97,12 +85,6 @@ const Register = () => {
     []
   );
 
-  // 성공 Dialog 상태 추가
-  const [successDialog, setSuccessDialog] = useState({
-    open: false,
-    message: "",
-  });
-
   // 인증번호 입력 타이머 - 인증번호 전송 후 5분 카운트다운
   useEffect(() => {
     if (!isConfirmCodeSent || confirmTimeLeft <= 0 || isConfirmCodeChecked) {
@@ -113,19 +95,24 @@ const Register = () => {
       setConfirmTimeLeft((prevTime) => {
         // 남은 시간이 0이 되면 알림 표시
         if (prevTime <= 1 && !isConfirmCodeChecked) {
-          setSnackbar({
-            open: true,
-            message:
-              "인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.",
-            severity: "error",
-          });
+          enqueueSnackbar(
+            "인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.",
+            {
+              variant: "error",
+            }
+          );
         }
         return prevTime - 1;
       });
     }, 1000);
 
     return () => clearInterval(confirmCodeTimer); // 컴포넌트 언마운트 시 타이머 정리
-  }, [isConfirmCodeChecked, confirmTimeLeft, isConfirmCodeSent]);
+  }, [
+    isConfirmCodeChecked,
+    confirmTimeLeft,
+    isConfirmCodeSent,
+    enqueueSnackbar,
+  ]);
 
   // 이메일 입력
   const handleEmailChange = useCallback(
@@ -147,10 +134,8 @@ const Register = () => {
   const handleConfirmCodeSendButtonClick = useCallback(async () => {
     // 이미 인증번호를 확인했다면 종료
     if (isConfirmCodeChecked) {
-      setSnackbar({
-        open: true,
-        message: "이미 인증번호를 확인했습니다.",
-        severity: "info",
+      enqueueSnackbar("이미 인증번호를 확인했습니다.", {
+        variant: "info",
       });
       return;
     }
@@ -188,33 +173,32 @@ const Register = () => {
 
       setIsConfirmCodeSent(true); // 인증번호 전송 여부를 true로 설정
       setConfirmTimeLeft(300); // 타이머를 5분(300초)으로 초기화
-      setSnackbar({
-        open: true,
-        message: "인증번호가 이메일로 발송되었습니다.",
-        severity: "success",
+      enqueueSnackbar("인증번호가 이메일로 발송되었습니다.", {
+        variant: "success",
       });
     } catch (error) {
       // 요청 실패 시 알림
       if (axios.isAxiosError(error) && error.response) {
-        setSnackbar({
-          open: true,
-          message: `이메일 전송 실패: ${
+        enqueueSnackbar(
+          `이메일 전송 실패: ${
             error.response.data?.message || "알 수 없는 오류"
           }`,
-          severity: "error",
-        });
+          {
+            variant: "error",
+          }
+        );
       } else {
-        console.error("요청 오류:", (error as Error).message);
-        setSnackbar({
-          open: true,
-          message: "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
-          severity: "error",
-        });
+        enqueueSnackbar(
+          "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
+          {
+            variant: "error",
+          }
+        );
       }
     } finally {
       setIsConfirmCodeSending(false);
     }
-  }, [email, isConfirmCodeChecked]);
+  }, [email, enqueueSnackbar, isConfirmCodeChecked]);
 
   // 타이머 시간 포맷팅
   const getFormattedTime = useCallback(() => {
@@ -237,30 +221,27 @@ const Register = () => {
   const handleConfirmCodeCheckButtonClick = useCallback(async () => {
     // 이미 확인된 인증번호라면 종료
     if (isConfirmCodeChecked) {
-      setSnackbar({
-        open: true,
-        message: "이미 인증번호를 확인했습니다.",
-        severity: "warning",
+      enqueueSnackbar("이미 인증번호를 확인했습니다.", {
+        variant: "warning",
       });
       return;
     }
 
     // 시간이 초과된 경우
     if (confirmTimeLeft <= 0) {
-      setSnackbar({
-        open: true,
-        message: "인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.",
-        severity: "warning",
-      });
+      enqueueSnackbar(
+        "인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.",
+        {
+          variant: "warning",
+        }
+      );
       return;
     }
 
     // 인증번호가 비어있는 경우
     if (!confirmCode || confirmCode.length !== 6) {
-      setSnackbar({
-        open: true,
-        message: "유효한 인증번호를 입력해주세요 (6자리)",
-        severity: "warning",
+      enqueueSnackbar("유효한 인증번호를 입력해주세요 (6자리)", {
+        variant: "warning",
       });
       return;
     }
@@ -285,33 +266,36 @@ const Register = () => {
       );
 
       // 요청 성공 처리
-      setSnackbar({
-        open: true,
-        message: "인증번호 확인이 완료되었습니다.",
-        severity: "success",
+      enqueueSnackbar("인증번호 확인이 완료되었습니다.", {
+        variant: "success",
       });
       setIsConfirmCodeChecked(true); // 인증 성공
     } catch (error) {
       // 요청 실패 처리
       if (axios.isAxiosError(error) && error.response) {
-        setSnackbar({
-          open: true,
-          message: `"인증 실패\n" + ${
-            error.response.data?.message || "알 수 없는 오류"
-          }`,
-          severity: "error",
-        });
+        enqueueSnackbar(
+          `인증 실패: ${error.response.data?.message || "알 수 없는 오류"}`,
+          {
+            variant: "error",
+          }
+        );
       } else {
         console.error("요청 오류:", (error as Error).message);
-        setSnackbar({
-          open: true,
-          message:
-            "예기치 않은 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
-          severity: "error",
-        });
+        enqueueSnackbar(
+          "예기치 않은 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
+          {
+            variant: "error",
+          }
+        );
       }
     }
-  }, [confirmCode, confirmTimeLeft, email, isConfirmCodeChecked]);
+  }, [
+    confirmCode,
+    confirmTimeLeft,
+    email,
+    enqueueSnackbar,
+    isConfirmCodeChecked,
+  ]);
 
   // 비밀번호 입력
   const handleChangePassword = useCallback(
@@ -385,12 +369,6 @@ const Register = () => {
     (term, index) => term.isOptional || isTermAgreed[index]
   );
 
-  // 성공 Dialog 닫기 핸들러
-  const handleSuccessDialogClose = useCallback(() => {
-    setSuccessDialog((prev) => ({ ...prev, open: false }));
-    navigate("/login"); // Dialog 닫을 때 로그인 페이지로 이동
-  }, [navigate]);
-
   // 선택된 자격증 목록 변경
   const handleSelectedCertificatesChange = useCallback(
     (_event: React.SyntheticEvent, value: string[]) => {
@@ -406,49 +384,40 @@ const Register = () => {
 
       // 전송 전 입력값 검증
       if (!email || !password || !passwordConfirm) {
-        console.error("이메일 또는 비밀번호가 비어있으면 안됩니다.");
-        setSnackbar({
-          open: true,
-          message: "이메일 또는 비밀번호가 비어있으면 안됩니다.",
-          severity: "warning",
+        enqueueSnackbar("이메일 또는 비밀번호가 비어있습니다.", {
+          variant: "warning",
         });
         return;
       }
 
+      // 이메일 인증 확인
       if (!isConfirmCodeChecked) {
-        console.error("이메일 인증을 완료해주세요.");
-        setSnackbar({
-          open: true,
-          message: "이메일 인증을 완료해주세요.",
-          severity: "warning",
+        enqueueSnackbar("이메일 인증이 완료되지 않았습니다.", {
+          variant: "warning",
         });
         return;
       }
 
+      // 별명 입력 확인
       if (!name) {
-        console.error("별명을 입력해주세요.");
-        setSnackbar({
-          open: true,
-          message: "별명을 입력해주세요.",
-          severity: "warning",
+        enqueueSnackbar("별명을 입력해주세요.", {
+          variant: "warning",
         });
         return;
       }
 
+      // 비밀번호와 비밀번호 재확인 일치 확인
       if (password !== passwordConfirm) {
-        setSnackbar({
-          open: true,
-          message: "비밀번호가 일치하지 않습니다.",
-          severity: "error",
+        enqueueSnackbar("비밀번호가 일치하지 않습니다.", {
+          variant: "error",
         });
         return;
       }
 
+      // 이용약관 필수 동의 확인
       if (!allRequiredAgreed) {
-        setSnackbar({
-          open: true,
-          message: "필수 약관에 모두 동의해 주세요.",
-          severity: "warning",
+        enqueueSnackbar("필수 약관에 모두 동의해 주세요.", {
+          variant: "warning",
         });
         return;
       }
@@ -463,7 +432,7 @@ const Register = () => {
         };
 
         // 서버로 회원가입 요청 전송
-        await axiosInstance.post(
+        const response = await axiosInstance.post(
           "/auth/register",
           {
             email,
@@ -482,33 +451,33 @@ const Register = () => {
           }
         );
 
-        // 성공 Dialog 표시 (Snackbar 대신)
-        setSuccessDialog({
-          open: true,
-          message: "회원가입이 성공적으로 완료되었습니다!",
-        });
-        // navigate("/login") 코드 제거 - Dialog 닫을 때 이동하도록 수정
+        // 로그인 성공시
+        if (response.data.success) {
+          enqueueSnackbar("회원가입이 완료되었습니다.", {
+            variant: "success",
+          });
+
+          // 로그인 페이지로 이동
+          navigate("/login", { replace: true });
+        }
       } catch (error) {
         // 에러 처리
         if (axios.isAxiosError(error) && error.response) {
           const errorData = error.response.data;
-          console.error("서버가 오류를 반환했습니다:", errorData.message);
-          setSnackbar({
-            open: true,
-            message: `Error: ${errorData.message}`,
-            severity: "error",
+          enqueueSnackbar(`Error: ${errorData.message}`, {
+            variant: "error",
           });
         } else {
           console.error(
             "요청을 보내는 중 오류가 발생했습니다:",
             (error as Error).message
           );
-          setSnackbar({
-            open: true,
-            message:
-              "예기치 않은 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
-            severity: "error",
-          });
+          enqueueSnackbar(
+            "요청을 보내는 중 오류가 발생했습니다. 다시 시도해 주세요.",
+            {
+              variant: "error",
+            }
+          );
         }
       }
     },
@@ -519,20 +488,11 @@ const Register = () => {
       isConfirmCodeChecked,
       name,
       allRequiredAgreed,
+      enqueueSnackbar,
       isTermAgreed,
       selectedCertificates,
+      navigate,
     ]
-  );
-
-  // Snackbar 닫기 핸들러
-  const handleSnackbarClose = useCallback(
-    (_event?: React.SyntheticEvent | Event, reason?: string) => {
-      if (reason === "clickaway") {
-        return;
-      }
-      setSnackbar((prev) => ({ ...prev, open: false }));
-    },
-    []
   );
 
   // 로그인된 상태라면 이전 페이지로 이동
@@ -886,44 +846,6 @@ const Register = () => {
           </Stack>
         </Stack>
       </Stack>
-
-      {/* 성공 Dialog */}
-      <Dialog open={successDialog.open} onClose={handleSuccessDialogClose}>
-        <DialogTitle id="alert-dialog-title">회원가입 완료</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            {successDialog.message}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", padding: 2 }}>
-          <Button
-            onClick={handleSuccessDialogClose}
-            color="primary"
-            variant="contained"
-            autoFocus
-            sx={{ minWidth: "200px", py: 1 }}
-          >
-            로그인 페이지로 이동
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar 컴포넌트 추가 */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 };

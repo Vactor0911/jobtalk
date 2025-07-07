@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Box,
   Button,
@@ -7,13 +7,6 @@ import {
   InputAdornment,
   Stack,
   Typography,
-  Snackbar,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
 } from "@mui/material";
 import OutlinedTextField from "../components/OutlinedTextField";
 import PlainLink from "../components/PlainLinkProps";
@@ -25,23 +18,12 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import axiosInstance, { getCsrfToken } from "../utils/axiosInstance";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router";
+import { useSnackbar } from "notistack";
 
 const ChangePassword = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Snackbar 상태 추가
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "info" as "success" | "error" | "warning" | "info",
-  });
-
-  // 성공 Dialog 상태 추가
-  const [successDialog, setSuccessDialog] = useState({
-    open: false,
-    message: "",
-  });
+  const { enqueueSnackbar } = useSnackbar();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,6 +31,7 @@ const ChangePassword = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isPasswordConfirmVisible, setIsPasswordCheckVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   // 이메일 정보 가져오기 (location.state에서)
   useEffect(() => {
@@ -57,16 +40,12 @@ const ChangePassword = () => {
       setEmail(emailFromState);
     } else {
       // 이메일 정보가 없으면 비밀번호 찾기 페이지로 리다이렉트
-      setSnackbar({
-        open: true,
-        message: "잘못된 접근입니다. 비밀번호 찾기를 다시 진행해주세요.",
-        severity: "error",
+      enqueueSnackbar("잘못된 접근입니다. 비밀번호 찾기를 다시 진행해주세요.", {
+        variant: "error",
       });
-      setTimeout(() => {
-        navigate("/find-password");
-      }, 2000);
+      navigate("/find-password");
     }
-  }, [location.state, navigate]);
+  }, [enqueueSnackbar, location.state, navigate]);
 
   // 비밀번호 입력
   const handlePasswordChange = useCallback(
@@ -98,19 +77,16 @@ const ChangePassword = () => {
   const handleChangePasswordButtonClick = useCallback(async () => {
     // 입력값 검증
     if (!password || !passwordConfirm) {
-      setSnackbar({
-        open: true,
-        message: "모든 비밀번호 필드를 입력해주세요.",
-        severity: "warning",
+      enqueueSnackbar("모든 비밀번호 필드를 입력해주세요.", {
+        variant: "warning",
       });
       return;
     }
 
+    // 비밀번호와 비밀번호 확인이 일치하지 않는 경우
     if (password !== passwordConfirm) {
-      setSnackbar({
-        open: true,
-        message: "비밀번호가 일치하지 않습니다.",
-        severity: "error",
+      enqueueSnackbar("비밀번호가 일치하지 않습니다.", {
+        variant: "error",
       });
       return;
     }
@@ -122,7 +98,7 @@ const ChangePassword = () => {
       const csrfToken = await getCsrfToken();
 
       // 비밀번호 재설정 요청
-      await axiosInstance.post(
+      const response = await axiosInstance.post(
         "/auth/resetPassword",
         {
           email,
@@ -135,53 +111,54 @@ const ChangePassword = () => {
         }
       );
 
-      // 성공 Dialog 표시
-      setSuccessDialog({
-        open: true,
-        message: "비밀번호가 성공적으로 변경되었습니다!",
-      });
+      // 비밀번호 재설정 성공
+      if (response.data.success) {
+        enqueueSnackbar("비밀번호가 성공적으로 변경되었습니다.", {
+          variant: "success",
+        });
+        // 비밀번호 변경 후 로그인 페이지로 리다이렉트
+        navigate("/login", { replace: true });
+      } else {
+        throw new Error(response.data.message || "비밀번호 변경 실패");
+      }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        setSnackbar({
-          open: true,
-          message: `비밀번호 변경 실패: ${
+        enqueueSnackbar(
+          `비밀번호 변경 실패: ${
             error.response.data?.message || "알 수 없는 오류"
           }`,
-          severity: "error",
-        });
+          {
+            variant: "error",
+          }
+        );
       } else {
-        console.error("요청 오류:", (error as Error).message);
-        setSnackbar({
-          open: true,
-          message: "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
-          severity: "error",
-        });
+        enqueueSnackbar(
+          "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
+          {
+            variant: "error",
+          }
+        );
       }
     } finally {
       setIsSubmitting(false);
     }
-  }, [email, password, passwordConfirm]);
+  }, [email, enqueueSnackbar, navigate, password, passwordConfirm]);
 
-  // 성공 Dialog 닫기 핸들러
-  const handleSuccessDialogClose = useCallback(() => {
-    setSuccessDialog((prev) => ({ ...prev, open: false }));
-    navigate("/login"); // Dialog 닫을 때 로그인 페이지로 이동
-  }, [navigate]);
-
-  // Snackbar 닫기 핸들러
-  const handleSnackbarClose = useCallback(
-    (_event?: React.SyntheticEvent | Event, reason?: string) => {
-      if (reason === "clickaway") {
-        return;
-      }
-      setSnackbar((prev) => ({ ...prev, open: false }));
-    },
-    []
-  );
+  // 페이지 마운트 시 비밀번호 입력란 포커스
+  useEffect(() => {
+    if (passwordInputRef.current) {
+      passwordInputRef.current.focus();
+    }
+  }, []);
 
   return (
     <Container maxWidth="xs">
-      <Stack minHeight="100vh" justifyContent="center" pb={29.2}>
+      <Stack
+        minHeight="calc(100vh - 64px)"
+        justifyContent="center"
+        paddingY={4}
+        paddingBottom={10}
+      >
         <Stack gap={6}>
           {/* 로고 링크 버튼*/}
           <PlainLink to="/">
@@ -194,7 +171,7 @@ const ChangePassword = () => {
             {/* 비밀번호 변경 헤더 */}
             <SectionHeader title="비밀번호 변경" />
 
-            <Stack gap={2}>
+            <Stack component="form" gap={2}>
               {/* 이메일 입력란 (읽기 전용) */}
               <Stack gap={1}>
                 <Stack direction="row" gap={1}>
@@ -211,6 +188,7 @@ const ChangePassword = () => {
 
               {/* 비밀번호 입력란 */}
               <OutlinedTextField
+                inputRef={passwordInputRef}
                 label="새 비밀번호"
                 value={password}
                 onChange={handlePasswordChange}
@@ -265,7 +243,7 @@ const ChangePassword = () => {
                 }}
               >
                 <Typography variant="h6" color="white">
-                  {isSubmitting ? "변경 중..." : "비밀번호 변경"}
+                  비밀번호 변경
                 </Typography>
               </Button>
 
@@ -275,7 +253,7 @@ const ChangePassword = () => {
                 <Box alignSelf="flex-end">
                   <PlainLink to="/login">
                     <Typography variant="subtitle1" color="text.secondary">
-                      로그인 페이지로 이동
+                      로그인으로 돌아가기
                     </Typography>
                   </PlainLink>
                 </Box>
@@ -284,49 +262,6 @@ const ChangePassword = () => {
           </Stack>
         </Stack>
       </Stack>
-
-      {/* 성공 Dialog */}
-      <Dialog
-        open={successDialog.open}
-        onClose={handleSuccessDialogClose}
-        aria-labelledby="success-dialog-title"
-        aria-describedby="success-dialog-description"
-      >
-        <DialogTitle id="success-dialog-title">비밀번호 변경 완료</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="success-dialog-description">
-            {successDialog.message}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", padding: 2 }}>
-          <Button
-            onClick={handleSuccessDialogClose}
-            color="primary"
-            variant="contained"
-            autoFocus
-            sx={{ minWidth: "200px", py: 1 }}
-          >
-            로그인 페이지로 이동
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar 컴포넌트 */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 };

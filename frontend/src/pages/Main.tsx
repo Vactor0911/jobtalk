@@ -1,9 +1,5 @@
-import Test from "../components/Test";
-
 const Main = () => {
-  return (
-    <Test />
-  )
-}
+  return <>{/* 메인 페이지 구현 */}</>;
+};
 
 export default Main;

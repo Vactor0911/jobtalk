@@ -17,12 +17,6 @@ export const searchJobs = async (req: Request, res: Response) => {
       return;
     }
 
-    console.log(
-      `직업 검색 시작 - 키워드: "${keyword || "없음"}", 적성코드: ${
-        aptdCodes || "없음"
-      }, 테마코드: ${themeCode || "없음"}`
-    );
-
     // 첫 페이지 요청으로 전체 데이터 개수 확인
     const firstPageResponse = await axios.get(
       `${CAREER_API_BASE_URL}/jobs.json`,
@@ -40,10 +34,6 @@ export const searchJobs = async (req: Request, res: Response) => {
     // 페이지 정보 추출
     const { count, pageSize, pageIndex } = firstPageResponse.data;
     const totalPages = Math.ceil(count / pageSize);
-
-    console.log(`총 결과 수: ${count}개`);
-    console.log(`페이지 크기: ${pageSize}`);
-    console.log(`총 페이지 수: ${totalPages}`);
 
     // 모든 직업 정보를 저장할 배열
     const allJobs: { name: string; code: string | number }[] = [];
@@ -82,12 +72,6 @@ export const searchJobs = async (req: Request, res: Response) => {
             })
           );
         }
-        console.log(
-          `Fetching pages ${i} to ${Math.min(
-            i + BATCH_SIZE - 1,
-            totalPages
-          )}...`
-        );
         const batchResponses = await Promise.all(batchPromises);
         // Process each response in the batch
         batchResponses.forEach((response) => {
@@ -102,8 +86,6 @@ export const searchJobs = async (req: Request, res: Response) => {
       }
     }
 
-    console.log(`총 ${allJobs.length}개의 직업 정보를 가져왔습니다.`);
-
     // 중복 제거 (직업 코드 기준)
     const uniqueJobMap = new Map();
     allJobs.forEach((job) => {
@@ -113,9 +95,6 @@ export const searchJobs = async (req: Request, res: Response) => {
     });
 
     const uniqueJobs = Array.from(uniqueJobMap.values());
-    console.log(
-      `중복 제거 후 총 ${uniqueJobs.length}개의 고유 직업 정보가 있습니다.`
-    );
 
     // 결과 반환
     res.status(200).json({

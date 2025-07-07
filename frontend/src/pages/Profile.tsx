@@ -1,5 +1,4 @@
 import {
-  Alert,
   Avatar,
   Box,
   Button,
@@ -7,7 +6,6 @@ import {
   Container,
   IconButton,
   InputAdornment,
-  Snackbar,
   Stack,
   Tooltip,
   Typography,
@@ -28,6 +26,7 @@ import axiosInstance, {
 } from "../utils/axiosInstance";
 import imageCompression from "browser-image-compression";
 import CertificateSelect from "../components/CertificateSelect";
+import { enqueueSnackbar } from "notistack";
 
 // 사용자 정보 인터페이스
 interface UserInfo {
@@ -37,13 +36,6 @@ interface UserInfo {
   profileImage: string | null;
   certificates?: string | null;
   interests?: string | null;
-}
-
-// 스낵바 상태 인터페이스
-interface SnackbarState {
-  open: boolean;
-  message: string;
-  severity: "success" | "error" | "warning" | "info";
 }
 
 const Profile = () => {
@@ -72,13 +64,6 @@ const Profile = () => {
   // 작업 상태
   const [isNicknameUpdating, setIsNicknameUpdating] = useState(false);
   const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
-
-  // 알림 상태
-  const [snackbar, setSnackbar] = useState<SnackbarState>({
-    open: false,
-    message: "",
-    severity: "info",
-  });
 
   // 자격증
   const [selectedCertificates, setSelectedCertificates] = useState<string[]>(
@@ -124,13 +109,12 @@ const Profile = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("사용자 정보 조회 실패:", err);
-      setSnackbar({
-        open: true,
-        message:
-          err.response?.data?.message ||
-          "사용자 정보를 불러오는데 실패했습니다.",
-        severity: "error",
-      });
+      enqueueSnackbar(
+        err.response?.data?.message || "사용자 정보를 불러오는데 실패했습니다.",
+        {
+          variant: "error",
+        }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -178,12 +162,12 @@ const Profile = () => {
       const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
 
       if (!allowedTypes.includes(file.type)) {
-        setSnackbar({
-          open: true,
-          message:
-            "지원되지 않는 파일 형식입니다. JPG, PNG, GIF, WEBP 형식만 업로드할 수 있습니다.",
-          severity: "error",
-        });
+        enqueueSnackbar(
+          "지원되지 않는 파일 형식입니다. JPG, PNG 형식만 업로드할 수 있습니다.",
+          {
+            variant: "error",
+          }
+        );
         return;
       }
 
@@ -195,10 +179,8 @@ const Profile = () => {
 
         // 파일 크기 검증 (4MB)
         if (compressedFile.size > 4 * 1024 * 1024) {
-          setSnackbar({
-            open: true,
-            message: "파일 크기는 4MB를 초과할 수 없습니다.",
-            severity: "error",
+          enqueueSnackbar("파일 크기는 4MB를 초과할 수 없습니다.", {
+            variant: "error",
           });
           return;
         }
@@ -244,21 +226,18 @@ const Profile = () => {
           );
 
           // 성공 메시지 표시
-          setSnackbar({
-            open: true,
-            message: "프로필 이미지가 성공적으로 업로드되었습니다.",
-            severity: "success",
+          enqueueSnackbar("프로필 이미지가 성공적으로 업로드되었습니다.", {
+            variant: "success",
           });
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
-        console.error("프로필 이미지 업로드 실패:", err);
-        setSnackbar({
-          open: true,
-          message:
-            err.response?.data?.message || "이미지 업로드에 실패했습니다.",
-          severity: "error",
-        });
+        enqueueSnackbar(
+          err.response?.data?.message || "이미지 업로드에 실패했습니다.",
+          {
+            variant: "error",
+          }
+        );
       } finally {
         setIsUploading(false);
         // 파일 입력 초기화
@@ -272,20 +251,16 @@ const Profile = () => {
   const handleUpdateNickname = useCallback(async () => {
     // 입력값 검증
     if (!nickname.trim()) {
-      setSnackbar({
-        open: true,
-        message: "닉네임을 입력해주세요.",
-        severity: "error",
+      enqueueSnackbar("닉네임을 입력해주세요.", {
+        variant: "error",
       });
       return;
     }
 
     // 기존 닉네임과 동일한지 확인 - 추가된 부분
     if (nickname.trim() === userInfo?.name) {
-      setSnackbar({
-        open: true,
-        message: "기존 닉네임과 동일합니다.",
-        severity: "error",
+      enqueueSnackbar("기존 닉네임과 동일합니다.", {
+        variant: "error",
       });
       return;
     }
@@ -304,10 +279,8 @@ const Profile = () => {
       );
 
       if (response.data.success) {
-        setSnackbar({
-          open: true,
-          message: "닉네임이 성공적으로 변경되었습니다.",
-          severity: "success",
+        enqueueSnackbar("닉네임이 성공적으로 변경되었습니다.", {
+          variant: "success",
         });
 
         // 헤더에 즉시 닉네임 업데이트 알림
@@ -325,11 +298,12 @@ const Profile = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("닉네임 변경 실패:", err);
-      setSnackbar({
-        open: true,
-        message: err.response?.data?.message || "닉네임 변경에 실패했습니다.",
-        severity: "error",
-      });
+      enqueueSnackbar(
+        err.response?.data?.message || "닉네임 변경에 실패했습니다.",
+        {
+          variant: "error",
+        }
+      );
     } finally {
       setIsNicknameUpdating(false);
     }
@@ -339,38 +313,30 @@ const Profile = () => {
   const handlePasswordUpateButtonClick = useCallback(async () => {
     // 입력값 검증
     if (!prevPassword) {
-      setSnackbar({
-        open: true,
-        message: "현재 비밀번호를 입력해주세요.",
-        severity: "error",
+      enqueueSnackbar("현재 비밀번호를 입력해주세요.", {
+        variant: "error",
       });
       return;
     }
 
     if (!newPassword) {
-      setSnackbar({
-        open: true,
-        message: "새 비밀번호를 입력해주세요.",
-        severity: "error",
+      enqueueSnackbar("새 비밀번호를 입력해주세요.", {
+        variant: "error",
       });
       return;
     }
 
     if (newPassword !== newPasswordConfirm) {
-      setSnackbar({
-        open: true,
-        message: "새 비밀번호와 확인 비밀번호가 일치하지 않습니다.",
-        severity: "error",
+      enqueueSnackbar("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.", {
+        variant: "error",
       });
       return;
     }
 
     // 현재 비밀번호와 새 비밀번호가 동일한지 확인
     if (prevPassword === newPassword) {
-      setSnackbar({
-        open: true,
-        message: "새 비밀번호는 현재 비밀번호와 달라야 합니다.",
-        severity: "error",
+      enqueueSnackbar("새 비밀번호는 현재 비밀번호와 달라야 합니다.", {
+        variant: "error",
       });
       return;
     }
@@ -393,10 +359,8 @@ const Profile = () => {
       );
 
       if (response.data.success) {
-        setSnackbar({
-          open: true,
-          message: "비밀번호가 성공적으로 변경되었습니다.",
-          severity: "success",
+        enqueueSnackbar("비밀번호가 성공적으로 변경되었습니다.", {
+          variant: "success",
         });
 
         // 비밀번호 입력 필드 초기화
@@ -407,11 +371,12 @@ const Profile = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("비밀번호 변경 실패:", err);
-      setSnackbar({
-        open: true,
-        message: err.response?.data?.message || "비밀번호 변경에 실패했습니다.",
-        severity: "error",
-      });
+      enqueueSnackbar(
+        err.response?.data?.message || "비밀번호 변경에 실패했습니다.",
+        {
+          variant: "error",
+        }
+      );
     } finally {
       setIsPasswordUpdating(false);
     }
@@ -447,10 +412,8 @@ const Profile = () => {
     const formattedInitialCertificates = initialCertificates.join(", ");
 
     if (formattedCertificates === formattedInitialCertificates) {
-      setSnackbar({
-        open: true,
-        message: "기존 자격증과 동일합니다.",
-        severity: "error",
+      enqueueSnackbar("기존 자격증과 동일합니다.", {
+        variant: "error",
       });
       return;
     }
@@ -466,31 +429,22 @@ const Profile = () => {
       );
 
       if (response.data.success) {
-        setSnackbar({
-          open: true,
-          message: "자격증 정보가 성공적으로 업데이트되었습니다.",
-          severity: "success",
+        enqueueSnackbar("자격증 정보가 성공적으로 업데이트되었습니다.", {
+          variant: "success",
         });
 
         // 초기값 업데이트 (변경사항 추적을 위해)
         setInitialCertificates([...selectedCertificates]);
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.error("자격증 업데이트 오류:", error);
-      setSnackbar({
-        open: true,
-        message: "자격증 정보 업데이트에 실패했습니다.",
-        severity: "error",
+      enqueueSnackbar("자격증 정보 업데이트에 실패했습니다.", {
+        variant: "error",
       });
     } finally {
       setIsCertificatesUpdating(false);
     }
   }, [initialCertificates, selectedCertificates]);
-
-  // 스낵바 닫기 핸들러
-  const handleCloseSnackbar = () => {
-    setSnackbar((prev) => ({ ...prev, open: false }));
-  };
 
   // 로딩 중 표시
   if (isLoading) {
@@ -717,10 +671,7 @@ const Profile = () => {
               </Stack>
 
               {/* 안내 문구 */}
-              <Typography
-                variant="subtitle2"
-                color="text.secondary"
-              >
+              <Typography variant="subtitle2" color="text.secondary">
                 직접 입력 시 결과가 부정확해질 수 있습니다.
               </Typography>
             </Stack>
@@ -813,22 +764,6 @@ const Profile = () => {
           </Stack>
         </Stack>
       </Stack>
-
-      {/* 알림 스낵바 */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 };

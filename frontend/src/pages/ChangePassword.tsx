@@ -80,6 +80,7 @@ const ChangePassword = () => {
       enqueueSnackbar("모든 비밀번호 필드를 입력해주세요.", {
         variant: "warning",
       });
+      return;
     }
 
     // 비밀번호와 비밀번호 확인이 일치하지 않는 경우

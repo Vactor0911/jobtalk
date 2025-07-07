@@ -53,9 +53,7 @@ const ChangePassword = () => {
       enqueueSnackbar("잘못된 접근입니다. 비밀번호 찾기를 다시 진행해주세요.", {
         variant: "error",
       });
-      setTimeout(() => {
-        navigate("/find-password");
-      }, 2000);
+      navigate("/find-password");
     }
   }, [enqueueSnackbar, location.state, navigate]);
 

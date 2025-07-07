@@ -181,10 +181,7 @@ const FindPassword = () => {
 
       // 인증 성공 시 비밀번호 재설정 페이지로 이동
       if (response.data.success && response.data.purpose === "resetPassword") {
-        // 잠시 후 페이지 이동 (사용자가 성공 메시지를 볼 수 있도록)
-        setTimeout(() => {
-          navigate("/change-password", { state: { email } });
-        }, 1000);
+        navigate("/change-password", { state: { email } });
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {

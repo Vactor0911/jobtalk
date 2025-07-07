@@ -432,7 +432,7 @@ const Register = () => {
         };
 
         // 서버로 회원가입 요청 전송
-        await axiosInstance.post(
+        const response = await axiosInstance.post(
           "/auth/register",
           {
             email,
@@ -451,7 +451,15 @@ const Register = () => {
           }
         );
 
-        navigate("/login", { replace: true });
+        // 로그인 성공시
+        if (response.data.success) {
+          enqueueSnackbar("회원가입이 완료되었습니다.", {
+            variant: "success",
+          });
+
+          // 로그인 페이지로 이동
+          navigate("/login", { replace: true });
+        }
       } catch (error) {
         // 에러 처리
         if (axios.isAxiosError(error) && error.response) {

@@ -196,8 +196,15 @@ const Header = () => {
 
   // 로고 클릭
   const handleLogoClick = useCallback(() => {
+    // 로그인 상태이면 워크스페이스로 이동
+    if (loginState.isLoggedIn) {
+      navigate("/workspace");
+      return;
+    }
+
+    // 로그인 상태가 아니면 메인 페이지로 이동
     navigate("/");
-  }, [navigate]);
+  }, [loginState.isLoggedIn, navigate]);
 
   // 프로필 버튼 클릭
   const handleProfileButtonClick = useCallback(() => {

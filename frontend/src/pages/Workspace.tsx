@@ -2,6 +2,7 @@ import { Button, Container, Stack, Typography } from "@mui/material";
 import RoadMapView from "../components/workspace/RoadMapView";
 import WorkspaceStepper from "../components/workspace/WorkspaceStepper";
 import { useState } from "react";
+import InterestsView from "../components/workspace/InterestsView";
 
 const Workspace = () => {
   const [step, setStep] = useState(1);
@@ -33,6 +34,8 @@ const Workspace = () => {
             다음
           </Button>
         </Stack>
+
+        <InterestsView />
       </Stack>
     </Container>
   );

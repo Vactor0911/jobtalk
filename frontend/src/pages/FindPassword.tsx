@@ -19,6 +19,7 @@ const FindPassword = () => {
   const [confirmTimeLeft, setConfirmTimeLeft] = useState(300);
   const [isConfirmCodeLoading, setIsConfirmCodeLoading] = useState(false);
   const [isConfirmCodeChecked, setIsConfirmCodeChecked] = useState(false);
+  const emailInputRef = useRef<HTMLInputElement>(null);
   const confirmCodeInputRef = useRef<HTMLInputElement>(null);
 
   // 인증번호 입력 타이머
@@ -263,6 +264,13 @@ const FindPassword = () => {
     [handleConfirmCodeCheckButtonClick]
   );
 
+  // 페이지 마운트 시 이메일 입력란 포커스
+  useEffect(() => {
+    if (emailInputRef.current) {
+      emailInputRef.current.focus();
+    }
+  }, []);
+
   return (
     <Container maxWidth="xs">
       <Stack
@@ -289,6 +297,7 @@ const FindPassword = () => {
               <Stack direction="row" gap={1} mt={1}>
                 <Box flex={1}>
                   <OutlinedTextField
+                    inputRef={emailInputRef}
                     label="이메일"
                     value={email}
                     onChange={handleEmailChange}

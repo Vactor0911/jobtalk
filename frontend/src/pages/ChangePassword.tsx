@@ -156,7 +156,12 @@ const ChangePassword = () => {
 
   return (
     <Container maxWidth="xs">
-      <Stack minHeight="100vh" justifyContent="center" pb={29.2}>
+      <Stack
+        minHeight="calc(100vh - 64px)"
+        justifyContent="center"
+        paddingY={4}
+        paddingBottom={10}
+      >
         <Stack gap={6}>
           {/* 로고 링크 버튼*/}
           <PlainLink to="/">

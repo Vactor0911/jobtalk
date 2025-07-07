@@ -12,7 +12,13 @@ import {
 import PlainLink from "../components/PlainLinkProps";
 import SectionHeader from "../components/SectionHeader";
 import OutlinedTextField from "../components/OutlinedTextField";
-import { useCallback, useLayoutEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { jobTalkLoginStateAtom } from "../state";
@@ -40,6 +46,7 @@ const Login = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isLoginStateSave, setIsLoginStateSave] = useState(true);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const emailInputRef = useRef<HTMLInputElement>(null);
 
   // 이메일 입력
   const handleEmailChange = useCallback(
@@ -200,6 +207,13 @@ const Login = () => {
     }
   }, [loginState.isLoggedIn, navigate]);
 
+  // 페이지 마운트 시 이메일 입력란 포커스
+  useEffect(() => {
+    if (emailInputRef.current) {
+      emailInputRef.current.focus();
+    }
+  }, []);
+
   if (loginState.isLoggedIn) {
     return null; // 컴포넌트 렌더링 중지
   }
@@ -229,6 +243,7 @@ const Login = () => {
             <Stack mt={1} gap={1}>
               {/* 이메일 입력란 */}
               <OutlinedTextField
+                inputRef={emailInputRef}
                 label="이메일"
                 value={email}
                 onChange={handleEmailChange}

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Box, Button, Container, Stack, Typography } from "@mui/material";
 import OutlinedTextField from "../components/OutlinedTextField";
 import PlainLink from "../components/PlainLinkProps";
@@ -17,7 +17,9 @@ const FindPassword = () => {
   const [isConfirmCodeSent, setIsConfirmCodeSent] = useState(false);
   const [confirmCode, setConfirmCode] = useState("");
   const [confirmTimeLeft, setConfirmTimeLeft] = useState(300);
+  const [isConfirmCodeLoading, setIsConfirmCodeLoading] = useState(false);
   const [isConfirmCodeChecked, setIsConfirmCodeChecked] = useState(false);
+  const confirmCodeInputRef = useRef<HTMLInputElement>(null);
 
   // 인증번호 입력 타이머
   useEffect(() => {
@@ -68,7 +70,7 @@ const FindPassword = () => {
       setIsConfirmCodeSending(true);
 
       const csrfToken = await getCsrfToken();
-      await axiosInstance.post(
+      const response = await axiosInstance.post(
         "/auth/sendVerifyEmail",
         {
           email,
@@ -81,11 +83,14 @@ const FindPassword = () => {
         }
       );
 
-      setIsConfirmCodeSent(true);
-      setConfirmTimeLeft(300);
-      enqueueSnackbar("인증번호가 이메일로 발송되었습니다.", {
-        variant: "success",
-      });
+      // 인증번호 전송 성공
+      if (response.data.success) {
+        setIsConfirmCodeSent(true);
+        setConfirmTimeLeft(300);
+        enqueueSnackbar("인증번호가 이메일로 발송되었습니다.", {
+          variant: "success",
+        });
+      }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         enqueueSnackbar(
@@ -108,6 +113,24 @@ const FindPassword = () => {
       setIsConfirmCodeSending(false);
     }
   }, [email, enqueueSnackbar, isConfirmCodeChecked]);
+
+  // 이메일 입력란 키 다운
+  const handleEmailInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleConfirmCodeSendButtonClick();
+      }
+    },
+    [handleConfirmCodeSendButtonClick]
+  );
+
+  // 인증 번호 입력란 최초 노출시 포커스
+  useEffect(() => {
+    if (isConfirmCodeSent && confirmCodeInputRef.current) {
+      confirmCodeInputRef.current.focus();
+    }
+  }, [isConfirmCodeSent]);
 
   // 인증번호 입력
   const handleConfirmCodeChange = useCallback(
@@ -134,6 +157,7 @@ const FindPassword = () => {
 
   // 인증번호 확인 버튼 클릭
   const handleConfirmCodeCheckButtonClick = useCallback(async () => {
+    // 인증번호가 이미 확인된 경우
     if (isConfirmCodeChecked) {
       enqueueSnackbar("이미 인증번호를 확인했습니다.", {
         variant: "warning",
@@ -141,6 +165,15 @@ const FindPassword = () => {
       return;
     }
 
+    // 인증 번호를 이미 확인하고 있는 경우
+    if (isConfirmCodeLoading) {
+      enqueueSnackbar("인증번호 확인 중입니다. 잠시 기다려주세요.", {
+        variant: "warning",
+      });
+      return;
+    }
+
+    // 인증 시간이 만료된 경우
     if (confirmTimeLeft <= 0) {
       enqueueSnackbar(
         "인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.",
@@ -151,6 +184,7 @@ const FindPassword = () => {
       return;
     }
 
+    // 인증 번호가 유효하지 않은 경우
     if (!confirmCode || confirmCode.length !== 6) {
       enqueueSnackbar("유효한 인증번호를 입력해주세요 (6자리)", {
         variant: "warning",
@@ -158,7 +192,11 @@ const FindPassword = () => {
       return;
     }
 
+    // 인증 번호 확인 요청
     try {
+      // 인증 번호 확인 중 로딩 상태 설정
+      setIsConfirmCodeLoading(true);
+
       const csrfToken = await getCsrfToken();
       const response = await axiosInstance.post(
         "/auth/verifyEmailCode",
@@ -174,14 +212,15 @@ const FindPassword = () => {
         }
       );
 
-      enqueueSnackbar("인증번호 확인이 완료되었습니다.", {
-        variant: "success",
-      });
-      setIsConfirmCodeChecked(true);
-
       // 인증 성공 시 비밀번호 재설정 페이지로 이동
       if (response.data.success && response.data.purpose === "resetPassword") {
-        navigate("/change-password", { state: { email } });
+        // 인증 번호 확인 성공
+        enqueueSnackbar("인증번호 확인이 완료되었습니다.", {
+          variant: "success",
+        });
+        setIsConfirmCodeChecked(true);
+
+        navigate("/change-password", { replace: true, state: { email } });
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -199,9 +238,13 @@ const FindPassword = () => {
           }
         );
       }
+    } finally {
+      // 인증 번호 확인 후 로딩 상태 해제
+      setIsConfirmCodeLoading(false);
     }
   }, [
     isConfirmCodeChecked,
+    isConfirmCodeLoading,
     confirmTimeLeft,
     confirmCode,
     enqueueSnackbar,
@@ -209,9 +252,25 @@ const FindPassword = () => {
     navigate,
   ]);
 
+  // 인증 번호 입력란 키 다운
+  const handleConfirmCodeInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleConfirmCodeCheckButtonClick();
+      }
+    },
+    [handleConfirmCodeCheckButtonClick]
+  );
+
   return (
     <Container maxWidth="xs">
-      <Stack minHeight="100vh" justifyContent="center" pb={45.2}>
+      <Stack
+        minHeight="calc(100vh - 64px)"
+        justifyContent="center"
+        paddingY={4}
+        paddingBottom={10}
+      >
         <Stack gap={6}>
           {/* 로고 링크 버튼*/}
           <PlainLink to="/">
@@ -233,6 +292,7 @@ const FindPassword = () => {
                     label="이메일"
                     value={email}
                     onChange={handleEmailChange}
+                    onKeyDown={handleEmailInputKeyDown}
                   />
                 </Box>
 
@@ -263,9 +323,11 @@ const FindPassword = () => {
               >
                 <Box flex={2}>
                   <OutlinedTextField
+                    inputRef={confirmCodeInputRef}
                     label="인증번호"
                     value={confirmCode}
                     onChange={handleConfirmCodeChange}
+                    onKeyDown={handleConfirmCodeInputKeyDown}
                     disabled={isConfirmCodeChecked || confirmTimeLeft <= 0}
                     error={confirmTimeLeft <= 0}
                   />
@@ -294,6 +356,7 @@ const FindPassword = () => {
                   disabled={
                     isConfirmCodeChecked || confirmTimeLeft <= 0 || !confirmCode
                   }
+                  loading={isConfirmCodeLoading}
                   sx={{
                     ml: 2,
                     borderRadius: "8px",

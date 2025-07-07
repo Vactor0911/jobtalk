@@ -1,29 +1,16 @@
 import { useState, useCallback, useEffect } from "react";
-import {
-  Box,
-  Button,
-  Container,
-  Stack,
-  Typography,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+import { Box, Button, Container, Stack, Typography } from "@mui/material";
 import OutlinedTextField from "../components/OutlinedTextField";
 import PlainLink from "../components/PlainLinkProps";
 import SectionHeader from "../components/SectionHeader";
 import axiosInstance, { getCsrfToken } from "../utils/axiosInstance";
 import axios from "axios";
 import { useNavigate } from "react-router";
+import { useSnackbar } from "notistack";
 
 const FindPassword = () => {
   const navigate = useNavigate();
-
-  // Snackbar 상태 추가
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "info" as "success" | "error" | "warning" | "info",
-  });
+  const { enqueueSnackbar } = useSnackbar();
 
   const [email, setEmail] = useState("");
   const [isConfirmCodeSending, setIsConfirmCodeSending] = useState(false);
@@ -41,19 +28,24 @@ const FindPassword = () => {
     const confirmCodeTimer = setInterval(() => {
       setConfirmTimeLeft((prevTime) => {
         if (prevTime <= 1 && !isConfirmCodeChecked) {
-          setSnackbar({
-            open: true,
-            message:
-              "인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.",
-            severity: "error",
-          });
+          enqueueSnackbar(
+            "인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.",
+            {
+              variant: "error",
+            }
+          );
         }
         return prevTime - 1;
       });
     }, 1000);
 
     return () => clearInterval(confirmCodeTimer);
-  }, [isConfirmCodeChecked, confirmTimeLeft, isConfirmCodeSent]);
+  }, [
+    isConfirmCodeChecked,
+    confirmTimeLeft,
+    isConfirmCodeSent,
+    enqueueSnackbar,
+  ]);
 
   // 이메일 입력
   const handleEmailChange = useCallback(
@@ -66,10 +58,8 @@ const FindPassword = () => {
   // 인증번호 전송 버튼 클릭
   const handleConfirmCodeSendButtonClick = useCallback(async () => {
     if (isConfirmCodeChecked) {
-      setSnackbar({
-        open: true,
-        message: "이미 인증번호를 확인했습니다.",
-        severity: "info",
+      enqueueSnackbar("이미 인증번호를 확인했습니다.", {
+        variant: "info",
       });
       return;
     }
@@ -93,32 +83,31 @@ const FindPassword = () => {
 
       setIsConfirmCodeSent(true);
       setConfirmTimeLeft(300);
-      setSnackbar({
-        open: true,
-        message: "인증번호가 이메일로 발송되었습니다.",
-        severity: "success",
+      enqueueSnackbar("인증번호가 이메일로 발송되었습니다.", {
+        variant: "success",
       });
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        setSnackbar({
-          open: true,
-          message: `이메일 전송 실패: ${
+        enqueueSnackbar(
+          `이메일 전송 실패: ${
             error.response.data?.message || "알 수 없는 오류"
           }`,
-          severity: "error",
-        });
+          {
+            variant: "error",
+          }
+        );
       } else {
-        console.error("요청 오류:", (error as Error).message);
-        setSnackbar({
-          open: true,
-          message: "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
-          severity: "error",
-        });
+        enqueueSnackbar(
+          "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
+          {
+            variant: "error",
+          }
+        );
       }
     } finally {
       setIsConfirmCodeSending(false);
     }
-  }, [email, isConfirmCodeChecked]);
+  }, [email, enqueueSnackbar, isConfirmCodeChecked]);
 
   // 인증번호 입력
   const handleConfirmCodeChange = useCallback(
@@ -146,28 +135,25 @@ const FindPassword = () => {
   // 인증번호 확인 버튼 클릭
   const handleConfirmCodeCheckButtonClick = useCallback(async () => {
     if (isConfirmCodeChecked) {
-      setSnackbar({
-        open: true,
-        message: "이미 인증번호를 확인했습니다.",
-        severity: "warning",
+      enqueueSnackbar("이미 인증번호를 확인했습니다.", {
+        variant: "warning",
       });
       return;
     }
 
     if (confirmTimeLeft <= 0) {
-      setSnackbar({
-        open: true,
-        message: "인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.",
-        severity: "warning",
-      });
+      enqueueSnackbar(
+        "인증 시간이 만료되었습니다. 인증번호를 다시 요청해주세요.",
+        {
+          variant: "warning",
+        }
+      );
       return;
     }
 
     if (!confirmCode || confirmCode.length !== 6) {
-      setSnackbar({
-        open: true,
-        message: "유효한 인증번호를 입력해주세요 (6자리)",
-        severity: "warning",
+      enqueueSnackbar("유효한 인증번호를 입력해주세요 (6자리)", {
+        variant: "warning",
       });
       return;
     }
@@ -188,10 +174,8 @@ const FindPassword = () => {
         }
       );
 
-      setSnackbar({
-        open: true,
-        message: "인증번호 확인이 완료되었습니다.",
-        severity: "success",
+      enqueueSnackbar("인증번호 확인이 완료되었습니다.", {
+        variant: "success",
       });
       setIsConfirmCodeChecked(true);
 
@@ -204,35 +188,29 @@ const FindPassword = () => {
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        setSnackbar({
-          open: true,
-          message: `인증 실패: ${
-            error.response.data?.message || "알 수 없는 오류"
-          }`,
-          severity: "error",
-        });
+        enqueueSnackbar(
+          `인증 실패: ${error.response.data?.message || "알 수 없는 오류"}`,
+          {
+            variant: "error",
+          }
+        );
       } else {
-        console.error("요청 오류:", (error as Error).message);
-        setSnackbar({
-          open: true,
-          message:
-            "예기치 않은 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
-          severity: "error",
-        });
+        enqueueSnackbar(
+          "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
+          {
+            variant: "error",
+          }
+        );
       }
     }
-  }, [confirmCode, email, isConfirmCodeChecked, navigate, confirmTimeLeft]);
-
-  // Snackbar 닫기 핸들러
-  const handleSnackbarClose = useCallback(
-    (_event?: React.SyntheticEvent | Event, reason?: string) => {
-      if (reason === "clickaway") {
-        return;
-      }
-      setSnackbar((prev) => ({ ...prev, open: false }));
-    },
-    []
-  );
+  }, [
+    isConfirmCodeChecked,
+    confirmTimeLeft,
+    confirmCode,
+    enqueueSnackbar,
+    email,
+    navigate,
+  ]);
 
   return (
     <Container maxWidth="xs">
@@ -348,23 +326,6 @@ const FindPassword = () => {
           </Stack>
         </Stack>
       </Stack>
-
-      {/* Snackbar 컴포넌트 추가 */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 };

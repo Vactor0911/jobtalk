@@ -1,5 +1,4 @@
 import {
-  Alert,
   Box,
   Button,
   Checkbox,
@@ -7,7 +6,6 @@ import {
   FormControlLabel,
   IconButton,
   InputAdornment,
-  Snackbar,
   Stack,
   Typography,
 } from "@mui/material";
@@ -22,6 +20,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { useNavigate } from "react-router";
 import { setAccessToken } from "../utils/accessToken";
 import axiosInstance, { getCsrfToken } from "../utils/axiosInstance";
+import { enqueueSnackbar } from "notistack";
 
 // 로그인 상태 타입 정의 (기존 코드 참조)
 interface LoginState {
@@ -41,18 +40,6 @@ const Login = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isLoginStateSave, setIsLoginStateSave] = useState(true);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
-
-  // 스낵바 상태
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "info" as "success" | "error" | "warning" | "info",
-  });
-
-  // 스낵바 닫기
-  const handleSnackbarClose = useCallback(() => {
-    setSnackbar((prev) => ({ ...prev, open: false }));
-  }, []);
 
   // 이메일 입력
   const handleEmailChange = useCallback(
@@ -118,10 +105,8 @@ const Login = () => {
       }
 
       // 로그인 성공 알림
-      setSnackbar({
-        open: true,
-        message: "로그인에 성공했습니다!",
-        severity: "success",
+      enqueueSnackbar("로그인에 성공했습니다!", {
+        variant: "success",
       });
 
       // 잠시 후 메인 페이지로 이동
@@ -136,10 +121,8 @@ const Login = () => {
   const handleLoginButtonClick = useCallback(async () => {
     // 입력 검증
     if (!email || !password) {
-      setSnackbar({
-        open: true,
-        message: "이메일과 비밀번호를 모두 입력해주세요.",
-        severity: "warning",
+      enqueueSnackbar("이메일과 비밀번호를 모두 입력해주세요.", {
+        variant: "warning",
       });
       return;
     }
@@ -174,10 +157,8 @@ const Login = () => {
         // 로그인 성공 처리
         processLoginSuccess(response.data);
       } else {
-        setSnackbar({
-          open: true,
-          message: response.data.message || "로그인에 실패했습니다.",
-          severity: "error",
+        enqueueSnackbar(response.data.message || "로그인에 실패했습니다.", {
+          variant: "error",
         });
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -192,10 +173,8 @@ const Login = () => {
         errorMessage = serverMessage || errorMessage;
       }
 
-      setSnackbar({
-        open: true,
-        message: errorMessage,
-        severity: "error",
+      enqueueSnackbar(errorMessage, {
+        variant: "error",
       });
     } finally {
       setIsLoginLoading(false);
@@ -330,23 +309,6 @@ const Login = () => {
           </Stack>
         </Stack>
       </Stack>
-
-      {/* 알림 스낵바 */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 };

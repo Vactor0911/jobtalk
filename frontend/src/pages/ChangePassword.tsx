@@ -7,8 +7,6 @@ import {
   InputAdornment,
   Stack,
   Typography,
-  Snackbar,
-  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -25,17 +23,12 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import axiosInstance, { getCsrfToken } from "../utils/axiosInstance";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router";
+import { useSnackbar } from "notistack";
 
 const ChangePassword = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Snackbar 상태 추가
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "info" as "success" | "error" | "warning" | "info",
-  });
+  const { enqueueSnackbar } = useSnackbar();
 
   // 성공 Dialog 상태 추가
   const [successDialog, setSuccessDialog] = useState({
@@ -57,16 +50,14 @@ const ChangePassword = () => {
       setEmail(emailFromState);
     } else {
       // 이메일 정보가 없으면 비밀번호 찾기 페이지로 리다이렉트
-      setSnackbar({
-        open: true,
-        message: "잘못된 접근입니다. 비밀번호 찾기를 다시 진행해주세요.",
-        severity: "error",
+      enqueueSnackbar("잘못된 접근입니다. 비밀번호 찾기를 다시 진행해주세요.", {
+        variant: "error",
       });
       setTimeout(() => {
         navigate("/find-password");
       }, 2000);
     }
-  }, [location.state, navigate]);
+  }, [enqueueSnackbar, location.state, navigate]);
 
   // 비밀번호 입력
   const handlePasswordChange = useCallback(
@@ -98,19 +89,15 @@ const ChangePassword = () => {
   const handleChangePasswordButtonClick = useCallback(async () => {
     // 입력값 검증
     if (!password || !passwordConfirm) {
-      setSnackbar({
-        open: true,
-        message: "모든 비밀번호 필드를 입력해주세요.",
-        severity: "warning",
+      enqueueSnackbar("모든 비밀번호 필드를 입력해주세요.", {
+        variant: "warning",
       });
-      return;
     }
 
+    // 비밀번호와 비밀번호 확인이 일치하지 않는 경우
     if (password !== passwordConfirm) {
-      setSnackbar({
-        open: true,
-        message: "비밀번호가 일치하지 않습니다.",
-        severity: "error",
+      enqueueSnackbar("비밀번호가 일치하지 않습니다.", {
+        variant: "error",
       });
       return;
     }
@@ -142,42 +129,32 @@ const ChangePassword = () => {
       });
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
-        setSnackbar({
-          open: true,
-          message: `비밀번호 변경 실패: ${
+        enqueueSnackbar(
+          `비밀번호 변경 실패: ${
             error.response.data?.message || "알 수 없는 오류"
           }`,
-          severity: "error",
-        });
+          {
+            variant: "error",
+          }
+        );
       } else {
-        console.error("요청 오류:", (error as Error).message);
-        setSnackbar({
-          open: true,
-          message: "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
-          severity: "error",
-        });
+        enqueueSnackbar(
+          "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
+          {
+            variant: "error",
+          }
+        );
       }
     } finally {
       setIsSubmitting(false);
     }
-  }, [email, password, passwordConfirm]);
+  }, [email, enqueueSnackbar, password, passwordConfirm]);
 
   // 성공 Dialog 닫기 핸들러
   const handleSuccessDialogClose = useCallback(() => {
     setSuccessDialog((prev) => ({ ...prev, open: false }));
     navigate("/login"); // Dialog 닫을 때 로그인 페이지로 이동
   }, [navigate]);
-
-  // Snackbar 닫기 핸들러
-  const handleSnackbarClose = useCallback(
-    (_event?: React.SyntheticEvent | Event, reason?: string) => {
-      if (reason === "clickaway") {
-        return;
-      }
-      setSnackbar((prev) => ({ ...prev, open: false }));
-    },
-    []
-  );
 
   return (
     <Container maxWidth="xs">
@@ -310,23 +287,6 @@ const ChangePassword = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Snackbar 컴포넌트 */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 };

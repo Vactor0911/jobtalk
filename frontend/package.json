@@ -23,6 +23,7 @@
     "dotenv": "^16.5.0",
     "gh-pages": "^6.3.0",
     "jotai": "^2.12.5",
+    "notistack": "^3.0.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-resizable-panels": "^3.0.3",

@@ -1,6 +1,6 @@
 import { useAtom, useSetAtom } from "jotai";
 import { type ReactNode, useEffect, useState } from "react";
-import { wannaTripLoginStateAtom, isAuthInitializedAtom } from "../state";
+import { jobTalkLoginStateAtom, isAuthInitializedAtom } from "../state";
 import axiosInstance, {
   getCsrfToken,
   setupAxiosInterceptors,
@@ -18,14 +18,14 @@ const TokenRefresher = ({ children }: TokenRefresherProps) => {
   const [, setIsAuthInitialized] = useAtom(isAuthInitializedAtom); // 전역 초기화 상태 연결
   const navigate = useNavigate();
 
-  const [loginState, setLoginState] = useAtom(wannaTripLoginStateAtom);
-  const setWannaTripLoginState = useSetAtom(wannaTripLoginStateAtom); // 상태 업데이트
+  const [loginState, setLoginState] = useAtom(jobTalkLoginStateAtom);
+  const setJobTalkLoginState = useSetAtom(jobTalkLoginStateAtom); // 상태 업데이트
 
   useEffect(() => {
     // 1. sessionStorage or localStorage에서 로그인 정보 복구
     const storedLoginState =
-      localStorage.getItem("WannaTriploginState") ||
-      sessionStorage.getItem("WannaTriploginState");
+      localStorage.getItem("JobTalkloginState") ||
+      sessionStorage.getItem("JobTalkloginState");
 
     if (storedLoginState) {
       const parsedLoginState = JSON.parse(storedLoginState);
@@ -81,14 +81,14 @@ const TokenRefresher = ({ children }: TokenRefresherProps) => {
           }
 
           // localStorage 또는 sessionStorage에 로그인 상태 저장
-          if (localStorage.getItem("WannaTriploginState")) {
+          if (localStorage.getItem("JobTalkloginState")) {
             localStorage.setItem(
-              "WannaTriploginState",
+              "JobTalkloginState",
               JSON.stringify(updatedLoginState)
             );
           } else {
             sessionStorage.setItem(
-              "WannaTriploginState",
+              "JobTalkloginState",
               JSON.stringify(updatedLoginState)
             );
           }
@@ -96,7 +96,7 @@ const TokenRefresher = ({ children }: TokenRefresherProps) => {
       } catch (error) {
         console.error("자동 로그인 유지 실패, 로그아웃 처리:", error);
 
-        await resetStates(setWannaTripLoginState); // 상태 초기화
+        await resetStates(setJobTalkLoginState); // 상태 초기화
         alert("세션이 만료되었습니다. 다시 로그인해주세요.");
         navigate("/login"); // 로그인 페이지로 이동
       } finally {
@@ -112,7 +112,7 @@ const TokenRefresher = ({ children }: TokenRefresherProps) => {
 
     // Axios Interceptor 설정 (자동 토큰 갱신)
     setupAxiosInterceptors();
-  }, [setLoginState, navigate, loginState, setWannaTripLoginState, setIsAuthInitialized]);
+  }, [setLoginState, navigate, loginState, setJobTalkLoginState, setIsAuthInitialized]);
 
   //  로그인 정보가 복구될 때까지 UI 렌더링 방지
   if (!isInitialized) {

@@ -19,6 +19,7 @@ const TitledContainer = (props: TitledContainerProps) => {
     <Paper
       variant="outlined"
       sx={{
+        height: "100%",
         padding: 1,
         borderRadius: 4,
         ...sx,

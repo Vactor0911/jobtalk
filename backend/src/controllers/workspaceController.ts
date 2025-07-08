@@ -21,6 +21,7 @@ export const getAllWorkspaces = async (req: Request, res: Response) => {
         name,
         status,
         chat_topic,
+        interest_category,
         created_at,
         updated_at
        FROM workspace 
@@ -39,6 +40,7 @@ export const getAllWorkspaces = async (req: Request, res: Response) => {
           name: workspace.name,
           status: workspace.status,
           chatTopic: workspace.chat_topic,
+          interestCategory: workspace.interest_category,
           createdAt: workspace.created_at,
           updatedAt: workspace.updated_at,
         })),
@@ -68,6 +70,7 @@ export const getWorkspaceByUuid = async (req: Request, res: Response) => {
         w.name,
         w.status,
         w.chat_topic,
+        w.interest_category,
         w.created_at,
         w.updated_at,
         r.id AS roadmap_id,
@@ -109,6 +112,7 @@ export const getWorkspaceByUuid = async (req: Request, res: Response) => {
           name: workspace.name,
           status: workspace.status,
           chatTopic: workspace.chat_topic,
+          interestCategory: workspace.interest_category,
           createdAt: workspace.created_at,
           updatedAt: workspace.updated_at,
           roadmap: roadmapData
@@ -205,10 +209,10 @@ export const saveWorkspaceChat = async (req: Request, res: Response) => {
     }
 
     // 올바른 역할 확인
-    if (!["user", "assistant"].includes(role)) {
+    if (!["user", "JobtalkAI"].includes(role)) {
       res.status(400).json({
         success: false,
-        message: "역할은 user 또는 assistant만 가능합니다.",
+        message: "역할은 user 또는 JobtalkAI만 가능합니다.",
       });
       return;
     }
@@ -255,7 +259,7 @@ export const saveWorkspaceChat = async (req: Request, res: Response) => {
     res.status(201).json({
       success: true,
       data: {
-        id: result.insertId,
+        id: Number(result.insertId),
         role,
         content,
         previousResponseId,
@@ -430,6 +434,66 @@ export const saveWorkspaceRoadmap = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "로드맵 저장에 실패했습니다.",
+      error: error.message,
+    });
+  }
+};
+
+// 워크스페이스 관심 분야 설정
+export const updateWorkspaceInterest = async (req: Request, res: Response) => {
+  try {
+    const { uuid } = req.params;
+    const { interestCategory } = req.body;
+    const user = req.user as { userUuid: string };
+
+    if (!interestCategory) {
+      res.status(400).json({
+        success: false,
+        message: "관심 분야를 입력해주세요.",
+      });
+      return;
+    }
+
+    // 워크스페이스 소유자 확인
+    const workspaces = await dbPool.query(
+      "SELECT id, name FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
+      [uuid, user.userUuid]
+    );
+
+    if (workspaces.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "워크스페이스를 찾을 수 없거나 권한이 없습니다.",
+      });
+      return;
+    }
+
+    const workspaceId = workspaces[0].id;
+    
+    // 새 이름 설정 (기존 이름에 관심분야 추가)
+    const newName = `${interestCategory} 분야 탐색하기 💼`;
+
+    // 워크스페이스 업데이트
+    await dbPool.query(
+      `UPDATE workspace 
+       SET interest_category = ?, name = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [interestCategory, newName, workspaceId]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "관심 분야가 성공적으로 설정되었습니다.",
+      data: {
+        interestCategory,
+        name: newName
+      },
+    });
+  } catch (error: any) {
+    console.error("관심 분야 설정 오류:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "관심 분야 설정에 실패했습니다.",
       error: error.message,
     });
   }

@@ -28,7 +28,7 @@ export const careerMentor = async (req: Request, res: Response) => {
         content: `
           당신은 진로 상담 전문가입니다.
             1) 사용자가 제공한 관심 분야와 보유 자격증을 바탕으로,
-            2) 최대 20회 질문을 통해 성향·목표·경력·학습 이력 등을 추가 수집하세요.
+            2) 한번에 하나의 질문으로, 최대 20회 질문을 통해 성향·목표·경력·학습 이력 등을 추가 수집하세요.
             3) 최종적으로 3~5개 적합한 직업을 추천하고, 사용자가 선택하도록 유도하세요.
             4) 선택된 직업별로 JSON 형식의 로드맵을 생성하세요.
               - 기술: 나무위키·공식 문서 URL 포함
@@ -64,7 +64,7 @@ export const careerMentor = async (req: Request, res: Response) => {
     const response = await openai.responses.create({
       model: "gpt-4o-mini",
       input: inputMessages as any,
-      previous_response_id: previousResponseId ?? undefined, // 직전 응답 ID (없으면 undefined)
+      previous_response_id: previousResponseId ? String(previousResponseId) : undefined, // 정수를 문자열로 변환
       // stream: false   // 필요하면 true 로 변경
 
       max_output_tokens: 15000, // 한 번에 최대 10000 토큰

@@ -2,6 +2,7 @@ import express from "express";
 import { csrfProtection, limiter } from "../utils"; // 기존 rate limiter 사용
 import {
   getAllWorkspaces,
+  getWorkspaceAndUserBasicInfo,
   getWorkspaceByUuid,
   getWorkspaceChats,
   saveWorkspaceChat,
@@ -61,6 +62,14 @@ workspaceRoute.put(
   limiter,
   authenticateToken,
   updateWorkspaceInterest
+);
+
+// 워크스페이스 기본 정보와 사용자 기본 정보 통합 조회
+workspaceRoute.get(
+  "/:uuid/basicinfo",
+  limiter,
+  authenticateToken,
+  getWorkspaceAndUserBasicInfo
 );
 
 export default workspaceRoute;

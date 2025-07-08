@@ -7,6 +7,7 @@ import {
   saveWorkspaceChat,
   saveWorkspaceRoadmap,
   updateWorkspaceForChat,
+  updateWorkspaceInterest,
 } from "../controllers/workspaceController";
 import { authenticateToken } from "../middleware/authenticate";
 
@@ -51,6 +52,15 @@ workspaceRoute.post(
   limiter,
   authenticateToken,
   saveWorkspaceRoadmap
+);
+
+// 워크스페이스 관심 분야 설정
+workspaceRoute.put(
+  "/:uuid/interest",
+  csrfProtection,
+  limiter,
+  authenticateToken,
+  updateWorkspaceInterest
 );
 
 export default workspaceRoute;

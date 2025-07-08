@@ -1,57 +1,53 @@
-import { Stack } from "@mui/material";
-import TitledContainer from "../components/TitledContainer";
-import { Panel, PanelGroup } from "react-resizable-panels";
-import StyledPanelResizeHandle from "../components/StyledPanelResizeHandle";
-import ChatTest from "../components/ChatTest";
+import { Button, Container, Stack, Typography } from "@mui/material";
+import WorkspaceStepper from "../components/workspace/WorkspaceStepper";
+import { useState } from "react";
+import InterestsView from "../components/workspace/InterestsView";
+import ChatbotView from "../components/workspace/ChatbotView";
 
 const Workspace = () => {
+  const [step, setStep] = useState(1);
+
   return (
-    <Stack padding={2} direction="row" height="calc(100vh - 64px)">
-      <PanelGroup direction="horizontal">
-        {/* 세부사항 패널 */}
-        <Panel
-          defaultSize={25}
-          minSize={20}
-          css={{
-            height: "100%",
-          }}
-        >
-          <TitledContainer title="세부사항"></TitledContainer>
-        </Panel>
+    <Container maxWidth="lg">
+      <Stack
+        minHeight="calc(100vh - 64px)"
+        paddingY={4}
+        paddingBottom={10}
+        gap={4}
+      >
+        {/* 스테퍼 */}
+        {step <= 5 && <WorkspaceStepper activeStep={step} />}
 
-        {/* 구분선 */}
-        <StyledPanelResizeHandle />
+        {/* 관심 분야 선택 */}
+        {step === 1 && <InterestsView />}
 
-        {/* 로드맵 패널 */}
-        <Panel
-          minSize={20}
-          css={{
-            height: "100%",
-          }}
-        >
-          <TitledContainer title="로드맵">
-            {/* TODO: 로드맵 뷰어 구현 */}
-          </TitledContainer>
-        </Panel>
+        {/* 챗봇 질문 */}
+        {step === 3 && <ChatbotView />}
 
-        {/* 구분선 */}
-        <StyledPanelResizeHandle />
-
-        {/* 챗봇 패널 */}
-        <Panel
-          defaultSize={25}
-          minSize={20}
-          css={{
-            height: "100%",
-          }}
-        >
-          <TitledContainer title="챗봇">
-            {/* <JobSearchChat /> */}
-            <ChatTest />
-          </TitledContainer>
-        </Panel>
-      </PanelGroup>
-    </Stack>
+        {/* 스텝 테스트용 버튼 */}
+        <Stack direction="row" gap={2} justifyContent="center">
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setStep((prev) => prev - 1);
+            }}
+          >
+            이전
+          </Button>
+          <Typography variant="h5" color="text.secondary">
+            {step}
+          </Typography>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setStep((prev) => prev + 1);
+            }}
+          >
+            다음
+          </Button>
+        </Stack>
+      </Stack>
+    </Container>
   );
 };
 

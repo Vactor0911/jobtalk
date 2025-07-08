@@ -4,12 +4,10 @@ import {
   Container,
   Paper,
   Stack,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { useState } from "react";
 import { getRandomColor } from "../utils";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
 
 const WORKSPACES = [
   {
@@ -27,18 +25,13 @@ const WORKSPACES = [
     name: "DevOps 엔지니어",
     createdAt: "2023-10-03T12:00:00Z",
   },
-  {
-    uuid: "4",
-    name: "데이터 엔지니어",
-    createdAt: "2023-10-04T12:00:00Z",
-  },
 ];
 
 const MyWorkspace = () => {
   const [workspaces] = useState(WORKSPACES);
 
   return (
-    <Container maxWidth="xl">
+    <Container maxWidth="md">
       <Stack
         width="100%"
         height="calc(100vh - 64px)"
@@ -50,83 +43,77 @@ const MyWorkspace = () => {
         <Typography variant="h4">워크스페이스</Typography>
 
         {/* 워크스페이스 목록 */}
-        <Stack
-          width="100%"
-          direction="row"
-          alignItems="center"
-          gap={2}
-          sx={{
-            overflowX: "auto",
-          }}
-        >
-          {workspaces.map((workspace) => (
-            <ButtonBase>
-              <Paper
-                variant="outlined"
-                key={`workspace-${workspace.uuid}`}
+        <Stack gap={4}>
+          {workspaces.map((workspace, index) => (
+            <Paper
+              key={workspace.uuid}
+              elevation={3}
+              sx={{
+                borderRadius: 4,
+                overflow: "hidden",
+                transition: "transform 0.2s, box-shadow 0.2s",
+                "&:hover": {
+                  boxShadow: 6,
+                  transform: "scale(1.02)",
+                },
+              }}
+            >
+              <ButtonBase
                 sx={{
-                  width: "300px",
-                  borderRadius: 4,
-                  overflow: "hidden",
+                  width: "100%",
                 }}
               >
-                <Stack textAlign="left">
-                  {/* 로드맵 미리보기 */}
+                <Stack
+                  width="100%"
+                  height="20vh"
+                  padding={2}
+                  direction="row"
+                  gap={2}
+                >
+                  {/* 미리보기 이미지 */}
                   <Box
-                    height="200px"
+                    height="100%"
+                    borderRadius={4}
                     sx={{
-                      backgroundColor: getRandomColor(workspace.name),
+                      aspectRatio: "1 / 1",
+                      backgroundColor: getRandomColor(),
                     }}
                   />
 
-                  {/* 구분선 */}
-                  <Box
-                    width="100%"
-                    height="1px"
-                    sx={{
-                      backgroundColor: "divider",
-                    }}
-                  />
+                  {/* 워크스페이스 정보 */}
+                  <Stack textAlign="left" paddingY={2}>
+                    {/* 워크스페이스명 */}
+                    <Typography variant="h6">
+                      워크스페이스 {index + 1}
+                    </Typography>
 
-                  {/* 텍스트 컨텐츠 */}
-                  <Stack padding={1} paddingX={2}>
-                    {/* 워크스페이스 제목 */}
-                    <Typography variant="h6">{workspace.name}</Typography>
+                    {/* 워크스페이스 상태 */}
+                    <Typography variant="h5" color="primary">
+                      {workspace.name} 로드맵
+                    </Typography>
 
-                    {/* 워크스페이스 생성일자 */}
-                    <Typography variant="subtitle2" color="text.secondary">
-                      {new Date(workspace.createdAt).toLocaleDateString()}
+                    {/* 수정 일자 */}
+                    <Typography
+                      variant="subtitle1"
+                      color="text.secondary"
+                      marginTop="auto"
+                    >
+                      {new Date(workspace.createdAt).toLocaleDateString()}에
+                      수정됨
                     </Typography>
                   </Stack>
                 </Stack>
-              </Paper>
-            </ButtonBase>
+              </ButtonBase>
+            </Paper>
           ))}
-
-          {/* 새 워크스페이스 버튼 */}
-          <Tooltip title="새 워크스페이스 만들기">
-            <ButtonBase>
-              <Paper
-                variant="outlined"
-                sx={{
-                  width: "200px",
-                  height: "200px",
-                  display: "inline-flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  borderRadius: 4,
-                }}
-              >
-                <AddRoundedIcon
-                  color="primary"
-                  sx={{
-                    fontSize: "4rem",
-                  }}
-                />
-              </Paper>
-            </ButtonBase>
-          </Tooltip>
         </Stack>
+
+        {/* 안내 문구 */}
+        <Typography variant="subtitle1" color="text.secondary">
+          계정당 최대 3개의 워크스페이스를 사용할 수 있습니다.
+          <br />
+          생성된 워크스페이스는 경진대회 기간 종료 후 즉시 삭제됩니다.
+        </Typography>
       </Stack>
     </Container>
   );

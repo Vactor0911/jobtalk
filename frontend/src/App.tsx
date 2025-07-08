@@ -20,7 +20,7 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
 
-      <SnackbarProvider maxSnack={3} autoHideDuration={5000}>
+      <SnackbarProvider maxSnack={3} autoHideDuration={3000}>
         <BrowserRouter basename="/jobtalk">
           <TokenRefresher>
             <Header />

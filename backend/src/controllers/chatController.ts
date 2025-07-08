@@ -126,7 +126,7 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
     const inputMessages = [
       {
         role: "system",
-        content: `당신은 IT 기술, 자격증, 직무 관련 전문 정보를 제공하는 AI입니다.
+        content: `당신은 모든 직업에 대한 기술, 자격증, 직무 관련 전문 정보를 제공하는 AI입니다.
         다음 정보에 대한 상세 설명을 JSON 형식으로 제공해주세요:
         1. 기술/자격증 개요 및 설명
         2. 필요성 및 중요도

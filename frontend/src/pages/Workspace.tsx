@@ -3,9 +3,15 @@ import WorkspaceStepper from "../components/workspace/WorkspaceStepper";
 import { useState } from "react";
 import InterestsView from "../components/workspace/InterestsView";
 import ChatbotView from "../components/workspace/ChatbotView";
+import RoadMapView from "../components/workspace/RoadMapView";
 
 const Workspace = () => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(6);
+
+  // 로드맵 뷰
+  if (step > 5) {
+    return <RoadMapView />;
+  }
 
   return (
     <Container maxWidth="lg">
@@ -16,7 +22,7 @@ const Workspace = () => {
         gap={4}
       >
         {/* 스테퍼 */}
-        {step <= 5 && <WorkspaceStepper activeStep={step} />}
+        <WorkspaceStepper activeStep={step} />
 
         {/* 스텝 테스트용 버튼 */}
         <Stack direction="row" gap={2} justifyContent="center">

@@ -14,6 +14,7 @@ import chatRoute from "./routes/chatRoute";
 import qualificationRoute from "./routes/qualificationRoute";
 import { dbPool } from "./config/db";
 import { syncQualificationsToDatabase } from "./controllers/qualificationController";
+import workspaceRoute from "./routes/workspaceRoute";
 
 // .env 파일 로드
 dotenv.config();
@@ -113,5 +114,6 @@ app.use("/csrf", csrfRoute); // CSRF 토큰 요청 라우트
 app.use("/career", careerRoute); // 커리어넷 관련 API 라우트
 app.use("/chat", chatRoute); // 챗봇 관련 API 라우트
 app.use("/qualification", qualificationRoute); // 자격증 관련 API 라우트 추가
+app.use("/workspace", workspaceRoute); // 워크스페이스 관련 API 라우트 추가
 
 // *** 라우트 정의 끝 ***

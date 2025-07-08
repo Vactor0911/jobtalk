@@ -18,12 +18,6 @@ const Workspace = () => {
         {/* 스테퍼 */}
         {step <= 5 && <WorkspaceStepper activeStep={step} />}
 
-        {/* 관심 분야 선택 */}
-        {step === 1 && <InterestsView />}
-
-        {/* 챗봇 질문 */}
-        {step === 3 && <ChatbotView />}
-
         {/* 스텝 테스트용 버튼 */}
         <Stack direction="row" gap={2} justifyContent="center">
           <Button
@@ -46,6 +40,12 @@ const Workspace = () => {
             다음
           </Button>
         </Stack>
+
+        {/* 관심 분야 선택 */}
+        {step === 1 && <InterestsView />}
+
+        {/* 챗봇 질문 */}
+        {step === 3 && <ChatbotView />}
       </Stack>
     </Container>
   );

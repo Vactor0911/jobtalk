@@ -197,7 +197,7 @@ const ChatbotView = () => {
   );
 
   return (
-    <Stack gap={4} marginTop={10}>
+    <Stack gap={4} marginTop={10} flex={1}>
       {chats.map((chat, index) => (
         <Stack
           width="66%"
@@ -250,7 +250,7 @@ const ChatbotView = () => {
       ))}
 
       {/* 채팅 입력란 */}
-      <Box position="relative" width="100%">
+      <Box position="relative" width="100%" marginTop="auto">
         {/* 입력란 */}
         <TextField
           fullWidth

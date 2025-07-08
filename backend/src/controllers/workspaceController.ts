@@ -1,10 +1,438 @@
 import { Request, Response } from "express";
 import { dbPool } from "../config/db";
 
+// 사용자의 모든 워크스페이스 조회
 export const getAllWorkspaces = async (req: Request, res: Response) => {
-  const { userUuid } = req.query;
-
   try {
-    const workspaces = await dbPool.query(``);
+    const user = req.user as { userUuid: string };
+
+    if (!user || !user.userUuid) {
+      res.status(401).json({
+        success: false,
+        message: "인증 정보가 유효하지 않습니다.",
+      });
+      return;
+    }
+
+    const workspaces = await dbPool.query(
+      `SELECT 
+        id,
+        workspace_uuid,
+        name,
+        status,
+        chat_topic,
+        created_at,
+        updated_at
+       FROM workspace 
+       WHERE user_uuid = ? AND is_active = TRUE 
+       ORDER BY created_at ASC`,
+      [user.userUuid]
+    );
+
+    res.status(200).json({
+      success: true,
+      totalCount: workspaces.length,
+      data: {
+        workspaces: workspaces.map((workspace: any) => ({
+          id: workspace.id,
+          uuid: workspace.workspace_uuid,
+          name: workspace.name,
+          status: workspace.status,
+          chatTopic: workspace.chat_topic,
+          createdAt: workspace.created_at,
+          updatedAt: workspace.updated_at,
+        })),
+      },
+      message: "워크스페이스 목록 조회를 완료했습니다.",
+    });
+  } catch (error: any) {
+    console.error("워크스페이스 조회 오류:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "워크스페이스 조회에 실패했습니다.",
+      error: error.message,
+    });
   }
 };
+
+// 특정 워크스페이스 조회
+export const getWorkspaceByUuid = async (req: Request, res: Response) => {
+  try {
+    const { uuid } = req.params;
+    const user = req.user as { userUuid: string };
+
+    const workspaces = await dbPool.query(
+      `SELECT 
+        w.id,
+        w.workspace_uuid,
+        w.name,
+        w.status,
+        w.chat_topic,
+        w.created_at,
+        w.updated_at,
+        r.id AS roadmap_id,
+        r.job_title,
+        r.job_description,
+        r.roadmap_data
+       FROM workspace w
+       LEFT JOIN workspace_roadmaps r ON w.id = r.workspace_id
+       WHERE w.workspace_uuid = ? AND w.user_uuid = ? AND w.is_active = TRUE`,
+      [uuid, user.userUuid]
+    );
+
+    if (workspaces.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "워크스페이스를 찾을 수 없습니다.",
+      });
+      return;
+    }
+
+    const workspace = workspaces[0];
+    
+    // 로드맵 데이터 처리
+    const roadmapData = workspace.roadmap_data 
+      ? {
+          id: workspace.roadmap_id,
+          jobTitle: workspace.job_title,
+          jobDescription: workspace.job_description,
+          data: JSON.parse(workspace.roadmap_data)
+        }
+      : null;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        workspace: {
+          id: workspace.id,
+          uuid: workspace.workspace_uuid,
+          name: workspace.name,
+          status: workspace.status,
+          chatTopic: workspace.chat_topic,
+          createdAt: workspace.created_at,
+          updatedAt: workspace.updated_at,
+          roadmap: roadmapData
+        },
+      },
+      message: "워크스페이스 조회를 완료했습니다.",
+    });
+  } catch (error: any) {
+    console.error("워크스페이스 조회 오류:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "워크스페이스 조회에 실패했습니다.",
+      error: error.message,
+    });
+  }
+};
+
+// 워크스페이스 대화 기록 조회
+export const getWorkspaceChats = async (req: Request, res: Response) => {
+  try {
+    const { uuid } = req.params;
+    const user = req.user as { userUuid: string };
+
+    // 해당 워크스페이스 존재 및 권한 확인
+    const workspaces = await dbPool.query(
+      "SELECT id FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
+      [uuid, user.userUuid]
+    );
+
+    if (workspaces.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "워크스페이스를 찾을 수 없거나 권한이 없습니다.",
+      });
+      return;
+    }
+
+    const workspaceId = workspaces[0].id;
+
+    // 대화 기록 조회
+    const chats = await dbPool.query(
+      `SELECT 
+        id, 
+        role, 
+        content, 
+        previous_response_id, 
+        message_index, 
+        created_at 
+       FROM workspace_chats 
+       WHERE workspace_id = ? 
+       ORDER BY message_index ASC, created_at ASC`,
+      [workspaceId]
+    );
+
+    res.status(200).json({
+      success: true,
+      totalCount: chats.length,
+      data: {
+        chats: chats.map((chat: any) => ({
+          id: chat.id,
+          role: chat.role,
+          content: chat.content,
+          previousResponseId: chat.previous_response_id,
+          messageIndex: chat.message_index,
+          createdAt: chat.created_at,
+        })),
+      },
+      message: "워크스페이스 대화 기록 조회를 완료했습니다.",
+    });
+  } catch (error: any) {
+    console.error("워크스페이스 대화 기록 조회 오류:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "워크스페이스 대화 기록 조회에 실패했습니다.",
+      error: error.message,
+    });
+  }
+};
+
+// 워크스페이스 대화 저장
+export const saveWorkspaceChat = async (req: Request, res: Response) => {
+  try {
+    const { uuid } = req.params;
+    const { role, content, previousResponseId } = req.body;
+    const user = req.user as { userUuid: string };
+
+    // 필수 입력값 확인
+    if (!role || !content) {
+      res.status(400).json({
+        success: false,
+        message: "역할과 내용은 필수 입력값입니다.",
+      });
+      return;
+    }
+
+    // 올바른 역할 확인
+    if (!["user", "assistant"].includes(role)) {
+      res.status(400).json({
+        success: false,
+        message: "역할은 user 또는 assistant만 가능합니다.",
+      });
+      return;
+    }
+
+    // 워크스페이스 확인 및 권한 검증
+    const workspaces = await dbPool.query(
+      "SELECT id FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
+      [uuid, user.userUuid]
+    );
+
+    if (workspaces.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "워크스페이스를 찾을 수 없거나 권한이 없습니다.",
+      });
+      return;
+    }
+
+    const workspaceId = workspaces[0].id;
+
+    // 현재 메시지 인덱스 조회
+    const lastMessageResult = await dbPool.query(
+      "SELECT MAX(message_index) as last_index FROM workspace_chats WHERE workspace_id = ?",
+      [workspaceId]
+    );
+    
+    const lastIndex = lastMessageResult[0].last_index || 0;
+    const nextIndex = lastIndex + 1;
+
+    // 새 대화 저장
+    const result = await dbPool.query(
+      `INSERT INTO workspace_chats 
+       (workspace_id, role, content, previous_response_id, message_index) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [workspaceId, role, content, previousResponseId || null, nextIndex]
+    );
+
+    // 워크스페이스 상태 업데이트 (대화 중으로)
+    await dbPool.query(
+      "UPDATE workspace SET status = 'chatting', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [workspaceId]
+    );
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: result.insertId,
+        role,
+        content,
+        previousResponseId,
+        messageIndex: nextIndex,
+      },
+      message: "대화가 저장되었습니다.",
+    });
+  } catch (error: any) {
+    console.error("대화 저장 오류:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "대화 저장에 실패했습니다.",
+      error: error.message,
+    });
+  }
+};
+
+// 워크스페이스 이름 업데이트 (챗봇 대화 시작 시)
+export const updateWorkspaceForChat = async (req: Request, res: Response) => {
+  try {
+    const { uuid } = req.params;
+    const { chatTopic } = req.body; // 대화 주제
+    const user = req.user as { userUuid: string };
+
+    if (!chatTopic || typeof chatTopic !== 'string') {
+      res.status(400).json({
+        success: false,
+        message: "유효한 대화 주제를 입력해주세요.",
+      });
+      return;
+    }
+
+    // 워크스페이스 소유자 확인
+    const workspaces = await dbPool.query(
+      "SELECT id FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
+      [uuid, user.userUuid]
+    );
+
+    if (workspaces.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "워크스페이스를 찾을 수 없거나 권한이 없습니다.",
+      });
+      return;
+    }
+
+    // 새로운 이름과 상태 설정
+    const newName = `${chatTopic}에 대해 상담 중 💬`;
+    
+    // 워크스페이스 업데이트
+    await dbPool.query(
+      `UPDATE workspace 
+       SET name = ?, status = 'chatting', chat_topic = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE workspace_uuid = ? AND user_uuid = ?`,
+      [newName, chatTopic, uuid, user.userUuid]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "워크스페이스가 대화 모드로 업데이트되었습니다.",
+      data: {
+        name: newName,
+        status: "chatting",
+        chatTopic,
+      },
+    });
+  } catch (error: any) {
+    console.error("워크스페이스 대화 모드 업데이트 오류:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "워크스페이스 업데이트에 실패했습니다.",
+      error: error.message,
+    });
+  }
+};
+
+// 워크스페이스 로드맵 생성/업데이트
+export const saveWorkspaceRoadmap = async (req: Request, res: Response) => {
+  try {
+    const { uuid } = req.params;
+    const { jobTitle, jobDescription, roadmapData } = req.body;
+    const user = req.user as { userUuid: string };
+    const connection = await dbPool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      // 필수 입력값 확인
+      if (!jobTitle || !roadmapData) {
+        res.status(400).json({
+          success: false,
+          message: "직업명과 로드맵 데이터는 필수입니다.",
+        });
+        return;
+      }
+
+      // 워크스페이스 소유자 확인
+      const workspaces = await connection.query(
+        "SELECT id FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
+        [uuid, user.userUuid]
+      );
+
+      if (workspaces.length === 0) {
+        res.status(404).json({
+          success: false,
+          message: "워크스페이스를 찾을 수 없거나 권한이 없습니다.",
+        });
+        return;
+      }
+
+      const workspaceId = workspaces[0].id;
+
+      // 새로운 이름 설정
+      const newName = `${jobTitle} 로드맵 🗺️`;
+
+      // 기존 로드맵이 있는지 확인
+      const existingRoadmap = await connection.query(
+        "SELECT id FROM workspace_roadmaps WHERE workspace_id = ?",
+        [workspaceId]
+      );
+
+      // roadmapData가 JSON 문자열인지 확인하고 변환
+      const roadmapDataJson = typeof roadmapData === 'string' 
+        ? roadmapData 
+        : JSON.stringify(roadmapData);
+
+      if (existingRoadmap.length > 0) {
+        // 기존 로드맵 업데이트
+        await connection.query(
+          `UPDATE workspace_roadmaps 
+           SET job_title = ?, job_description = ?, roadmap_data = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?`,
+          [jobTitle, jobDescription || null, roadmapDataJson, existingRoadmap[0].id]
+        );
+      } else {
+        // 새 로드맵 생성
+        await connection.query(
+          `INSERT INTO workspace_roadmaps 
+           (workspace_id, job_title, job_description, roadmap_data) 
+           VALUES (?, ?, ?, ?)`,
+          [workspaceId, jobTitle, jobDescription || null, roadmapDataJson]
+        );
+      }
+
+      // 워크스페이스 상태 업데이트
+      await connection.query(
+        `UPDATE workspace 
+         SET name = ?, status = 'roadmap_generated', chat_topic = NULL, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [newName, workspaceId]
+      );
+
+      await connection.commit();
+
+      res.status(200).json({
+        success: true,
+        message: "로드맵이 성공적으로 저장되었습니다.",
+        data: {
+          name: newName,
+          status: "roadmap_generated",
+          jobTitle,
+        },
+      });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  } catch (error: any) {
+    console.error("로드맵 저장 오류:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "로드맵 저장에 실패했습니다.",
+      error: error.message,
+    });
+  }
+};
+
+

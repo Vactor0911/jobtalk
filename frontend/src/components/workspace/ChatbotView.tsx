@@ -18,6 +18,7 @@ import axiosInstance, {
 import { jobTalkLoginStateAtom } from "../../state";
 import { useAtomValue } from "jotai";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
+import { enqueueSnackbar } from "notistack";
 
 interface Chat {
   isBot: boolean; // 챗봇인지 여부
@@ -25,21 +26,379 @@ interface Chat {
   date: string; // 메시지 전송 날짜
 }
 
-const ChatbotView = () => {
-  const theme = useTheme();
+interface ChatbotViewProps {
+  workspaceUuid: string;
+}
 
-  const [chats, setChats] = useState<Chat[]>([]);
+const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
+  const theme = useTheme();
   const loginState = useAtomValue(jobTalkLoginStateAtom);
+
+  // 채팅 관련 상태
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [input, setInput] = useState("");
+  const [isInputLoading, setIsInputLoading] = useState(false);
+  const [responseId, setResponseId] = useState<string | null>(null);
+  const [, setChatHistoryLoaded] = useState(false); // 이전 대화 불러온 여부
 
   // 프로필 이미지와 닉네임 상태
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [imageVersion, setImageVersion] = useState(0);
 
-  // 메시지 입력 상태
-  const [input, setInput] = useState("");
-  const [isInputLoading, setIsInputLoading] = useState(false);
-  const [responseId, setResponseId] = useState<string | null>(null);
+  // 자격증과 관심분야 정보
+  const [userCertificates, setUserCertificates] = useState<string>("");
+  const [interestCategory, setInterestCategory] = useState<string>("");
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  // 워크스페이스 정보와 사용자 자격증 정보 가져오기
+  const fetchWorkspaceAndUserData = useCallback(async () => {
+    if (!workspaceUuid) return;
+
+    try {
+      setIsInputLoading(true);
+      // CSRF 토큰 획득
+      const csrfToken = await getCsrfToken();
+
+      // 1. 워크스페이스 정보 조회
+      const workspaceResponse = await axiosInstance.get(
+        `/workspace/${workspaceUuid}`,
+        {
+          headers: { "X-CSRF-Token": csrfToken },
+        }
+      );
+
+      if (workspaceResponse.data.success) {
+        const workspaceData = workspaceResponse.data.data.workspace;
+        setInterestCategory(workspaceData.interestCategory || "");
+      }
+
+      // 2. 사용자 정보 조회
+      const userResponse = await axiosInstance.get("/auth/me", {
+        headers: { "X-CSRF-Token": csrfToken },
+      });
+
+      if (userResponse.data.success) {
+        const userData = userResponse.data.data;
+        setUserCertificates(userData.certificates || "없음");
+
+        // 프로필 정보도 같이 설정
+        if (userData.name) {
+          setUserName(userData.name);
+        }
+
+        if (userData.profileImage) {
+          const imageUrl = `${SERVER_HOST}${
+            userData.profileImage
+          }?t=${new Date().getTime()}`;
+          setProfileImage(imageUrl);
+          setImageVersion((prev) => prev + 1);
+        }
+      }
+
+      setDataLoaded(true);
+    } catch (err) {
+      console.error("워크스페이스/사용자 정보 로드 실패:", err);
+      enqueueSnackbar("정보를 불러오는 데 실패했습니다", { variant: "error" });
+    } finally {
+      setIsInputLoading(false);
+    }
+  }, [workspaceUuid]);
+
+  // 컴포넌트 마운트 시 필요한 데이터 로드
+  useEffect(() => {
+    fetchWorkspaceAndUserData();
+  }, [fetchWorkspaceAndUserData]);
+
+  // 워크스페이스 대화 모드로 업데이트
+  const updateWorkspaceChat = useCallback(async () => {
+    if (!workspaceUuid || !interestCategory) return;
+
+    try {
+      // CSRF 토큰 획득
+      const csrfToken = await getCsrfToken();
+
+      await axiosInstance.put(
+        `/workspace/${workspaceUuid}/chat`,
+        {
+          chatTopic: `${interestCategory} 진로 상담`,
+        },
+        {
+          headers: {
+            "X-CSRF-Token": csrfToken,
+          },
+        }
+      );
+    } catch (err) {
+      console.error("워크스페이스 대화 모드 업데이트 실패:", err);
+    }
+  }, [workspaceUuid, interestCategory]);
+
+  // 대화 내용 워크스페이스에 저장
+  const saveMessageToWorkspace = useCallback(
+    async (role: string, content: string) => {
+      if (!workspaceUuid) return;
+
+      try {
+        // CSRF 토큰 획득
+        const csrfToken = await getCsrfToken();
+
+        await axiosInstance.post(
+          `/workspace/${workspaceUuid}/chats`,
+          {
+            role,
+            content,
+            previousResponseId: responseId,
+          },
+          {
+            headers: {
+              "X-CSRF-Token": csrfToken,
+            },
+          }
+        );
+      } catch (err) {
+        console.error("대화 저장 실패:", err);
+      }
+    },
+    [workspaceUuid, responseId]
+  );
+
+  // 이전 대화 불러오기
+  const fetchChatHistory = useCallback(async () => {
+    if (!workspaceUuid) return;
+
+    try {
+      // CSRF 토큰 획득
+      const csrfToken = await getCsrfToken();
+
+      // 워크스페이스의 채팅 기록 가져오기
+      const response = await axiosInstance.get(
+        `/workspace/${workspaceUuid}/chats`,
+        {
+          headers: {
+            "X-CSRF-Token": csrfToken,
+          },
+        }
+      );
+
+      if (response.data.success && response.data.data.chats.length > 0) {
+        const chatHistory = response.data.data.chats;
+
+        // 마지막 메시지의 응답 ID 저장 (대화 연속성 유지)
+        const lastChat = chatHistory[chatHistory.length - 1];
+        if (lastChat.id) {
+          setResponseId(lastChat.id);
+        }
+
+        // 채팅 기록을 UI에 표시할 형태로 변환
+        const formattedChats = chatHistory.map(
+          (chat: {
+            role: string;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            content: any;
+            createdAt: string | number | Date;
+          }) => ({
+            isBot: chat.role === "JobtalkAI",
+            content: chat.content,
+            date: new Date(chat.createdAt).toISOString(),
+          })
+        );
+
+        setChats(formattedChats);
+        setChatHistoryLoaded(true);
+
+        return true; // 대화 기록이 있음을 반환
+      }
+
+      return false; // 대화 기록이 없음을 반환
+    } catch (err) {
+      console.error("채팅 기록 불러오기 실패:", err);
+      return false;
+    }
+  }, [workspaceUuid]);
+
+  // 메시지 전송 함수
+  const handleSendMessage = useCallback(
+    async (message: string) => {
+      if (isInputLoading || !message.trim()) return;
+
+      setIsInputLoading(true);
+
+      try {
+        // CSRF 토큰 획득
+        const csrfToken = await getCsrfToken();
+
+        // 메시지 전송 (첫 메시지가 아닌 경우는 관심분야와 자격증 정보 불필요)
+        const response = await axiosInstance.post(
+          `/chat/test`,
+          {
+            message: message,
+            previousResponseId: responseId, // 이전 응답 ID 전송
+          },
+          {
+            headers: {
+              "X-CSRF-Token": csrfToken,
+            },
+          }
+        );
+
+        if (response.data.success) {
+          // 응답 ID 업데이트
+          setResponseId(response.data.previous_response_id);
+
+          // 챗봇 응답 추가
+          const botChat = {
+            isBot: true,
+            content: response.data.answer,
+            date: new Date().toISOString(),
+          };
+
+          setChats((prevChats) => [...prevChats, botChat]);
+
+          // 챗봇 응답 워크스페이스에 저장
+          await saveMessageToWorkspace("JobtalkAI", response.data.answer);
+        } else {
+          // 오류 응답 처리
+          const errorChat = {
+            isBot: true,
+            content: "메시지 전송 실패",
+            date: new Date().toISOString(),
+          };
+          setChats((prevChats) => [...prevChats, errorChat]);
+          enqueueSnackbar("챗봇 응답을 받는데 실패했습니다.", {
+            variant: "error",
+          });
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        console.error("메시지 전송 오류:", err);
+
+        // 오류 메시지 추가
+        const errorChat = {
+          isBot: true,
+          content: "메시지 전송에 실패했습니다. 잠시 후 다시 시도해주세요.",
+          date: new Date().toISOString(),
+        };
+        setChats((prevChats) => [...prevChats, errorChat]);
+
+        enqueueSnackbar(
+          err.response?.data?.message || "메시지 전송에 실패했습니다",
+          { variant: "error" }
+        );
+      } finally {
+        setIsInputLoading(false);
+      }
+    },
+    [responseId, isInputLoading, saveMessageToWorkspace]
+  );
+
+  // 사용자 메시지 전송 핸들러
+  const handleSendButtonClick = useCallback(async () => {
+    if (isInputLoading || !input.trim()) return;
+
+    // 사용자 메시지 UI에 표시
+    const userChat = {
+      isBot: false,
+      content: input,
+      date: new Date().toISOString(),
+    };
+    setChats((prevChats) => [...prevChats, userChat]);
+
+    // 사용자 메시지 워크스페이스에 저장
+    await saveMessageToWorkspace("user", input);
+
+    // 입력 초기화 및 메시지 전송
+    const messageToSend = input;
+    setInput("");
+    await handleSendMessage(messageToSend);
+  }, [input, isInputLoading, saveMessageToWorkspace, handleSendMessage]);
+
+  // 첫 대화 또는 대화 기록 불러오기
+  useEffect(() => {
+    // 필요한 데이터가 로드되기 전에는 실행하지 않음
+    if (!dataLoaded) return;
+
+    // 워크스페이스 대화 모드로 업데이트
+    updateWorkspaceChat();
+
+    // 이전 대화 기록 불러오기 또는 새 대화 시작
+    const loadChatHistory = async () => {
+      // 대화 기록 불러오기 시도
+      const hasHistory = await fetchChatHistory();
+
+      // 대화 기록이 없으면 첫 대화 시작
+      if (!hasHistory) {
+        // 첫 메시지 텍스트
+        const initialMessage = "안녕하세요, 진로 상담을 시작해 볼게요!";
+
+        try {
+          // CSRF 토큰 획득
+          const csrfToken = await getCsrfToken();
+
+          // 백엔드로 첫 메시지 전송
+          const response = await axiosInstance.post(
+            `/chat/test`,
+            {
+              message: initialMessage,
+              interests: interestCategory,
+              certificates: userCertificates,
+            },
+            {
+              headers: {
+                "X-CSRF-Token": csrfToken,
+              },
+            }
+          );
+
+          if (response.data.success) {
+            // 응답 ID 저장
+            setResponseId(response.data.previous_response_id);
+
+            // 워크스페이스에 AI 응답만 저장
+            await saveMessageToWorkspace("JobtalkAI", response.data.answer);
+
+            // UI에 AI 응답만 표시
+            setChats([
+              {
+                isBot: true,
+                content: response.data.answer,
+                date: new Date().toISOString(),
+              },
+            ]);
+          } else {
+            enqueueSnackbar("챗봇 응답을 받는데 실패했습니다.", {
+              variant: "error",
+            });
+          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+          console.error("첫 메시지 전송 오류:", err);
+          enqueueSnackbar(
+            err.response?.data?.message || "첫 메시지 전송에 실패했습니다",
+            { variant: "error" }
+          );
+
+          setChats([
+            {
+              isBot: true,
+              content:
+                "죄송합니다. 상담을 시작하는 데 문제가 발생했습니다. 다시 시도해 주세요.",
+              date: new Date().toISOString(),
+            },
+          ]);
+        }
+      }
+    };
+
+    loadChatHistory();
+  }, [
+    dataLoaded,
+    updateWorkspaceChat,
+    fetchChatHistory,
+    saveMessageToWorkspace,
+    interestCategory,
+    userCertificates,
+  ]);
 
   // 사용자 정보 가져오기 함수
   const fetchUserInfo = useCallback(async () => {
@@ -57,7 +416,7 @@ const ChatbotView = () => {
       if (response.data.success) {
         const userData = response.data.data;
 
-        // 닉네임 설정 (name 필드 사용)
+        // 닉네임 설정
         if (userData.name) {
           setUserName(userData.name);
         }
@@ -76,7 +435,6 @@ const ChatbotView = () => {
       }
     } catch (err) {
       console.error("사용자 정보 조회 실패:", err);
-      // 에러 발생 시 기본값으로 설정
       setProfileImage(null);
       setUserName(loginState.userName || "");
     }
@@ -122,67 +480,6 @@ const ChatbotView = () => {
     },
     []
   );
-
-  // 메시지 전송
-  const handleSendButtonClick = useCallback(async () => {
-    // 이미 전송중이라면 종료
-    if (isInputLoading) {
-      return;
-    }
-
-    setIsInputLoading(true);
-
-    try {
-      // 보낼 메시지가 없다면 종료
-      if (!input.trim()) {
-        return;
-      }
-
-      // 보낸 메시지 추가
-      const newChat = {
-        isBot: false,
-        content: input,
-        date: new Date().toISOString(),
-      };
-
-      setChats((prevChats) => [...prevChats, newChat]);
-      setInput("");
-
-      // 메시지 전송
-      const response = await axiosInstance.post(`/chat/test`, {
-        message: input,
-        previousResponseId: responseId, // 직전 응답 ID 전달
-        interests: "정보기술(IT)", // 관심분야
-        certificates: "정보처리기사, SQLD", // 보유 자격증
-      });
-
-      if (response.data.success) {
-        const newChat = {
-          isBot: true,
-          content: response.data.answer,
-          date: new Date().toISOString(),
-        };
-        setChats((prevChats) => [...prevChats, newChat]);
-        setResponseId(response.data.responseId); // 응답 ID 저장
-      } else {
-        const newChat = {
-          isBot: true,
-          content: "메시지 전송 실패",
-          date: new Date().toISOString(),
-        };
-        setChats((prevChats) => [...prevChats, newChat]);
-      }
-    } catch (err) {
-      const newChat = {
-        isBot: true,
-        content: `메시지 전송 실패: ${err}`,
-        date: new Date().toISOString(),
-      };
-      setChats((prevChats) => [...prevChats, newChat]);
-    } finally {
-      setIsInputLoading(false);
-    }
-  }, [input, isInputLoading, responseId]);
 
   // 입력란 키 다운
   const handleInputKeyDown = useCallback(

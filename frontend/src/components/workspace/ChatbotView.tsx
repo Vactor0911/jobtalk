@@ -15,8 +15,6 @@ import axiosInstance, {
   getCsrfToken,
   SERVER_HOST,
 } from "../../utils/axiosInstance";
-import { jobTalkLoginStateAtom } from "../../state";
-import { useAtomValue } from "jotai";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import { enqueueSnackbar } from "notistack";
 
@@ -32,7 +30,6 @@ interface ChatbotViewProps {
 
 const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   const theme = useTheme();
-  const loginState = useAtomValue(jobTalkLoginStateAtom);
 
   // 채팅 관련 상태
   const [chats, setChats] = useState<Chat[]>([]);
@@ -51,8 +48,8 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   const [interestCategory, setInterestCategory] = useState<string>("");
   const [dataLoaded, setDataLoaded] = useState(false);
 
-  // 워크스페이스 정보와 사용자 자격증 정보 가져오기
-  const fetchWorkspaceAndUserData = useCallback(async () => {
+  // 워크스페이스와 사용자 기본 정보 한번에 가져오기
+  const fetchBasicInfo = useCallback(async () => {
     if (!workspaceUuid) return;
 
     try {
@@ -60,55 +57,47 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
       // CSRF 토큰 획득
       const csrfToken = await getCsrfToken();
 
-      // 1. 워크스페이스 정보 조회
-      const workspaceResponse = await axiosInstance.get(
-        `/workspace/${workspaceUuid}`,
+      // 통합 API 호출
+      const response = await axiosInstance.get(
+        `/workspace/${workspaceUuid}/basicinfo`,
         {
           headers: { "X-CSRF-Token": csrfToken },
         }
       );
 
-      if (workspaceResponse.data.success) {
-        const workspaceData = workspaceResponse.data.data.workspace;
-        setInterestCategory(workspaceData.interestCategory || "");
-      }
+      if (response.data.success) {
+        const { workspace, user } = response.data.data;
 
-      // 2. 사용자 정보 조회
-      const userResponse = await axiosInstance.get("/auth/me", {
-        headers: { "X-CSRF-Token": csrfToken },
-      });
+        // 1. 워크스페이스 관심분야 설정
+        setInterestCategory(workspace.interestCategory || "");
 
-      if (userResponse.data.success) {
-        const userData = userResponse.data.data;
-        setUserCertificates(userData.certificates || "없음");
+        // 2. 사용자 정보 설정
+        setUserCertificates(user.certificates || "없음");
+        setUserName(user.name || "");
 
-        // 프로필 정보도 같이 설정
-        if (userData.name) {
-          setUserName(userData.name);
-        }
-
-        if (userData.profileImage) {
+        // 3. 프로필 이미지 설정
+        if (user.profileImage) {
           const imageUrl = `${SERVER_HOST}${
-            userData.profileImage
+            user.profileImage
           }?t=${new Date().getTime()}`;
           setProfileImage(imageUrl);
           setImageVersion((prev) => prev + 1);
         }
-      }
 
-      setDataLoaded(true);
+        setDataLoaded(true);
+      }
     } catch (err) {
-      console.error("워크스페이스/사용자 정보 로드 실패:", err);
+      console.error("기본 정보 로드 실패:", err);
       enqueueSnackbar("정보를 불러오는 데 실패했습니다", { variant: "error" });
     } finally {
       setIsInputLoading(false);
     }
   }, [workspaceUuid]);
 
-  // 컴포넌트 마운트 시 필요한 데이터 로드
+  // 컴포넌트 마운트 시 통합 API 호출
   useEffect(() => {
-    fetchWorkspaceAndUserData();
-  }, [fetchWorkspaceAndUserData]);
+    fetchBasicInfo();
+  }, [fetchBasicInfo]);
 
   // 워크스페이스 대화 모드로 업데이트
   const updateWorkspaceChat = useCallback(async () => {
@@ -136,7 +125,11 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
 
   // 대화 내용 워크스페이스에 저장
   const saveMessageToWorkspace = useCallback(
-    async (role: string, content: string) => {
+    async (
+      role: string,
+      content: string,
+      currentResponseId: string | null = null
+    ) => {
       if (!workspaceUuid) return;
 
       try {
@@ -148,7 +141,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
           {
             role,
             content,
-            previousResponseId: responseId,
+            previousResponseId: currentResponseId || responseId, // 전달받은 ID 우선 사용
           },
           {
             headers: {
@@ -186,8 +179,8 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
 
         // 마지막 메시지의 응답 ID 저장 (대화 연속성 유지)
         const lastChat = chatHistory[chatHistory.length - 1];
-        if (lastChat.id) {
-          setResponseId(lastChat.id);
+        if (lastChat.previousResponseId) {
+          setResponseId(lastChat.previousResponseId);
         }
 
         // 채팅 기록을 UI에 표시할 형태로 변환
@@ -221,7 +214,6 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   const handleSendMessage = useCallback(
     async (message: string) => {
       if (isInputLoading || !message.trim()) return;
-
       setIsInputLoading(true);
 
       try {
@@ -233,7 +225,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
           `/chat/career/mentor`,
           {
             message: message,
-            previousResponseId: responseId, // 이전 응답 ID 전송
+            previousResponseId: responseId, // 현재 저장된 응답 ID 사용
           },
           {
             headers: {
@@ -243,8 +235,10 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
         );
 
         if (response.data.success) {
+          const newResponseId = response.data.previous_response_id;
+
           // 응답 ID 업데이트
-          setResponseId(response.data.previous_response_id);
+          setResponseId(newResponseId);
 
           // 챗봇 응답 추가
           const botChat = {
@@ -255,8 +249,12 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
 
           setChats((prevChats) => [...prevChats, botChat]);
 
-          // 챗봇 응답 워크스페이스에 저장
-          await saveMessageToWorkspace("JobtalkAI", response.data.answer);
+          // 업데이트된 ID를 직접 전달
+          await saveMessageToWorkspace(
+            "JobtalkAI",
+            response.data.answer,
+            newResponseId
+          );
         } else {
           // 오류 응답 처리
           const errorChat = {
@@ -399,53 +397,6 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
     interestCategory,
     userCertificates,
   ]);
-
-  // 사용자 정보 가져오기 함수
-  const fetchUserInfo = useCallback(async () => {
-    if (!loginState.isLoggedIn) return;
-
-    try {
-      // CSRF 토큰 가져오기
-      const csrfToken = await getCsrfToken();
-
-      // 사용자 정보 조회 API 호출
-      const response = await axiosInstance.get("/auth/me", {
-        headers: { "X-CSRF-Token": csrfToken },
-      });
-
-      if (response.data.success) {
-        const userData = response.data.data;
-
-        // 닉네임 설정
-        if (userData.name) {
-          setUserName(userData.name);
-        }
-
-        // 프로필 이미지 설정
-        if (userData.profileImage) {
-          // 캐시 방지를 위한 타임스탬프 추가
-          const imageUrl = `${SERVER_HOST}${
-            userData.profileImage
-          }?t=${new Date().getTime()}`;
-          setProfileImage(imageUrl);
-          setImageVersion((prev) => prev + 1);
-        } else {
-          setProfileImage(null);
-        }
-      }
-    } catch (err) {
-      console.error("사용자 정보 조회 실패:", err);
-      setProfileImage(null);
-      setUserName(loginState.userName || "");
-    }
-  }, [loginState.isLoggedIn, loginState.userName]);
-
-  // 로그인 상태가 변경될 때마다 사용자 정보 가져오기
-  useEffect(() => {
-    if (loginState.isLoggedIn) {
-      fetchUserInfo();
-    }
-  }, [loginState.isLoggedIn, fetchUserInfo]);
 
   // 프로필 이미지 요소
   const profileAvatar = useMemo(() => {

@@ -230,7 +230,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
 
         // 메시지 전송 (첫 메시지가 아닌 경우는 관심분야와 자격증 정보 불필요)
         const response = await axiosInstance.post(
-          `/chat/test`,
+          `/chat/career/mentor`,
           {
             message: message,
             previousResponseId: responseId, // 이전 응답 ID 전송
@@ -337,7 +337,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
 
           // 백엔드로 첫 메시지 전송
           const response = await axiosInstance.post(
-            `/chat/test`,
+            `/chat/career/mentor`,
             {
               message: initialMessage,
               interests: interestCategory,

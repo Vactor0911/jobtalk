@@ -92,14 +92,14 @@ export const getWorkspaceByUuid = async (req: Request, res: Response) => {
     }
 
     const workspace = workspaces[0];
-    
+
     // 로드맵 데이터 처리
-    const roadmapData = workspace.roadmap_data 
+    const roadmapData = workspace.roadmap_data
       ? {
           id: workspace.roadmap_id,
           jobTitle: workspace.job_title,
           jobDescription: workspace.job_description,
-          data: JSON.parse(workspace.roadmap_data)
+          data: JSON.parse(workspace.roadmap_data),
         }
       : null;
 
@@ -115,7 +115,7 @@ export const getWorkspaceByUuid = async (req: Request, res: Response) => {
           interestCategory: workspace.interest_category,
           createdAt: workspace.created_at,
           updatedAt: workspace.updated_at,
-          roadmap: roadmapData
+          roadmap: roadmapData,
         },
       },
       message: "워크스페이스 조회를 완료했습니다.",
@@ -238,16 +238,22 @@ export const saveWorkspaceChat = async (req: Request, res: Response) => {
       "SELECT MAX(message_index) as last_index FROM workspace_chats WHERE workspace_id = ?",
       [workspaceId]
     );
-    
+
     const lastIndex = lastMessageResult[0].last_index || 0;
     const nextIndex = lastIndex + 1;
 
     // 새 대화 저장
     const result = await dbPool.query(
       `INSERT INTO workspace_chats 
-       (workspace_id, role, content, previous_response_id, message_index) 
-       VALUES (?, ?, ?, ?, ?)`,
-      [workspaceId, role, content, previousResponseId || null, nextIndex]
+   (workspace_id, role, content, previous_response_id, message_index) 
+   VALUES (?, ?, ?, ?, ?)`,
+      [
+        workspaceId,
+        role,
+        content,
+        previousResponseId ? String(previousResponseId) : null,
+        nextIndex,
+      ]
     );
 
     // 워크스페이스 상태 업데이트 (대화 중으로)
@@ -284,7 +290,7 @@ export const updateWorkspaceForChat = async (req: Request, res: Response) => {
     const { chatTopic } = req.body; // 대화 주제
     const user = req.user as { userUuid: string };
 
-    if (!chatTopic || typeof chatTopic !== 'string') {
+    if (!chatTopic || typeof chatTopic !== "string") {
       res.status(400).json({
         success: false,
         message: "유효한 대화 주제를 입력해주세요.",
@@ -308,7 +314,7 @@ export const updateWorkspaceForChat = async (req: Request, res: Response) => {
 
     // 새로운 이름과 상태 설정
     const newName = `${chatTopic}에 대해 상담 중 💬`;
-    
+
     // 워크스페이스 업데이트
     await dbPool.query(
       `UPDATE workspace 
@@ -382,9 +388,10 @@ export const saveWorkspaceRoadmap = async (req: Request, res: Response) => {
       );
 
       // roadmapData가 JSON 문자열인지 확인하고 변환
-      const roadmapDataJson = typeof roadmapData === 'string' 
-        ? roadmapData 
-        : JSON.stringify(roadmapData);
+      const roadmapDataJson =
+        typeof roadmapData === "string"
+          ? roadmapData
+          : JSON.stringify(roadmapData);
 
       if (existingRoadmap.length > 0) {
         // 기존 로드맵 업데이트
@@ -392,7 +399,12 @@ export const saveWorkspaceRoadmap = async (req: Request, res: Response) => {
           `UPDATE workspace_roadmaps 
            SET job_title = ?, job_description = ?, roadmap_data = ?, updated_at = CURRENT_TIMESTAMP
            WHERE id = ?`,
-          [jobTitle, jobDescription || null, roadmapDataJson, existingRoadmap[0].id]
+          [
+            jobTitle,
+            jobDescription || null,
+            roadmapDataJson,
+            existingRoadmap[0].id,
+          ]
         );
       } else {
         // 새 로드맵 생성
@@ -469,7 +481,7 @@ export const updateWorkspaceInterest = async (req: Request, res: Response) => {
     }
 
     const workspaceId = workspaces[0].id;
-    
+
     // 새 이름 설정 (기존 이름에 관심분야 추가)
     const newName = `${interestCategory} 분야 탐색하기 💼`;
 
@@ -486,7 +498,7 @@ export const updateWorkspaceInterest = async (req: Request, res: Response) => {
       message: "관심 분야가 성공적으로 설정되었습니다.",
       data: {
         interestCategory,
-        name: newName
+        name: newName,
       },
     });
   } catch (error: any) {
@@ -499,4 +511,86 @@ export const updateWorkspaceInterest = async (req: Request, res: Response) => {
   }
 };
 
+// 워크스페이스 기본 정보와 사용자 기본 정보 조회
+export const getWorkspaceAndUserBasicInfo = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { uuid } = req.params;
+    const user = req.user as { userUuid: string };
 
+    // 트랜잭션으로 쿼리 묶기
+    const connection = await dbPool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      // 1. 워크스페이스 정보 조회 (관심분야만)
+      const workspaces = await connection.query(
+        `SELECT 
+          interest_category
+         FROM workspace 
+         WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE`,
+        [uuid, user.userUuid]
+      );
+
+      if (workspaces.length === 0) {
+        res.status(404).json({
+          success: false,
+          message: "워크스페이스를 찾을 수 없거나 권한이 없습니다.",
+        });
+        return;
+      }
+
+      // 2. 사용자 정보 조회 (자격증, 이름, 프로필 이미지만)
+      const users = await connection.query(
+        `SELECT 
+          name,
+          certificates,
+          profile_image
+         FROM user
+         WHERE user_uuid = ?`,
+        [user.userUuid]
+      );
+
+      if (users.length === 0) {
+        res.status(404).json({
+          success: false,
+          message: "사용자 정보를 찾을 수 없습니다.",
+        });
+        return;
+      }
+
+      await connection.commit();
+
+      // 결과 반환
+      res.status(200).json({
+        success: true,
+        data: {
+          workspace: {
+            interestCategory: workspaces[0].interest_category,
+          },
+          user: {
+            name: users[0].name,
+            certificates: users[0].certificates,
+            profileImage: users[0].profile_image,
+          },
+        },
+        message: "워크스페이스와 사용자 기본 정보를 성공적으로 조회했습니다.",
+      });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  } catch (error: any) {
+    console.error("워크스페이스/사용자 정보 조회 오류:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "정보 조회에 실패했습니다.",
+      error: error.message,
+    });
+  }
+};

@@ -11,6 +11,12 @@ import path from "path"; // 경로 조작을 위한 모듈
 
 const allowedSymbolsForPassword = /^[a-zA-Z0-9!@#$%^&*?]*$/; // 허용된 문자만 포함하는지 확인
 
+const workspaceNames = [
+  "안녕하세요! 진로 상담이 궁금해요 💬",
+  "새로운 꿈을 찾고 있어요 ✨",
+  "나만의 로드맵을 만들어볼까요? 🗺️",
+];
+
 // 사용자 회원가입
 export const register = async (req: Request, res: Response) => {
   const { email, password, name, terms, certificates } = req.body;
@@ -55,8 +61,8 @@ export const register = async (req: Request, res: Response) => {
     // Step 2: 비밀번호 암호화
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Step 3: 사용자 저장 - 추가 필드 포함
-    await connection.query(
+    // Step 3: 사용자 저장
+    const result = await connection.query(
       `INSERT INTO user (email, password, name, terms, certificates) 
        VALUES (?, ?, ?, ?, ?)`,
       [
@@ -64,9 +70,36 @@ export const register = async (req: Request, res: Response) => {
         hashedPassword,
         name,
         JSON.stringify(terms || { privacy: true }),
-        certificates || null, // 자격증 추가
+        certificates || null,
       ]
     );
+
+    // Step 4: 생성된 사용자의 UUID 조회
+    const userRows = await connection.query(
+      "SELECT user_uuid FROM user WHERE user_id = ?",
+      [result.insertId]
+    );
+
+    if (userRows.length === 0) {
+      await connection.rollback();
+      res.status(500).json({
+        success: false,
+        message: "사용자 정보 조회 실패",
+      });
+      return;
+    }
+
+    const userUuid = userRows[0].user_uuid;
+
+    // Step 5: 기본 워크스페이스 3개 생성
+    for (let i = 0; i < 3; i++) {
+      await connection.query(
+        `INSERT INTO workspace 
+        (user_uuid, name, status, chat_topic, is_active) 
+        VALUES (?, ?, 'waiting', NULL, TRUE)`,
+        [userUuid, workspaceNames[i]]
+      );
+    }
 
     await connection.commit(); // 트랜잭션 커밋
 

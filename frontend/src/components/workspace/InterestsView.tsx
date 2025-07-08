@@ -13,7 +13,12 @@ import interests from "../../assets/interests.json";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import CircleRoundedIcon from "@mui/icons-material/CircleRounded";
 import EastRoundedIcon from "@mui/icons-material/EastRounded";
+import { enqueueSnackbar } from "notistack";
+import axiosInstance, { getCsrfToken } from "../../utils/axiosInstance";
+import { useCallback } from "react";
+import { useNavigate, useParams } from "react-router";
 
+// 화살표 애니메이션 키프레임
 const arrowHoverAnimation = keyframes`
   0% {
     transform: translate(120%, -50%);
@@ -26,7 +31,71 @@ const arrowHoverAnimation = keyframes`
   }
 `;
 
-const InterestsView = () => {
+interface InterestsViewProps {
+  onInterestSelected?: (interest: string) => void;
+}
+
+const InterestsView = ({ onInterestSelected }: InterestsViewProps) => {
+  const navigate = useNavigate();
+  const { uuid } = useParams<{ uuid: string }>();
+
+  // 관심 분야 선택 핸들러
+  const handleInterestSelect = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async (interest: any) => {
+      try {
+        if (!uuid) {
+          enqueueSnackbar("워크스페이스 정보를 찾을 수 없습니다.", {
+            variant: "error",
+          });
+          return;
+        }
+
+        // CSRF 토큰 획득
+        const csrfToken = await getCsrfToken();
+
+        // API 호출로 관심분야 설정
+        const response = await axiosInstance.put(
+          `/workspace/${uuid}/interest`,
+          {
+            interestCategory: interest.name,
+          },
+          {
+            headers: {
+              "X-CSRF-Token": csrfToken,
+            },
+          }
+        );
+
+        if (response.data.success) {
+          enqueueSnackbar(`'${interest.name}' 분야를 선택했습니다.`, {
+            variant: "success",
+          });
+
+          // 부모 컴포넌트에 선택된 관심분야 전달 (있는 경우)
+          if (onInterestSelected) {
+            onInterestSelected(interest.name);
+          }
+
+          // 새로고침 또는 다음 화면으로 이동
+          navigate(`/workspace/${uuid}?refresh=true`);
+        } else {
+          throw new Error(
+            response.data.message || "관심분야 설정에 실패했습니다."
+          );
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        console.error("관심분야 설정 오류:", err);
+        enqueueSnackbar(
+          err.response?.data?.message || "관심분야 설정에 실패했습니다.",
+          { variant: "error" }
+        );
+      }
+    },
+    [uuid, navigate, onInterestSelected]
+  );
+
   return (
     <Grid container spacing={4}>
       {interests.map((interest, index) => (
@@ -90,6 +159,7 @@ const InterestsView = () => {
               {/* 선택하기 버튼 */}
               <Button
                 variant="contained"
+                onClick={() => handleInterestSelect(interest)}
                 sx={{
                   marginTop: "auto",
                   borderRadius: 3,

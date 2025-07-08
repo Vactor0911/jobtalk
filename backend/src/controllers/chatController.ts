@@ -65,7 +65,7 @@ export const chatTest = async (req: Request, res: Response) => {
       previous_response_id: previousResponseId ?? undefined, // 직전 응답 ID (없으면 undefined)
       // stream: false   // 필요하면 true 로 변경
 
-      max_output_tokens: 10000, // 한 번에 최대 10000 토큰
+      max_output_tokens: 15000, // 한 번에 최대 10000 토큰
       temperature: 0.7, // 0(가장 결정적) ~ 1.0(가장 창의적)
     });
 
@@ -73,7 +73,7 @@ export const chatTest = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       answer: response.output_text,
-      responseId: response.id, // 다음 대화에서 previous_response_id 로 사용
+      previous_response_id: response.id, // 다음 대화에서 사용
       usage: response.usage, // 토큰/비용 모니터링
     });
   } catch (err: any) {

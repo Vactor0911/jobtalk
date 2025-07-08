@@ -79,7 +79,7 @@ const StyledStepIconRoot = (props: StyledStepIconRootProps) => {
             ? `${rotateReverseAnimation} 1s ease-in-out`
             : "none",
           "& .MuiSvgIcon-root": {
-            fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
+            fontSize: { xs: "1.5rem", sm: "2.5rem", md: "4rem" },
           },
         }}
       >
@@ -120,7 +120,7 @@ const StyledStepLabel = ({ children, ownerState }: StyledStepLabelProps) => {
       variant="h6"
       fontSize={{
         xs: theme.typography.subtitle2.fontSize,
-        md: "inherit",
+        md: theme.typography.h6.fontSize,
       }}
       color={ownerState.active ? "primary" : grey[400]}
     >
@@ -147,8 +147,8 @@ const StyledStepConnector = () => {
       sx={{
         top: {
           xs: "27px",
-          sm: "31px",
-          md: "40px",
+          sm: "35px",
+          md: "52px",
         },
         marginX: "15%",
         transform: "translateY(-50%)",
@@ -205,8 +205,7 @@ const WorkspaceStepper = ({ activeStep }: { activeStep: number }) => {
                 <StyledStepLabel
                   {...props}
                   ownerState={{
-                    active:
-                      (activeStep - 1) * 0.5 === steps.indexOf(label),
+                    active: (activeStep - 1) * 0.5 === steps.indexOf(label),
                   }}
                 />
               ),

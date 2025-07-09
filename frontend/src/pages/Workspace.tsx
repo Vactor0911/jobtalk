@@ -3,7 +3,6 @@ import WorkspaceStepper from "../components/workspace/WorkspaceStepper";
 import { useCallback, useEffect, useState } from "react";
 import InterestsView from "../components/workspace/InterestsView";
 import ChatbotView from "../components/workspace/ChatbotView";
-import RoadMapView from "../components/workspace/RoadMapView";
 import { enqueueSnackbar } from "notistack";
 import axiosInstance from "../utils/axiosInstance";
 import { useParams } from "react-router";
@@ -28,18 +27,12 @@ interface UserInfo {
 }
 
 const Workspace = () => {
-  const [step, setStep] = useState(6);
   const { uuid } = useParams<{ uuid: string }>();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(true); // 로딩 구현할 때 사용하려면
   const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
   const [, setUserInfo] = useState<UserInfo | null>(null);
   const [selectedInterest, setSelectedInterest] = useState<string | null>(null);
-
-  // 로드맵 뷰
-  if (step > 5) {
-    return <RoadMapView />;
-  }
 
   // 워크스페이스 정보 가져오기
   const fetchWorkspaceInfo = useCallback(async () => {
@@ -122,7 +115,7 @@ const Workspace = () => {
         gap={4}
       >
         {/* 스테퍼 */}
-        <WorkspaceStepper activeStep={step} />
+        {step <= 5 && <WorkspaceStepper activeStep={step} />}
 
         {/* 관심 분야 선택 */}
         {step === 1 && (
@@ -177,12 +170,6 @@ const Workspace = () => {
             다음
           </Button>
         </Stack>
-
-        {/* 관심 분야 선택 */}
-        {step === 1 && <InterestsView />}
-
-        {/* 챗봇 질문 */}
-        {step === 3 && <ChatbotView />}
       </Stack>
     </Container>
   );

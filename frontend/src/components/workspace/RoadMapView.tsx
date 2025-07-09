@@ -2,7 +2,7 @@ import { Stack } from "@mui/material";
 import { Panel, PanelGroup } from "react-resizable-panels";
 import TitledContainer from "../TitledContainer";
 import StyledPanelResizeHandle from "../StyledPanelResizeHandle";
-import RoadMapViewer from "./RoadMapViewer";
+import ChatTest from "../ChatTest";
 
 const RoadMapView = () => {
   return (
@@ -31,7 +31,6 @@ const RoadMapView = () => {
         >
           <TitledContainer title="로드맵">
             {/* TODO: 로드맵 뷰어 구현 */}
-            <RoadMapViewer />
           </TitledContainer>
         </Panel>
 
@@ -47,7 +46,8 @@ const RoadMapView = () => {
           }}
         >
           <TitledContainer title="챗봇">
-            {/* TODO: 챗봇 구현 */}
+            {/* <JobSearchChat /> */}
+            <ChatTest />
           </TitledContainer>
         </Panel>
       </PanelGroup>

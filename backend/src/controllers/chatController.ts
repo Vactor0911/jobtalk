@@ -294,93 +294,99 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
   }
 };
 
-// 로드맵 노드 상세 정보 제공 AI
+// 로드맵 노드 세부사항 제공 API
 export const nodeDetailProvider = async (req: Request, res: Response) => {
   try {
-    const { nodeId, nodeName, nodeType, parentNode } = req.body;
+    const { roadmap_uuid, node_id, title } = req.body;
 
-    // 필수 입력값 확인
-    if (!nodeId || !nodeName) {
+    // 필수 입력값 체크
+    if (!roadmap_uuid || !node_id || !title) {
       res.status(400).json({
         success: false,
-        message: "노드 ID와 이름은 필수 입력값입니다.",
+        message: "roadmap_uuid, node_id, title은 필수 입력값입니다.",
       });
       return;
     }
 
-    // DB에서 노드 정보 조회
-    const existingNodeDetails = await dbPool.query(
-      "SELECT * FROM node_details WHERE node_id = ?",
-      [nodeId]
+    // 1. DB에서 상세 정보 조회
+    const [existing] = await dbPool.query(
+      "SELECT * FROM node_details WHERE roadmap_uuid = ? AND node_id = ?",
+      [roadmap_uuid, node_id]
     );
 
-    // DB에 정보가 이미 있으면 바로 반환
-    if (existingNodeDetails.length > 0) {
+    if (existing) {
+      // 이미 있으면 DB 값 반환
       res.status(200).json({
         success: true,
         source: "database",
-        data: {
-          nodeDetail: existingNodeDetails[0],
-        },
+        data: { nodeDetail: existing },
       });
       return;
     }
 
-    // DB에 정보가 없으면 OpenAI API 호출하여 생성
+    // 2. 없으면 OpenAI로 상세 설명 생성
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
     const inputMessages = [
       {
         role: "system",
-        content: `당신은 모든 직업에 대한 기술, 자격증, 직무 관련 전문 정보를 제공하는 AI입니다.
-        다음 정보에 대한 상세 설명을 JSON 형식으로 제공해주세요:
-        1. 기술/자격증 개요 및 설명
-        2. 필요성 및 중요도
-        3. 활용 분야 및 사용처
-        4. 관련 공식 문서나 학습 자료 링크
-        5. 자격증인 경우 시험 접수 페이지 링크`,
+        content: `
+          당신은 진로·기술·자격증 로드맵 전문가입니다.
+          아래 노드명에 대해 상세 설명을 아래 JSON 스키마에 맞춰 작성하세요.
+
+          반드시 아래 항목 포함:
+          - overview: 개요 및 설명
+          - importance: 왜 필요한지 (중요성)
+          - applications: 어디에 쓰이는지 (활용 분야)
+          - resources: 관련 공식 문서/학습 자료 링크 배열 (title, url, type 포함)
+          - examInfo: 자격증일 경우만 포함 (registrationUrl, organization 등)
+
+          아래와 같은 JSON 예시 참고:
+          {
+            "overview": "...",
+            "importance": "...",
+            "applications": "...",
+            "resources": [{ "title": "...", "url": "...", "type": "공식 문서" }],
+            "examInfo": {
+              "registrationUrl": "...",
+              "organization": "..."
+            }
+          }
+
+          반드시 JSON만 출력하세요.`,
       },
       {
         role: "user",
-        content: `"${nodeName}" 노드에 대한 상세 정보를 제공해주세요.
-        노드 타입: ${nodeType || "기술"}
-        상위 카테고리: ${parentNode || "없음"}`,
+        content: `"${title}" 노드에 대한 정보를 위 스키마에 맞춰 작성해주세요.`,
+      },
+      {
+        role: "developer",
+        content:
+          "응답은 반드시 유효한 JSON 형식이어야 합니다. 마크다운, 주석, 설명 없이 JSON만 반환하세요.",
       },
     ];
 
     const response = await openai.responses.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4",
       input: inputMessages as any,
-      max_output_tokens: 15000, // 최대 15000 토큰
-      temperature: 0.7, // 0(가장 결정적) ~ 1.0(가장 창의적)
+      max_output_tokens: 5000,
+      temperature: 0.7,
     });
 
-    // 응답 파싱 및 DB 저장
-    const nodeDetail = {
-      description: response.output_text,
-      created_at: new Date(),
-    };
-
+    // 3. 결과 파싱 및 DB 저장
+    let description = response.output_text;
+    // (필요시 JSON 파싱 검증 후 저장)
     await dbPool.query(
-      "INSERT INTO node_details (node_id, node_name, node_type, parent_node, description, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-      [
-        nodeId,
-        nodeName,
-        nodeType || "기술",
-        parentNode || null,
-        nodeDetail.description,
-        nodeDetail.created_at,
-      ]
+      `INSERT INTO node_details (roadmap_uuid, node_id, title, description, created_at)
+       VALUES (?, ?, ?, ?, NOW())`,
+      [roadmap_uuid, node_id, title, description]
     );
 
-    // 결과 반환
     res.status(200).json({
       success: true,
       source: "openai",
-      data: {
-        nodeDetail,
-      },
+      data: { nodeDetail: { roadmap_uuid, node_id, title, description } },
     });
+    return;
   } catch (err: any) {
     console.error("노드 상세 정보 API 오류:", err);
     res.status(err?.statusCode || 500).json({

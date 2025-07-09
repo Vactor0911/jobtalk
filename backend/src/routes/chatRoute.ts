@@ -21,7 +21,7 @@ chatRoute.post(
   generateCareerRoadmap
 );
 
-// 로드맵 노드 상세 정보 제공 API
+// 로드맵 노드 세부사항 제공 API
 chatRoute.post("/roadmap/node/detail", limiter, nodeDetailProvider);
 
 export default chatRoute;

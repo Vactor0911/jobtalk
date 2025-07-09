@@ -294,7 +294,7 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
   }
 };
 
-// 노드 상세 정보 제공 API
+// 로드맵 노드 세부사항 제공 API
 export const nodeDetailProvider = async (req: Request, res: Response) => {
   try {
     const { roadmap_uuid, node_id, title } = req.body;
@@ -329,18 +329,39 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
     const inputMessages = [
       {
         role: "system",
-        content: `당신은 진로·기술·자격증 로드맵 전문가입니다.
-          아래 노드명에 대해 아래 항목을 포함한 상세 설명을 JSON으로 제공하세요.
-          1. 개요 및 설명
-          2. 왜 필요한지(중요성)
-          3. 어디에 쓰이는지(활용 분야)
-          4. 공식 문서/학습 자료 링크(있으면)
-          5. 자격증이면 시험 접수 페이지(있으면)
+        content: `
+          당신은 진로·기술·자격증 로드맵 전문가입니다.
+          아래 노드명에 대해 상세 설명을 아래 JSON 스키마에 맞춰 작성하세요.
+
+          반드시 아래 항목 포함:
+          - overview: 개요 및 설명
+          - importance: 왜 필요한지 (중요성)
+          - applications: 어디에 쓰이는지 (활용 분야)
+          - resources: 관련 공식 문서/학습 자료 링크 배열 (title, url, type 포함)
+          - examInfo: 자격증일 경우만 포함 (registrationUrl, organization 등)
+
+          아래와 같은 JSON 예시 참고:
+          {
+            "overview": "...",
+            "importance": "...",
+            "applications": "...",
+            "resources": [{ "title": "...", "url": "...", "type": "공식 문서" }],
+            "examInfo": {
+              "registrationUrl": "...",
+              "organization": "..."
+            }
+          }
+
           반드시 JSON만 출력하세요.`,
       },
       {
         role: "user",
-        content: `"${title}"에 대한 상세 설명을 위 항목에 맞춰 작성해주세요.`,
+        content: `"${title}" 노드에 대한 정보를 위 스키마에 맞춰 작성해주세요.`,
+      },
+      {
+        role: "developer",
+        content:
+          "응답은 반드시 유효한 JSON 형식이어야 합니다. 마크다운, 주석, 설명 없이 JSON만 반환하세요.",
       },
     ];
 

@@ -47,6 +47,26 @@ const extractJobOptions = (message: string): string[] | null => {
   return null;
 };
 
+// JOB_OPTIONS: [...] 부분과 중복 QUESTION: 제거 함수
+const cleanBotMessage = (message: string) => {
+  // 1. JOB_OPTIONS: [...] 제거
+  let cleaned = message.replace(/JOB_OPTIONS:\s*\[[^\]]*\]/g, "").trim();
+
+  // 2. QUESTION:이 두 번 이상 나오면 첫 번째만 남기고 뒤는 모두 제거
+  const firstQuestionIdx = cleaned.indexOf("QUESTION:");
+  if (firstQuestionIdx !== -1) {
+    // 두 번째 QUESTION: 위치 찾기 (첫 번째 이후)
+    const secondQuestionIdx = cleaned.indexOf(
+      "QUESTION:",
+      firstQuestionIdx + 1
+    );
+    if (secondQuestionIdx !== -1) {
+      cleaned = cleaned.slice(0, secondQuestionIdx).trim();
+    }
+  }
+  return cleaned;
+};
+
 const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   const theme = useTheme();
 
@@ -582,7 +602,9 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
               borderRadius={2}
               bgcolor={grey[100]}
             >
-              <Typography variant="subtitle1">{chat.content}</Typography>
+              <Typography variant="subtitle1">
+                {cleanBotMessage(chat.content)}
+              </Typography>
               {/* 직업 옵션 버튼 표시 */}
               {chat.jobOptions && chat.jobOptions.length > 0 && (
                 <JobOptionsButtons
@@ -620,7 +642,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
           value={input}
           onChange={handleInputChange}
           onKeyDown={handleInputKeyDown}
-          disabled={isInputLoading || (isRecommendLimit)}
+          disabled={isInputLoading || isRecommendLimit}
           slotProps={{
             input: {
               sx: { paddingBottom: 6, borderRadius: 3 },
@@ -639,7 +661,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
             borderRadius: "50px",
           }}
           onClick={handleSendButtonClick}
-          disabled={isInputLoading || (isRecommendLimit)}
+          disabled={isInputLoading || isRecommendLimit}
         >
           <Typography variant="subtitle1" fontWeight="bold">
             입력

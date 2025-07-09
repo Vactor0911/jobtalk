@@ -194,7 +194,7 @@ export const careerMentor = async (req: Request, res: Response) => {
   }
 };
 
-// 로드맵 생성 전용 API
+// 로드맵 생성 API
 export const generateCareerRoadmap = async (req: Request, res: Response) => {
   try {
     // 데이터 받기

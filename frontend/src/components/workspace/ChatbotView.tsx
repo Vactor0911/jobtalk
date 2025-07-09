@@ -47,6 +47,26 @@ const extractJobOptions = (message: string): string[] | null => {
   return null;
 };
 
+// JOB_OPTIONS: [...] 부분과 중복 QUESTION: 제거 함수
+const cleanBotMessage = (message: string) => {
+  // 1. JOB_OPTIONS: [...] 제거
+  let cleaned = message.replace(/JOB_OPTIONS:\s*\[[^\]]*\]/g, "").trim();
+
+  // 2. QUESTION:이 두 번 이상 나오면 첫 번째만 남기고 뒤는 모두 제거
+  const firstQuestionIdx = cleaned.indexOf("QUESTION:");
+  if (firstQuestionIdx !== -1) {
+    // 두 번째 QUESTION: 위치 찾기 (첫 번째 이후)
+    const secondQuestionIdx = cleaned.indexOf(
+      "QUESTION:",
+      firstQuestionIdx + 1
+    );
+    if (secondQuestionIdx !== -1) {
+      cleaned = cleaned.slice(0, secondQuestionIdx).trim();
+    }
+  }
+  return cleaned;
+};
+
 const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   const theme = useTheme();
 
@@ -56,7 +76,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   const [isInputLoading, setIsInputLoading] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [, setChatHistoryLoaded] = useState(false); // 이전 대화 불러온 여부
-  const [isRecommendStage, setIsRecommendStage] = useState(false); // 직업 추천 단계 여부
+  const [, setIsRecommendStage] = useState(false); // 직업 추천 단계 여부
   const [, setForceRecommendCount] = useState(0); // 직업 추천 강제 카운트
   const [isRecommendLimit, setIsRecommendLimit] = useState(false); // 직업 추천 제한 여부
   const [recommendedJobs, setRecommendedJobs] = useState<string[]>([]); // 추천된 직업 목록
@@ -224,12 +244,17 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
         setChats(formattedChats);
         setChatHistoryLoaded(true);
 
+        // isRecommendLimit 복원
+        setIsRecommendLimit(!!response.data.data.isRecommendLimit);
+
         return true; // 대화 기록이 있음을 반환
       }
 
+      setIsRecommendLimit(false); // 대화 없으면 제한 해제
       return false; // 대화 기록이 없음을 반환
     } catch (err) {
       console.error("채팅 기록 불러오기 실패:", err);
+      setIsRecommendLimit(false);
       return false;
     }
   }, [workspaceUuid]);
@@ -577,14 +602,18 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
               borderRadius={2}
               bgcolor={grey[100]}
             >
-              <Typography variant="subtitle1">{chat.content}</Typography>
+              <Typography variant="subtitle1">
+                {cleanBotMessage(chat.content)}
+              </Typography>
               {/* 직업 옵션 버튼 표시 */}
               {chat.jobOptions && chat.jobOptions.length > 0 && (
                 <JobOptionsButtons
                   jobOptions={chat.jobOptions}
                   onSelectJob={(job) => {
                     // TODO: 직업 선택 시 로드맵 요청 등 처리
-                    enqueueSnackbar(`선택한 직업: ${job}`, { variant: "success" });
+                    enqueueSnackbar(`선택한 직업: ${job}`, {
+                      variant: "success",
+                    });
                   }}
                 />
               )}
@@ -593,7 +622,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
         </Stack>
       ))}
 
-      {isRecommendStage && isRecommendLimit && recommendedJobs.length > 0 && (
+      {isRecommendLimit && recommendedJobs.length > 0 && (
         <JobOptionsButtons
           jobOptions={recommendedJobs}
           onSelectJob={(job) => {
@@ -613,7 +642,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
           value={input}
           onChange={handleInputChange}
           onKeyDown={handleInputKeyDown}
-          disabled={isInputLoading || (isRecommendStage && isRecommendLimit)}
+          disabled={isInputLoading || isRecommendLimit}
           slotProps={{
             input: {
               sx: { paddingBottom: 6, borderRadius: 3 },
@@ -632,7 +661,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
             borderRadius: "50px",
           }}
           onClick={handleSendButtonClick}
-          disabled={isInputLoading || (isRecommendStage && isRecommendLimit)}
+          disabled={isInputLoading || isRecommendLimit}
         >
           <Typography variant="subtitle1" fontWeight="bold">
             입력

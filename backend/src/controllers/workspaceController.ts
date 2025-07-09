@@ -138,7 +138,7 @@ export const getWorkspaceChats = async (req: Request, res: Response) => {
 
     // 해당 워크스페이스 존재 및 권한 확인
     const workspaces = await dbPool.query(
-      "SELECT id FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
+      "SELECT id, force_recommend_count FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
       [uuid, user.userUuid]
     );
 
@@ -151,6 +151,8 @@ export const getWorkspaceChats = async (req: Request, res: Response) => {
     }
 
     const workspaceId = workspaces[0].id;
+    const forceRecommendCount = workspaces[0].force_recommend_count ?? 0;
+    const isRecommendLimit = forceRecommendCount >= 3;
 
     // 대화 기록 조회
     const chats = await dbPool.query(
@@ -179,6 +181,7 @@ export const getWorkspaceChats = async (req: Request, res: Response) => {
           messageIndex: chat.message_index,
           createdAt: chat.created_at,
         })),
+        isRecommendLimit,
       },
       message: "워크스페이스 대화 기록 조회를 완료했습니다.",
     });

@@ -7,7 +7,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import { grey } from "@mui/material/colors";
 import FaceRoundedIcon from "@mui/icons-material/FaceRounded";
@@ -15,6 +15,8 @@ import axiosInstance, {
   getCsrfToken,
   SERVER_HOST,
 } from "../../utils/axiosInstance";
+import { jobTalkLoginStateAtom, profileImageAtom } from "../../state";
+import { useAtomValue } from "jotai";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import { enqueueSnackbar } from "notistack";
 import JobOptionsButtons from "./JobOptionsButtons";
@@ -76,6 +78,8 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   const [isInputLoading, setIsInputLoading] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [, setChatHistoryLoaded] = useState(false); // 이전 대화 불러온 여부
+  const loginState = useAtomValue(jobTalkLoginStateAtom); // 로그인 상태
+  const profileImage = useAtomValue(profileImageAtom); // 프로필 이미지 상태
   const [, setIsRecommendStage] = useState(false); // 직업 추천 단계 여부
   const [, setForceRecommendCount] = useState(0); // 직업 추천 강제 카운트
   const [isRecommendLimit, setIsRecommendLimit] = useState(false); // 직업 추천 제한 여부
@@ -513,7 +517,6 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   const profileAvatar = useMemo(() => {
     return (
       <Avatar
-        key={`header-profile-${imageVersion}`} // 캐시 방지
         src={profileImage || undefined}
         sx={{
           bgcolor: grey[400],
@@ -522,8 +525,8 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
         }}
       >
         {!profileImage &&
-          (userName ? (
-            userName.charAt(0).toUpperCase()
+          (loginState.userName ? (
+            loginState.userName.charAt(0).toUpperCase()
           ) : (
             <FaceRoundedIcon
               sx={{
@@ -533,7 +536,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
           ))}
       </Avatar>
     );
-  }, [profileImage, userName, imageVersion]);
+  }, [loginState.userName, profileImage]);
 
   // 메시지 입력
   const handleInputChange = useCallback(
@@ -556,7 +559,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   );
 
   return (
-    <Stack gap={4} marginTop={10}>
+    <Stack gap={4} marginTop={10} flex={1}>
       {chats.map((chat, index) => (
         <Stack
           width="66%"
@@ -592,7 +595,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
               color={chat.isBot ? "primary" : "inherit"}
               alignSelf={chat.isBot ? "flex-start" : "flex-end"}
             >
-              {chat.isBot ? "잡톡AI" : userName}
+              {chat.isBot ? "잡톡AI" : loginState.userName}
             </Typography>
 
             {/* 대화 내용 */}
@@ -633,7 +636,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
       )}
 
       {/* 채팅 입력란 */}
-      <Box position="relative" width="100%">
+      <Box position="relative" width="100%" marginTop="auto">
         {/* 입력란 */}
         <TextField
           fullWidth

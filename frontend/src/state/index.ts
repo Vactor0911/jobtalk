@@ -21,3 +21,6 @@ export const jobTalkLoginStateAtom = atom({
 
 // 인증 초기화 완료 상태를 추적하는 atom
 export const isAuthInitializedAtom = atom(false); // 초기화 완료 상태
+
+// 사용자 프로필 이미지 상태
+export const profileImageAtom = atom<string | null>(null);

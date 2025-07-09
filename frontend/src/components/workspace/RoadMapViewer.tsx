@@ -1,6 +1,6 @@
 import { Box, useTheme } from "@mui/material";
 import roadmapData from "../../assets/roadmap_test.json";
-import { ReactFlow } from "@xyflow/react";
+import { Controls, ReactFlow } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useState } from "react";
@@ -46,7 +46,7 @@ const RoadMapViewer = () => {
         data: { label: node.title },
         position: { x: 0, y: 0 }, // 초기 위치는 나중에 조정
         style: {
-          backgroundColor: theme.palette.secondary.main,
+          backgroundColor: node.isOptional ? "inherit" : theme.palette.secondary.main,
           color: "black",
         },
       }));
@@ -143,7 +143,9 @@ const RoadMapViewer = () => {
           console.log("Node clicked:", event, node);
         }}
         fitView
-      />
+      >
+        <Controls />
+      </ReactFlow>
     </Box>
   );
 };

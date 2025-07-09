@@ -17,16 +17,35 @@ import axiosInstance, {
 } from "../../utils/axiosInstance";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import { enqueueSnackbar } from "notistack";
+import JobOptionsButtons from "./JobOptionsButtons";
 
 interface Chat {
   isBot: boolean; // 챗봇인지 여부
   content: string; // 메시지 내용
   date: string; // 메시지 전송 날짜
+  jobOptions?: string[]; // 직업 옵션이 있는 경우
 }
 
 interface ChatbotViewProps {
   workspaceUuid: string;
 }
+
+// AI 응답에서 직업 옵션 추출 함수
+const extractJobOptions = (message: string): string[] | null => {
+  const regex = /JOB_OPTIONS:\s*(\[[^\]]+\])/;
+  const match = message.match(regex);
+
+  if (match && match[1]) {
+    try {
+      const jobs = JSON.parse(match[1]);
+      return jobs;
+    } catch (error) {
+      console.error("직업 옵션 파싱 실패:", error);
+      return null;
+    }
+  }
+  return null;
+};
 
 const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   const theme = useTheme();
@@ -37,6 +56,10 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   const [isInputLoading, setIsInputLoading] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [, setChatHistoryLoaded] = useState(false); // 이전 대화 불러온 여부
+  const [isRecommendStage, setIsRecommendStage] = useState(false); // 직업 추천 단계 여부
+  const [, setForceRecommendCount] = useState(0); // 직업 추천 강제 카운트
+  const [isRecommendLimit, setIsRecommendLimit] = useState(false); // 직업 추천 제한 여부
+  const [recommendedJobs, setRecommendedJobs] = useState<string[]>([]); // 추천된 직업 목록
 
   // 프로필 이미지와 닉네임 상태
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -194,6 +217,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
             isBot: chat.role === "JobtalkAI",
             content: chat.content,
             date: new Date(chat.createdAt).toISOString(),
+            jobOptions: extractJobOptions(chat.content) || undefined,
           })
         );
 
@@ -209,6 +233,14 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
       return false;
     }
   }, [workspaceUuid]);
+
+  useEffect(() => {
+    // 채팅 내역에서 직업 옵션 누적
+    const allJobs = chats
+      .filter((chat) => chat.jobOptions && chat.jobOptions.length > 0)
+      .flatMap((chat) => chat.jobOptions!);
+    setRecommendedJobs(Array.from(new Set(allJobs)));
+  }, [chats]);
 
   // 메시지 전송 함수
   const handleSendMessage = useCallback(
@@ -226,6 +258,8 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
           {
             message: message,
             previousResponseId: responseId, // 현재 저장된 응답 ID 사용
+            workspaceUuid: workspaceUuid,
+            userName: userName,
           },
           {
             headers: {
@@ -234,17 +268,51 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
           }
         );
 
+        // 1. 토큰 경고/차단 UX
+        if (response.data.usage?.total_tokens >= 15000) {
+          enqueueSnackbar("질문/응답이 너무 깁니다. 더 짧게 입력해주세요.", {
+            variant: "error",
+          });
+          setIsInputLoading(false);
+          return;
+        }
+
         if (response.data.success) {
+          // 강제 직업 추천 단계인 경우
+          setIsRecommendStage(!!response.data.isRecommendStage);
+          setForceRecommendCount(response.data.forceRecommendCount ?? 0);
+          setIsRecommendLimit(!!response.data.isRecommendLimit);
+
+          if (response.data.questionCount === 8) {
+            enqueueSnackbar(
+              "최대 15번까지만 질의응답이 진행됩니다. 사용자는 성의껏 대답해주세요.",
+              {
+                variant: "info",
+              }
+            );
+          }
+
+          // 직업 옵션 누적
+          const jobOptions = extractJobOptions(response.data.answer);
+          setRecommendedJobs((prev) => {
+            if (!jobOptions) return prev;
+            // 중복 제거
+            return Array.from(new Set([...prev, ...jobOptions]));
+          });
+
           const newResponseId = response.data.previous_response_id;
+          // 비용 확인용 콘솔
+          console.log("비용 : ", response.data.usage.total_tokens);
 
           // 응답 ID 업데이트
           setResponseId(newResponseId);
 
           // 챗봇 응답 추가
-          const botChat = {
+          const botChat: Chat = {
             isBot: true,
             content: response.data.answer,
             date: new Date().toISOString(),
+            jobOptions: jobOptions || undefined,
           };
 
           setChats((prevChats) => [...prevChats, botChat]);
@@ -254,6 +322,12 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
             "JobtalkAI",
             response.data.answer,
             newResponseId
+          );
+        } else if (response.data.isRecommendLimit) {
+          setIsRecommendLimit(true);
+          enqueueSnackbar(
+            "더 이상 추가 질문이 불가합니다. 직업을 선택해주세요.",
+            { variant: "warning" }
           );
         } else {
           // 오류 응답 처리
@@ -287,7 +361,13 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
         setIsInputLoading(false);
       }
     },
-    [responseId, isInputLoading, saveMessageToWorkspace]
+    [
+      isInputLoading,
+      responseId,
+      workspaceUuid,
+      userName,
+      saveMessageToWorkspace,
+    ]
   );
 
   // 사용자 메시지 전송 핸들러
@@ -340,6 +420,8 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
               message: initialMessage,
               interests: interestCategory,
               certificates: userCertificates,
+              workspaceUuid: workspaceUuid,
+              userName: userName,
             },
             {
               headers: {
@@ -351,6 +433,8 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
           if (response.data.success) {
             // 응답 ID 저장
             setResponseId(response.data.previous_response_id);
+
+            console.log("비용 : ", response.data.usage.total_tokens);
 
             // 워크스페이스에 AI 응답만 저장
             await saveMessageToWorkspace("JobtalkAI", response.data.answer);
@@ -396,6 +480,8 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
     saveMessageToWorkspace,
     interestCategory,
     userCertificates,
+    workspaceUuid,
+    userName,
   ]);
 
   // 프로필 이미지 요소
@@ -492,10 +578,30 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
               bgcolor={grey[100]}
             >
               <Typography variant="subtitle1">{chat.content}</Typography>
+              {/* 직업 옵션 버튼 표시 */}
+              {chat.jobOptions && chat.jobOptions.length > 0 && (
+                <JobOptionsButtons
+                  jobOptions={chat.jobOptions}
+                  onSelectJob={(job) => {
+                    // TODO: 직업 선택 시 로드맵 요청 등 처리
+                    enqueueSnackbar(`선택한 직업: ${job}`, { variant: "success" });
+                  }}
+                />
+              )}
             </Box>
           </Stack>
         </Stack>
       ))}
+
+      {isRecommendStage && isRecommendLimit && recommendedJobs.length > 0 && (
+        <JobOptionsButtons
+          jobOptions={recommendedJobs}
+          onSelectJob={(job) => {
+            enqueueSnackbar(`선택한 직업: ${job}`, { variant: "success" });
+            // TODO: 선택 후 로드맵 요청 등 추가
+          }}
+        />
+      )}
 
       {/* 채팅 입력란 */}
       <Box position="relative" width="100%">
@@ -507,6 +613,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
           value={input}
           onChange={handleInputChange}
           onKeyDown={handleInputKeyDown}
+          disabled={isInputLoading || (isRecommendStage && isRecommendLimit)}
           slotProps={{
             input: {
               sx: { paddingBottom: 6, borderRadius: 3 },
@@ -525,6 +632,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
             borderRadius: "50px",
           }}
           onClick={handleSendButtonClick}
+          disabled={isInputLoading || (isRecommendStage && isRecommendLimit)}
         >
           <Typography variant="subtitle1" fontWeight="bold">
             입력

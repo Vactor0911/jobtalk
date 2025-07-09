@@ -7,15 +7,12 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import { grey } from "@mui/material/colors";
 import FaceRoundedIcon from "@mui/icons-material/FaceRounded";
-import axiosInstance, {
-  getCsrfToken,
-  SERVER_HOST,
-} from "../../utils/axiosInstance";
-import { jobTalkLoginStateAtom } from "../../state";
+import axiosInstance from "../../utils/axiosInstance";
+import { jobTalkLoginStateAtom, profileImageAtom } from "../../state";
 import { useAtomValue } from "jotai";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 
@@ -29,71 +26,18 @@ const ChatbotView = () => {
   const theme = useTheme();
 
   const [chats, setChats] = useState<Chat[]>([]);
-  const loginState = useAtomValue(jobTalkLoginStateAtom);
-
-  // 프로필 이미지와 닉네임 상태
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>("");
-  const [imageVersion, setImageVersion] = useState(0);
+  const loginState = useAtomValue(jobTalkLoginStateAtom); // 로그인 상태
+  const profileImage = useAtomValue(profileImageAtom); // 프로필 이미지 상태
 
   // 메시지 입력 상태
   const [input, setInput] = useState("");
   const [isInputLoading, setIsInputLoading] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
 
-  // 사용자 정보 가져오기 함수
-  const fetchUserInfo = useCallback(async () => {
-    if (!loginState.isLoggedIn) return;
-
-    try {
-      // CSRF 토큰 가져오기
-      const csrfToken = await getCsrfToken();
-
-      // 사용자 정보 조회 API 호출
-      const response = await axiosInstance.get("/auth/me", {
-        headers: { "X-CSRF-Token": csrfToken },
-      });
-
-      if (response.data.success) {
-        const userData = response.data.data;
-
-        // 닉네임 설정 (name 필드 사용)
-        if (userData.name) {
-          setUserName(userData.name);
-        }
-
-        // 프로필 이미지 설정
-        if (userData.profileImage) {
-          // 캐시 방지를 위한 타임스탬프 추가
-          const imageUrl = `${SERVER_HOST}${
-            userData.profileImage
-          }?t=${new Date().getTime()}`;
-          setProfileImage(imageUrl);
-          setImageVersion((prev) => prev + 1);
-        } else {
-          setProfileImage(null);
-        }
-      }
-    } catch (err) {
-      console.error("사용자 정보 조회 실패:", err);
-      // 에러 발생 시 기본값으로 설정
-      setProfileImage(null);
-      setUserName(loginState.userName || "");
-    }
-  }, [loginState.isLoggedIn, loginState.userName]);
-
-  // 로그인 상태가 변경될 때마다 사용자 정보 가져오기
-  useEffect(() => {
-    if (loginState.isLoggedIn) {
-      fetchUserInfo();
-    }
-  }, [loginState.isLoggedIn, fetchUserInfo]);
-
   // 프로필 이미지 요소
   const profileAvatar = useMemo(() => {
     return (
       <Avatar
-        key={`header-profile-${imageVersion}`} // 캐시 방지
         src={profileImage || undefined}
         sx={{
           bgcolor: grey[400],
@@ -102,8 +46,8 @@ const ChatbotView = () => {
         }}
       >
         {!profileImage &&
-          (userName ? (
-            userName.charAt(0).toUpperCase()
+          (loginState.userName ? (
+            loginState.userName.charAt(0).toUpperCase()
           ) : (
             <FaceRoundedIcon
               sx={{
@@ -113,7 +57,7 @@ const ChatbotView = () => {
           ))}
       </Avatar>
     );
-  }, [profileImage, userName, imageVersion]);
+  }, [loginState.userName, profileImage]);
 
   // 메시지 입력
   const handleInputChange = useCallback(
@@ -233,7 +177,7 @@ const ChatbotView = () => {
               color={chat.isBot ? "primary" : "inherit"}
               alignSelf={chat.isBot ? "flex-start" : "flex-end"}
             >
-              {chat.isBot ? "잡톡AI" : userName}
+              {chat.isBot ? "잡톡AI" : loginState.userName}
             </Typography>
 
             {/* 대화 내용 */}

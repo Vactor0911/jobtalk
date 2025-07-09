@@ -9,7 +9,7 @@ import { authenticateToken } from "../middleware/authenticate";
 
 const chatRoute = express.Router();
 
-// 진로 상담 및 로드맵 생성 API
+// 진로 상담 AI
 chatRoute.post("/career/mentor", limiter, careerMentor);
 
 // 로드맵 생성 전용 API

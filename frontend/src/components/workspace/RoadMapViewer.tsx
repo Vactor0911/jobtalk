@@ -143,6 +143,9 @@ const RoadMapViewer = () => {
           console.log("Node clicked:", event, node);
         }}
         fitView
+        disableKeyboardA11y
+        nodesConnectable={false}
+        elementsSelectable={false}
       >
         <Controls />
       </ReactFlow>

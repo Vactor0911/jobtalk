@@ -7,14 +7,11 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import { grey } from "@mui/material/colors";
 import FaceRoundedIcon from "@mui/icons-material/FaceRounded";
-import axiosInstance, {
-  getCsrfToken,
-  SERVER_HOST,
-} from "../../utils/axiosInstance";
+import axiosInstance, { getCsrfToken } from "../../utils/axiosInstance";
 import { jobTalkLoginStateAtom, profileImageAtom } from "../../state";
 import { useAtomValue } from "jotai";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
@@ -86,9 +83,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   const [recommendedJobs, setRecommendedJobs] = useState<string[]>([]); // 추천된 직업 목록
 
   // 프로필 이미지와 닉네임 상태
-  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
-  const [imageVersion, setImageVersion] = useState(0);
 
   // 자격증과 관심분야 정보
   const [userCertificates, setUserCertificates] = useState<string>("");
@@ -115,21 +110,12 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
       if (response.data.success) {
         const { workspace, user } = response.data.data;
 
-        // 1. 워크스페이스 관심분야 설정
+        // 워크스페이스 관심분야 설정
         setInterestCategory(workspace.interestCategory || "");
 
-        // 2. 사용자 정보 설정
+        // 사용자 정보 설정
         setUserCertificates(user.certificates || "없음");
         setUserName(user.name || "");
-
-        // 3. 프로필 이미지 설정
-        if (user.profileImage) {
-          const imageUrl = `${SERVER_HOST}${
-            user.profileImage
-          }?t=${new Date().getTime()}`;
-          setProfileImage(imageUrl);
-          setImageVersion((prev) => prev + 1);
-        }
 
         setDataLoaded(true);
       }

@@ -276,6 +276,7 @@ const Header = () => {
         sx={{
           backgroundColor: "white",
           boxShadow: `0px 2px 4px -1px ${theme.palette.primary.main}`,
+          zIndex: 1200,
         }}
       >
         <Toolbar

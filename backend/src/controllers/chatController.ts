@@ -194,17 +194,11 @@ export const careerMentor = async (req: Request, res: Response) => {
   }
 };
 
-// 로드맵 생성 전용 API 추가
+// 로드맵 생성 API
 export const generateCareerRoadmap = async (req: Request, res: Response) => {
   try {
     // 데이터 받기
-    const {
-      jobTitle,
-      interests,
-      certificates,
-      userSkills,
-      previousExperience,
-    } = req.body;
+    const { jobTitle, interests, certificates } = req.body;
 
     if (!jobTitle?.trim()) {
       res
@@ -221,51 +215,31 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
       {
         role: "system",
         content: `
-          당신은 커리어 로드맵 생성 전문가입니다. 
-          사용자가 선택한 직업(${jobTitle})에 대한 상세한 학습 및 커리어 로드맵을 생성해주세요.
-          반드시 다음 구조의 JSON 형식으로 응답하세요:
-          
-          {
-            "title": "직업 제목",
-            "description": "직업에 대한 간략한 설명",
-            "jobOutlook": "취업 전망 및 시장 상황",
-            "recommendedFor": "이런 사람에게 추천",
-            "skills": [
-              {
-                "name": "기술 이름",
-                "category": "기초/필수/고급 중 하나",
-                "description": "기술 설명",
-                "priority": "우선순위(상/중/하)",
-                "resources": [
-                  {
-                    "title": "학습 자료 제목",
-                    "type": "영상/문서/강의 중 하나",
-                    "url": "참고 URL(나무위키, 공식문서 등)",
-                    "difficulty": "난이도(입문/중급/고급)"
-                  }
-                ]
-              }
-            ],
-            "certificates": [
-              {
-                "name": "자격증 이름",
-                "importance": "중요도(필수/권장/선택)",
-                "description": "자격증 설명",
-                "examInfo": "시험 정보",
-                "registrationUrl": "시험 접수 페이지 URL",
-                "preparationTime": "준비 기간"
-              }
-            ],
-            "careerPath": [
-              {
-                "stage": "단계 이름(취업준비/신입/주니어/시니어 등)",
-                "duration": "기간",
-                "goals": ["목표1", "목표2"],
-                "focusAreas": ["집중 분야1", "집중 분야2"]
-              }
-            ],
-            "additionalTips": "추가 조언"
-          }
+          당신은 20년 차 진로·학습 로드맵 전문가입니다.
+          사용자가 입력한 **직업명, 관심 분야(카테고리), 보유 자격증**을 바탕으로
+          해당 직업에 필요한 학습·자격증 로드맵 트리를 작성하십시오.
+
+          [출력 규칙]
+          1. 결과는 **JSON 배열** 하나로만 출력합니다. (마크다운·주석·설명 절대 금지)
+
+          2. 각 노드는 아래 5개 필드만 포함합니다.  
+            • id          : 1부터 증가하는 정수  
+            • title       : 과목·기술·자격증·경력 단계 등 노드 이름  
+            • parent_id   : 부모 id (최상위는 null)  
+            • isOptional  : 필수 과정이 아니면 true, 그 외 false  
+            • category    : "skill" | "certificate" | "job" 등 노드 유형  
+
+          3. 선후관계 규칙  
+            • A 과목을 배우려면 B 과목이 선행 → B 다음에 A 연결  
+            • C 과목을 이수한 뒤 D 자격증 준비 가능 → C 다음에 D 연결  
+            • E 과목 이수 후 F 과목을 추가 학습해도 됨 → E 다음에 F 연결  
+
+          4. **노드 수·깊이 제한**  
+            • 기본값: maxNodes = 35, maxDepth = 6  
+            • 사용자 프롬프트 끝에 "옵션" 객체가 주어지면 해당 값으로 덮어쓰십시오.  
+            • 제약을 초과하면 중요도가 낮은 **선택 노드**부터 제거하여 조건을 만족시킵니다.
+
+          5. 위 규칙을 어기거나 JSON 외의 텍스트가 포함되면 출력은 **오류**로 간주됩니다.
         `,
       },
       {
@@ -274,15 +248,8 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
           저는 ${jobTitle} 직업에 대한 상세한 커리어 로드맵이 필요합니다.
           제 관심 분야는 ${interests || "특별히 명시되지 않음"}이고, 
           보유 자격증은 ${certificates || "없음"}입니다.
-          ${userSkills ? `현재 보유 기술: ${userSkills}` : ""}
-          ${previousExperience ? `이전 경험: ${previousExperience}` : ""}
           위 정보를 고려해서 맞춤형 커리어 로드맵을 JSON 형식으로 제공해주세요.
         `,
-      },
-      {
-        role: "developer",
-        content:
-          "응답은 반드시 유효한 JSON 형식이어야 합니다. 마크다운이나 추가 설명 없이 JSON만 반환하세요.",
       },
     ];
 

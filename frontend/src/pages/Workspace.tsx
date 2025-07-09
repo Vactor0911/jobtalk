@@ -28,18 +28,12 @@ interface UserInfo {
 }
 
 const Workspace = () => {
-  const [step, setStep] = useState(6);
-  const { uuid } = useParams<{ uuid: string }>();
   const [step, setStep] = useState(1);
+  const { uuid } = useParams<{ uuid: string }>();
   const [isLoading, setIsLoading] = useState(true); // 로딩 구현할 때 사용하려면
   const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
   const [, setUserInfo] = useState<UserInfo | null>(null);
   const [selectedInterest, setSelectedInterest] = useState<string | null>(null);
-
-  // 로드맵 뷰
-  if (step > 5) {
-    return <RoadMapView />;
-  }
 
   // 워크스페이스 정보 가져오기
   const fetchWorkspaceInfo = useCallback(async () => {
@@ -113,6 +107,11 @@ const Workspace = () => {
     fetchUserInfo();
   }, [fetchWorkspaceInfo, fetchUserInfo]);
 
+  // 로드맵 뷰
+  if (step > 5) {
+    return <RoadMapView />;
+  }
+
   return (
     <Container maxWidth="lg">
       <Stack
@@ -182,7 +181,9 @@ const Workspace = () => {
         {step === 1 && <InterestsView />}
 
         {/* 챗봇 질문 */}
-        {step === 3 && <ChatbotView />}
+        {step === 3 && workspace && (
+          <ChatbotView workspaceUuid={workspace.uuid} />
+        )}
       </Stack>
     </Container>
   );

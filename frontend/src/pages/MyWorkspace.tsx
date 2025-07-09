@@ -69,12 +69,23 @@ const MyWorkspace = () => {
       const created = new Date(createdAt);
       const updated = new Date(updatedAt);
 
+      // 날짜 포맷터 - 한국어 형식으로 날짜와 시간 표시
+      const formatter = new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false, // 24시간제 사용
+      });
+
       // 생성 시간과 수정 시간의 차이가 1초 이상인 경우 (동일하지 않은 경우)
       if (Math.abs(updated.getTime() - created.getTime()) > 1000) {
-        return `${updated.toLocaleDateString()}에 수정됨`;
+        return `${formatter.format(updated)} 에 수정됨`;
       }
 
-      return `${created.toLocaleDateString()}에 생성됨`;
+      return `${formatter.format(created)} 에 생성됨`;
     },
     []
   );

@@ -245,14 +245,15 @@ export const saveWorkspaceChat = async (req: Request, res: Response) => {
     // 새 대화 저장
     const result = await dbPool.query(
       `INSERT INTO workspace_chats 
-   (workspace_id, role, content, previous_response_id, message_index) 
-   VALUES (?, ?, ?, ?, ?)`,
+   (workspace_id, role, content, previous_response_id, message_index, workspace_uuid) 
+   VALUES (?, ?, ?, ?, ?, ?)`,
       [
         workspaceId,
         role,
         content,
         previousResponseId ? String(previousResponseId) : null,
         nextIndex,
+        uuid,
       ]
     );
 

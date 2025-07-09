@@ -21,6 +21,7 @@
     "axios": "^1.10.0",
     "browser-image-compression": "^2.0.2",
     "dotenv": "^16.5.0",
+    "framer-motion": "^12.23.0",
     "gh-pages": "^6.3.0",
     "jotai": "^2.12.5",
     "notistack": "^3.0.2",

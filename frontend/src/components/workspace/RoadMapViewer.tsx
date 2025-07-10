@@ -1,4 +1,4 @@
-import { Box, useTheme } from "@mui/material";
+import { Box, Paper, Stack, Typography, useTheme } from "@mui/material";
 import roadmapData from "../../assets/roadmap_test.json";
 import { Controls, ReactFlow, type ReactFlowInstance } from "@xyflow/react";
 
@@ -235,7 +235,71 @@ const RoadMapViewer = () => {
   }, []);
 
   return (
-    <Box width="100%" height="100%">
+    <Box width="100%" height="100%" position="relative">
+      {/* 로드맵 레전드 */}
+      <Paper
+        variant="outlined"
+        sx={{
+          position: "absolute",
+          top: 10,
+          left: 10,
+          padding: 1,
+          bgcolor: "#f6f6f6",
+          zIndex: 2,
+        }}
+      >
+        <Stack gap={0.75}>
+          {/* 학습 단계 */}
+          <Stack direction="row" gap={1} alignItems="center">
+            <Box
+              width="60px"
+              height="30px"
+              bgcolor={theme.palette.primary.main}
+              border="2px solid black"
+              borderRadius={1}
+            />
+            <Typography variant="subtitle1">학습 단계</Typography>
+          </Stack>
+
+          {/* 학습 내용 */}
+          <Stack direction="row" gap={1} alignItems="center">
+            <Box
+              width="60px"
+              height="30px"
+              bgcolor="white"
+              border={`2px solid ${theme.palette.primary.main}`}
+              borderRadius={1}
+            />
+            <Typography variant="subtitle1">학습 내용</Typography>
+          </Stack>
+
+          {/* 자격증 */}
+          <Stack direction="row" gap={1} alignItems="center">
+            <Box
+              width="60px"
+              height="30px"
+              bgcolor={theme.palette.secondary.main}
+              border="2px solid black"
+              borderRadius={1}
+            />
+            <Typography variant="subtitle1">자격증</Typography>
+          </Stack>
+
+          {/* 정규 학습 과정 */}
+          <Stack direction="row" gap={1} alignItems="center">
+            <Box width="60px" border="2px solid #b1b1b7" borderRadius={1} />
+            <Typography variant="subtitle1">정규 과정</Typography>
+          </Stack>
+
+          {/* 선택 학습 과정 */}
+          <Stack direction="row" gap={1} alignItems="center">
+            <Box width="60px" border="2px dashed #b1b1b7" borderRadius={1} />
+            <Typography variant="subtitle1">선택 학습 과정</Typography>
+          </Stack>
+        </Stack>
+      </Paper>
+
+      {/* 로드맵 플로우 */}
       <ReactFlow
         nodes={nodes}
         edges={edges}

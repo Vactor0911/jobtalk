@@ -6,11 +6,14 @@ import ChatInput from "../chat/ChatInput";
 
 const RoadMapChatBot = () => {
   // 채팅 관련 상태
-  const [chats, setChats] = useState<Chat[]>([]); // 채팅 메시지 목록
-  const [chatbotLoading, setChatbotLoading] = useState(false); // 챗봇 응답 로딩 상태
+  const [chats] = useState<Chat[]>([]); // 채팅 메시지 목록
+  const [chatbotLoading] = useState(false); // 챗봇 응답 로딩 상태
 
   // 메시지 전송
-  const handleMessageSend = useCallback((message: string) => {}, []);
+  const handleMessageSend = useCallback((message: string) => {
+    console.log("메시지 전송:", message);
+    // TODO: 메시지 전송 로직 구현
+  }, []);
 
   return (
     <Stack gap={4} height="100%">

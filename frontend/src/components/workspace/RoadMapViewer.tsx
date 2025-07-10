@@ -1,9 +1,10 @@
 import { Box, useTheme } from "@mui/material";
-import roadmapData from "../../assets/roadmap_test.json";
 import { Controls, ReactFlow } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useState } from "react";
+import { useParams } from "react-router";
+import axiosInstance from "../../utils/axiosInstance";
 
 // 로드맵 데이터 타입
 interface NodeData {
@@ -11,6 +12,7 @@ interface NodeData {
   title: string;
   parent_id: number | string | null;
   isOptional?: boolean;
+  category: string; // "skill" | "certificate" | "job"
 }
 
 // 노드 데이터 타입
@@ -34,9 +36,30 @@ interface Edge {
 
 const RoadMapViewer = () => {
   const theme = useTheme();
+  const { uuid } = useParams<{ uuid: string }>(); // URL에서 워크스페이스 UUID 가져오기
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [roadmapData, setRoadmapData] = useState<NodeData[]>([]);
+
+  // DB에서 로드맵 데이터 조회
+  useEffect(() => {
+    const fetchRoadmap = async () => {
+      if (!uuid) return;
+      try {
+        const response = await axiosInstance.get(`/workspace/${uuid}/roadmap`);
+        if (response.data.success && response.data.data?.roadmapData) {
+          setRoadmapData(response.data.data.roadmapData);
+        } else {
+          setRoadmapData([]);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (err) {
+        setRoadmapData([]);
+      }
+    };
+    fetchRoadmap();
+  }, [uuid]);
 
   // 노드 구성
   const createNodes = useCallback(
@@ -46,7 +69,9 @@ const RoadMapViewer = () => {
         data: { label: node.title },
         position: { x: 0, y: 0 }, // 초기 위치는 나중에 조정
         style: {
-          backgroundColor: node.isOptional ? "inherit" : theme.palette.secondary.main,
+          backgroundColor: node.isOptional
+            ? "inherit"
+            : theme.palette.secondary.main,
           color: "black",
         },
       }));
@@ -111,7 +136,7 @@ const RoadMapViewer = () => {
       ...node,
       position: nodePositions[node.id] || { x: 0, y: 0 },
     }));
-  }, []);
+  }, [roadmapData]);
 
   // 엣지 구성
   const createEdges = useCallback((data: NodeData[]) => {
@@ -132,7 +157,7 @@ const RoadMapViewer = () => {
     // 엣지 생성
     const newEdges = createEdges(roadmapData);
     setEdges(newEdges);
-  }, [adjustNodePositions, createEdges, createNodes]);
+  }, [adjustNodePositions, createEdges, createNodes, roadmapData]);
 
   return (
     <Box width="100%" height="100%">

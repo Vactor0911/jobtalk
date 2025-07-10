@@ -77,7 +77,7 @@ const InterestsView = () => {
 
           // 선택된 관심 분야 적용
           setSelectedInterest(interest.name);
-          setStep(2); // 챗봇 준비 단계로 이동
+          setStep(3); // 챗봇 채팅 단계로 이동
         } else {
           throw new Error(
             response.data.message || "관심분야 설정에 실패했습니다."

@@ -1,9 +1,9 @@
 import { Box, useTheme } from "@mui/material";
 import roadmapData from "../../assets/roadmap_test.json";
-import { Controls, ReactFlow } from "@xyflow/react";
+import { Controls, ReactFlow, type ReactFlowInstance } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { JSX } from "@emotion/react/jsx-runtime";
 
 // 로드맵 데이터 타입
@@ -18,13 +18,17 @@ interface NodeData {
 // 노드 데이터 타입
 interface Node {
   id: string;
+  type?: string;
   data: { label: JSX.Element | string };
   position: { x: number; y: number };
   style: {
     backgroundColor: string;
     border: string;
     color: string;
+    boxShadow?: string;
   };
+  width?: number;
+  height?: number;
 }
 
 // 엣지 데이터 타입
@@ -40,12 +44,14 @@ const RoadMapViewer = () => {
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const reactFlowInstance = useRef<ReactFlowInstance<Node, Edge> | null>(null);
 
   // 노드 배경색 추출
   const getNodeBackgroundColor = useCallback(
     (category: string) => {
       switch (category) {
         case "job":
+        case "stage":
           return theme.palette.primary.main;
         case "certificate":
           return theme.palette.secondary.main;
@@ -59,26 +65,74 @@ const RoadMapViewer = () => {
   // 노드 구성
   const createNodes = useCallback(
     (data: NodeData[]) => {
-      const nodes = data.map((node) => ({
+      const nodes: Node[] = data.map((node) => ({
         id: `node-${node.id}`,
         data: {
           label:
-            node.category === "job" ? (
-              <span css={{ fontWeight: "bold" }}>{node.title}</span>
+            node.category === "job" || node.category === "stage" ? (
+              <div
+                css={{
+                  display: "flex",
+                  height: "100%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <span
+                  css={{ fontSize: "1rem", fontWeight: "bold", color: "white" }}
+                >
+                  {node.title}
+                </span>
+              </div>
             ) : (
-              node.title
+              <div
+                css={{
+                  display: "flex",
+                  height: "100%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <span>{node.title}</span>
+              </div>
             ),
         },
         position: { x: 0, y: 0 }, // 초기 위치는 나중에 조정
+        width: 150,
+        height: 40,
         style: {
+          padding: "0",
           backgroundColor: getNodeBackgroundColor(node.category || "default"),
           border:
             node.category === "skill"
               ? `2px solid ${theme.palette.primary.main}`
               : "2px solid black",
-          color: node.category === "job" ? "white" : "black",
+          color:
+            node.category === "job" || node.category === "stage"
+              ? "white"
+              : "black",
         },
       }));
+
+      // 자식 노드가 없는 노드의 타입을 "output"으로 설정
+      const parentIdSet = new Set(
+        data.map((n) => n.parent_id).filter((id) => id !== null)
+      );
+      nodes.forEach((node) => {
+        const nodeData = data.find((d) => `node-${d.id}` === node.id);
+
+        if (!nodeData) {
+          // 노드 데이터가 없는 경우
+          return;
+        } else if (nodeData.category === "job") {
+          // category가 "job"인 경우
+          node.type = "input";
+        } else if (!parentIdSet.has(nodeData.id)) {
+          // 자식 노드가 없는 경우
+          node.type = "output";
+        }
+      });
+
       return nodes;
     },
     [getNodeBackgroundColor, theme.palette.primary.main]
@@ -163,18 +217,40 @@ const RoadMapViewer = () => {
     setEdges(newEdges);
   }, [adjustNodePositions, createEdges, createNodes]);
 
+  // 노드로 시점 이동
+  const fitViewToNode = useCallback((nodeId: string, zoomLevel = 1.5) => {
+    // reactFlowInstance 참조
+    const instance = reactFlowInstance.current;
+    if (!instance) return;
+
+    // 선택한 노드 가져오기
+    const node = instance.getNode(nodeId);
+    if (!node) return;
+
+    // 노드를 가운데로 이동
+    const centerX = node.position.x + (node.width ? node.width / 2 : 0);
+    const centerY = node.position.y + (node.height ? node.height / 2 : 0);
+
+    instance.setCenter(centerX, centerY, { zoom: zoomLevel, duration: 800 });
+  }, []);
+
   return (
     <Box width="100%" height="100%">
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodeClick={(event, node) => {
-          console.log("Node clicked:", event, node);
+        onInit={(instance) => {
+          reactFlowInstance.current = instance;
+
+          const firstJob = roadmapData.find((n) => n.category === "job");
+          if (firstJob) fitViewToNode(`node-${firstJob.id}`, 1);
         }}
+        onNodeClick={(_, node) => fitViewToNode(node.id)}
         fitView
         disableKeyboardA11y
         nodesConnectable={false}
-        elementsSelectable={false}
+        nodesDraggable={false}
+        nodesFocusable={false}
       >
         <Controls />
       </ReactFlow>

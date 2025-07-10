@@ -552,6 +552,16 @@ export const saveWorkspaceRoadmap = async (req: Request, res: Response) => {
         );
       }
 
+      // 워크스페이스 상태 및 이름 업데이트
+      await connection.query(
+        `UPDATE workspace 
+         SET status = 'roadmap_generated', 
+             name = CONCAT(?, ' 로드맵 💼'), 
+             updated_at = CURRENT_TIMESTAMP
+         WHERE workspace_uuid = ? AND user_uuid = ?`,
+        [jobTitle, uuid, user.userUuid]
+      );
+
       await connection.commit();
 
       res.status(200).json({

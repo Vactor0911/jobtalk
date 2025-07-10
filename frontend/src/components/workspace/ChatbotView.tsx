@@ -544,7 +544,13 @@ const ChatbotView = () => {
           맞춤형 진로 상담
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
-          {selectedInterest} 분야에 관한 상담을 시작합니다.
+          <span css={{ fontWeight: "bold" }}>{"[ "}</span>
+          {/* 선택된 관심 분야 강조 */}
+          <span css={{ color: theme.palette.primary.main, fontWeight: "bold" }}>
+            {selectedInterest}
+          </span>
+          <span css={{ fontWeight: "bold" }}>{" ]"}</span> 분야에 관한 상담을
+          시작합니다.
         </Typography>
       </Box>
       <Stack gap={4} marginTop={10} flex={1}>

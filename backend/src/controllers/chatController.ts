@@ -215,59 +215,73 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
       {
         role: "system",
         content: `
-        당신은 20년 차 진로·학습 로드맵 전문가입니다.
+        당신은 20년 차 진로·상담 전문가입니다.
         사용자가 입력한 **직업명, 관심 분야(카테고리), 보유 자격증**을 바탕으로
-        해당 직업에 필요한 학습·자격증 로드맵 트리를 작성하십시오.
+        해당 직업을 지망하는 취업준비생이 학습해야 할 과목·언어·자격증을
+        추천되는 학습 단계별 부모·자식 노드 트리(로드맵)로 작성하십시오.
 
         ─────────────────────
         [출력 규칙]
-        1. 결과는 **JSON 배열** 하나로만 출력합니다. (마크다운·주석·설명 절대 금지)
+        1. 결과는 **JSON 배열** 하나만 출력합니다. (마크다운·주석·설명 금지)
 
         2. 각 노드는 아래 5개 필드만 포함합니다.  
           • id          : 1부터 증가하는 정수  
-          • title       : 과목·기술·자격증·경력 단계 등 한글로 된 노드 이름  
+          • title       : 과목·기술·자격증·경력 단계 등 한글 이름  
           • parent_id   : 부모 id (최상위는 null)  
           • isOptional  : 필수 과정이 아니면 true, 그 외 false  
-          • category    : "skill" | "certificate" | "job"  중 하나  
+          • category    : "skill" | "certificate" | "job" 중 하나  
 
         3. 노드 생성 규칙  
-          • **id = 1** 노드는 반드시 사용자의 직업명으로 설정하고  
-            "parent_id": null, "isOptional": false, "category": "job"  로 지정합니다.  
-          • 그 외 노드들은 자격증이면 "certificate", 나머지는 "skill" 로 지정합니다.
+          • **id = 1** 노드는 반드시 사용자의 직업명으로 지정하고  
+            "parent_id": null, "isOptional": false, "category": "job" 로 설정합니다.  
+          • 나머지 노드는 자격증이면 "certificate", 그 외는 "skill" 로 지정합니다.
 
         4. 학습 단계 & 선후관계  
-          • 단계 구분:  
-            ① 기초 → ② 핵심 → ③ 심화 → ④ 고급 → ⑤ 전문/특화(연구·프로젝트)  
+          • 단계 구분: ① 기초 → ② 핵심 → ③ 심화 → ④ 고급 → ⑤ 전문/특화(연구·프로젝트)  
           • “앞 단계 이수 → 뒷 단계 진행” 흐름으로 parent-child 를 연결합니다.  
           • 자격증은 **직접 준비 단계(skill)** 를 선행 노드로 두고,  
-            준비 단계를 모두 이수하면 해당 certificate 노드를 연결합니다.  
+            그 단계가 모두 끝난 뒤 certificate 노드를 연결합니다.  
+
+          *4-A.* **id = 2~6** 노드는 각각  
+                "기초 단계", "핵심 단계", "심화 단계", "고급 단계", "전문 단계"로 고정하고  
+                아래처럼 **세로(계단식)로** 연결합니다.  
+                ─ 2: parent_id = 1  
+                ─ 3: parent_id = 2  
+                ─ 4: parent_id = 3  
+                ─ 5: parent_id = 4  
+                ─ 6: parent_id = 5  
+                isOptional = false, category = "skill" 로 지정합니다.  
+
+          *4-B.* id = 2~6 을 제외한 모든 skill·certificate 노드는  
+                자신이 속한 단계 노드를 parent_id 로 가져야 합니다.  
+                (예: "HTML/CSS 기초" → parent_id = 2, "웹 프레임워크(Django)" → parent_id = 3)
 
         5. 세부 분해 지침  
-          • **모든 핵심 skill 노드는 반드시 2개 이상의 세부 skill** 로 분해합니다.  
-            예) “SQL” → “기초 문법”, “조인·서브쿼리”, “인덱스·최적화”  
+          • 모든 **핵심·고급 단계 skill** 은 *반드시 최소 2개* 이상의 세부 skill 로 분해합니다.  
+            (예: “SQL” → “기초 문법”, “조인·서브쿼리”, “인덱스·최적화”)  
           • 프레임워크·언어·툴 역시 “기본 설정 → 필수 기능 → 고급 기능” 식으로 2-3단계로 쪼갭니다.  
-          • **최종 leaf-skill 은 ‘더 이상 실무 단위로 쪼갤 수 없는 구체 항목’** 이어야 합니다.  
-            leaf-skill 이 광범위하면 한 단계 더 쪼개십시오.
+          • **최종 leaf-skill** 은 ‘실무 단위로 더 쪼갤 수 없는 구체 항목’이어야 합니다.  
+
+          *5-A.* 위 분해 규칙이 지켜지지 않거나 minNodes < 40 이면  
+                출력은 오직 한 단어 **“오류”** 만 적으십시오.
 
         6. 병렬 대안 기술 (선택 분기)  
           • 비슷한 기술(예: Java / Python / Node.js)은 같은 parent_id 를 공유하고  
-            각 노드의 isOptional 을 true 로 설정해 **선택 분기**를 만듭니다.
+            각 노드의 isOptional 을 true 로 지정해 **선택 분기**를 만듭니다.
 
-        7. 깊이·노드 수 제한  
-          • 기본값: **maxNodes = 150, maxDepth = 15**    
-          • 제약을 초과할 경우  
-            ① 깊이가 가장 큰 선택 노드 → ② 중요도가 낮은 선택 노드 순으로 제거합니다.
+        7. 노드 수 제한  
+          • **maxNodes = 80** (초과 시 중요도가 낮은 선택 노드부터 제거)
 
         8. 최소 분량 목표  
-          • **minNodes = 50, minDepth = 10** 을 반드시 만족하십시오.  
-          • 목표 미달 시 leaf-skill 을 더 세분화하여 minNodes·minDepth 를 달성하십시오.  
-          • 목표를 초과해도 maxNodes·maxDepth 안에서는 자유롭게 확장할 수 있습니다.
+          • **minNodes = 50** 이상을 반드시 만족하십시오.  
+          • 부족할 때는 leaf-skill 을 더 세분화해 노드를 늘리십시오.
 
-        9. 삭제·추가 금지 규칙  
-          • 본 지침에 명시된 필드 외의 속성, 마크다운, 설명, 주석을 **절대 포함하지 마십시오.**
+        9. 금지 규칙  
+          • 위 5개 필드 외의 속성, 마크다운, 설명, 주석을 **절대 포함하지 마십시오.**
 
         10. 검증 & 오류  
-            • minNodes·minDepth 미달, 또는 금지된 텍스트 포함 시 **“오류”** 단어만 출력하십시오.
+          • minNodes < 50 이거나 금지된 텍스트가 포함되면  
+            출력은 오직 한 단어 **“오류”** 만 적으십시오.
         `,
       },
       {
@@ -283,15 +297,22 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
 
     // OpenAI API 호출
     const response = await openai.responses.create({
-      model: "gpt-4", // 또는 더 뛰어난 gpt-4
+      model: "gpt-4o",
       input: inputMessages as any,
       max_output_tokens: 15000,
       temperature: 0.7,
     });
 
     try {
-      // JSON 파싱 검증
-      const roadmapData = JSON.parse(response.output_text);
+      let output = response.output_text.trim();
+      // 마크다운 코드블록 제거
+      if (output.startsWith("```")) {
+        output = output
+          .replace(/^```[a-zA-Z]*\s*/, "")
+          .replace(/```$/, "")
+          .trim();
+      }
+      const roadmapData = JSON.parse(output);
 
       // usage.total_tokens 체크
       const usage = response.usage;

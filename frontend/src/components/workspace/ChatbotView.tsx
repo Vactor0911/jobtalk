@@ -1,20 +1,13 @@
-import {
-  Box,
-  Button,
-  Stack,
-  TextField,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Box, Stack, Typography, useTheme } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import axiosInstance, { getCsrfToken } from "../../utils/axiosInstance";
 import { selectedInterestAtom, workspaceStepAtom } from "../../state";
 import { useAtom, useAtomValue } from "jotai";
-import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import { enqueueSnackbar } from "notistack";
 import JobOptionsButtons from "./JobOptionsButtons";
 import { useParams } from "react-router";
 import ChatBox from "../chat/ChatBox";
+import ChatInput from "../chat/ChatInput";
 
 interface Chat {
   isBot: boolean; // 챗봇인지 여부
@@ -68,9 +61,9 @@ const ChatbotView = () => {
   const selectedInterest = useAtomValue(selectedInterestAtom); // 선택된 관심 분야
 
   // 채팅 관련 상태
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [input, setInput] = useState("");
-  const [isInputLoading, setIsInputLoading] = useState(false);
+  const [chats, setChats] = useState<Chat[]>([]); // 채팅 메시지 목록
+  const [fetchLoading, setFetchLoading] = useState(false); // 데이터 로딩 상태
+  const [chatbotLoading, setChatbotLoading] = useState(false); // 챗봇 응답 로딩 상태
   const [responseId, setResponseId] = useState<string | null>(null);
   const [, setChatHistoryLoaded] = useState(false); // 이전 대화 불러온 여부
   const [, setIsRecommendStage] = useState(false); // 직업 추천 단계 여부
@@ -94,7 +87,7 @@ const ChatbotView = () => {
     if (!uuid) return;
 
     try {
-      setIsInputLoading(true);
+      setFetchLoading(true);
       // CSRF 토큰 획득
       const csrfToken = await getCsrfToken();
 
@@ -119,7 +112,7 @@ const ChatbotView = () => {
       console.error("기본 정보 로드 실패:", err);
       enqueueSnackbar("정보를 불러오는 데 실패했습니다", { variant: "error" });
     } finally {
-      setIsInputLoading(false);
+      setFetchLoading(false);
     }
   }, [uuid]);
 
@@ -251,12 +244,28 @@ const ChatbotView = () => {
   }, [chats]);
 
   // 메시지 전송 함수
-  const handleSendMessage = useCallback(
+  const handleMessageSend = useCallback(
     async (message: string) => {
-      if (isInputLoading || !message.trim()) return;
-      setIsInputLoading(true);
+      // 메시지 내용이 없다면 종료
+      if (!message || !message.trim()) {
+        return;
+      }
 
+      // 사용자 메시지 UI에 추가
+      const userChat: Chat = {
+        isBot: false,
+        content: message,
+        date: new Date().toISOString(),
+      };
+      setChats((prevChats: Chat[]) => [...prevChats, userChat]);
+
+      // 사용자 메시지 워크스페이스에 저장
+      await saveMessageToWorkspace("user", message);
+
+      // 메시지 전송
       try {
+        setChatbotLoading(true);
+
         // CSRF 토큰 획득
         const csrfToken = await getCsrfToken();
 
@@ -281,7 +290,6 @@ const ChatbotView = () => {
           enqueueSnackbar("질문/응답이 너무 깁니다. 더 짧게 입력해주세요.", {
             variant: "error",
           });
-          setIsInputLoading(false);
           return;
         }
 
@@ -366,32 +374,11 @@ const ChatbotView = () => {
           { variant: "error" }
         );
       } finally {
-        setIsInputLoading(false);
+        setChatbotLoading(false);
       }
     },
-    [isInputLoading, responseId, uuid, userName, saveMessageToWorkspace]
+    [responseId, uuid, userName, saveMessageToWorkspace]
   );
-
-  // 사용자 메시지 전송 핸들러
-  const handleSendButtonClick = useCallback(async () => {
-    if (isInputLoading || !input.trim()) return;
-
-    // 사용자 메시지 UI에 표시
-    const userChat = {
-      isBot: false,
-      content: input,
-      date: new Date().toISOString(),
-    };
-    setChats((prevChats) => [...prevChats, userChat]);
-
-    // 사용자 메시지 워크스페이스에 저장
-    await saveMessageToWorkspace("user", input);
-
-    // 입력 초기화 및 메시지 전송
-    const messageToSend = input;
-    setInput("");
-    await handleSendMessage(messageToSend);
-  }, [input, isInputLoading, saveMessageToWorkspace, handleSendMessage]);
 
   // 첫 대화 또는 대화 기록 불러오기
   useEffect(() => {
@@ -485,26 +472,6 @@ const ChatbotView = () => {
     uuid,
     userName,
   ]);
-
-  // 메시지 입력
-  const handleInputChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setInput(event.target.value);
-    },
-    []
-  );
-
-  // 입력란 키 다운
-  const handleInputKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement>) => {
-      // Enter 키 입력 시
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault(); // 기본 Enter 동작 방지
-        handleSendButtonClick(); // 메시지 전송 함수 호출
-      }
-    },
-    [handleSendButtonClick]
-  );
 
   // 로드맵 저장 핸들러
   const handleSaveRoadmap = useCallback(
@@ -640,6 +607,18 @@ const ChatbotView = () => {
           />
         ))}
 
+        {/* 챗봇 응답 로딩중 대화상자 */}
+        {chatbotLoading && (
+          <ChatBox
+            chat={{
+              isBot: true,
+              content: "",
+              date: new Date().toISOString(),
+            }}
+            loading={true}
+          />
+        )}
+
         {isRecommendLimit && recommendedJobs.length > 0 && (
           <JobOptionsButtons
             jobOptions={recommendedJobs}
@@ -648,40 +627,13 @@ const ChatbotView = () => {
         )}
 
         {/* 채팅 입력란 */}
-        <Box position="relative" width="100%" marginTop="auto">
-          {/* 입력란 */}
-          <TextField
-            fullWidth
-            multiline
-            placeholder="잡톡AI에게 무엇이든 물어보세요"
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={handleInputKeyDown}
-            disabled={isInputLoading || isRecommendLimit}
-            slotProps={{
-              input: {
-                sx: { paddingBottom: 6, borderRadius: 3 },
-              },
-            }}
+        <Box width="100%" marginTop="auto">
+          <ChatInput
+            onSend={handleMessageSend}
+            placeholder="잡톡 AI에게 무엇이든 물어보세요"
+            multiline={true}
+            disabled={fetchLoading || isRecommendLimit}
           />
-
-          {/* 입력 버튼 */}
-          <Button
-            endIcon={<SendRoundedIcon />}
-            loading={isInputLoading}
-            sx={{
-              position: "absolute",
-              bottom: 6,
-              right: 6,
-              borderRadius: "50px",
-            }}
-            onClick={handleSendButtonClick}
-            disabled={isInputLoading || isRecommendLimit}
-          >
-            <Typography variant="subtitle1" fontWeight="bold">
-              입력
-            </Typography>
-          </Button>
         </Box>
       </Stack>
     </Stack>

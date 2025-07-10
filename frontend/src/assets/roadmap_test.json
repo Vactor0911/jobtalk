@@ -1,164 +1,282 @@
 [
-  {
-    "id": 1,
-    "title": "Computer Science Fundamentals",
-    "parent_id": null,
-    "isOptional": false
-  },
-  {
-    "id": 2,
-    "title": "Programming Basics with Java",
-    "parent_id": 1,
-    "isOptional": false
-  },
-  {
-    "id": 3,
-    "title": "Object-Oriented Programming (Java)",
-    "parent_id": 2,
-    "isOptional": false
-  },
-  {
-    "id": 4,
-    "title": "Java Standard Library & Collections",
-    "parent_id": 3,
-    "isOptional": false
-  },
-  {
-    "id": 5,
-    "title": "Data Structures & Algorithms",
-    "parent_id": 4,
-    "isOptional": false
-  },
-  {
-    "id": 6,
-    "title": "Version Control (Git)",
-    "parent_id": 3,
-    "isOptional": false
-  },
-  {
-    "id": 7,
-    "title": "Build Tools & Dependency Management (Maven/Gradle)",
-    "parent_id": 3,
-    "isOptional": false
-  },
-  {
-    "id": 8,
-    "title": "Web Fundamentals (HTTP, REST, HTML basics)",
-    "parent_id": 3,
-    "isOptional": false
-  },
-  {
-    "id": 9,
-    "title": "Relational Databases & SQL",
-    "parent_id": 5,
-    "isOptional": false
-  },
-  {
-    "id": 10,
-    "title": "JDBC & ORM (JPA/Hibernate)",
-    "parent_id": 9,
-    "isOptional": false
-  },
-  {
-    "id": 11,
-    "title": "Spring Framework Core & Spring Boot",
-    "parent_id": 8,
-    "isOptional": false
-  },
-  {
-    "id": 12,
-    "title": "Spring Data JPA Integration",
-    "parent_id": 11,
-    "isOptional": false
-  },
-  {
-    "id": 13,
-    "title": "Building RESTful APIs with Spring",
-    "parent_id": 11,
-    "isOptional": false
-  },
-  {
-    "id": 14,
-    "title": "Authentication & Authorization (Spring Security)",
-    "parent_id": 13,
-    "isOptional": false
-  },
-  {
-    "id": 15,
-    "title": "Testing (JUnit, Mockito)",
-    "parent_id": 11,
-    "isOptional": false
-  },
-  {
-    "id": 16,
-    "title": "Containerization with Docker",
-    "parent_id": 13,
-    "isOptional": false
-  },
-  {
-    "id": 17,
-    "title": "CI/CD (GitHub Actions, Jenkins)",
-    "parent_id": 16,
-    "isOptional": false
-  },
-  {
-    "id": 18,
-    "title": "Cloud Deployment Basics (AWS EC2/Elastic Beanstalk)",
-    "parent_id": 17,
-    "isOptional": false
-  },
-  {
-    "id": 19,
-    "title": "Microservices Architecture (Spring Cloud, Kubernetes)",
-    "parent_id": 18,
-    "isOptional": false
-  },
-  {
-    "id": 20,
-    "title": "Monitoring & Logging (ELK, Prometheus, Grafana)",
-    "parent_id": 19,
-    "isOptional": false
-  },
-  {
-    "id": 21,
-    "title": "NoSQL Databases (MongoDB, Redis)",
-    "parent_id": 9,
-    "isOptional": true
-  },
-  {
-    "id": 22,
-    "title": "Reactive Programming (Spring WebFlux)",
-    "parent_id": 11,
-    "isOptional": true
-  },
-  {
-    "id": 23,
-    "title": "Kotlin for Backend",
-    "parent_id": 11,
-    "isOptional": true
-  },
-  {
-    "id": 24,
-    "title": "GraphQL with Spring",
-    "parent_id": 13,
-    "isOptional": true
-  },
-  {
-    "id": 25,
-    "title": "Oracle Certified Professional: Java SE",
-    "parent_id": 4,
-    "isOptional": true
-  },
-  {
-    "id": 26,
-    "title": "AWS Certified Cloud Practitioner",
-    "parent_id": 18,
-    "isOptional": true
-  },
-  {
-    "id": 27,
-    "title": "Certified Kubernetes Application Developer (CKAD)",
-    "parent_id": 19,
-    "isOptional": true
-  }
+ {
+   "id": 1,
+   "title": "백엔드 개발자",
+   "parent_id": null,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "job"
+ },
+ {
+   "id": 2,
+   "title": "프로그래밍 기초",
+   "parent_id": 1,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 3,
+   "title": "Java 프로그래밍",
+   "parent_id": 2,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 4,
+   "title": "Python 프로그래밍",
+   "parent_id": 2,
+   "isOptional": true,
+   "edgeStyle": "dotted",
+   "category": "skill"
+ },
+ {
+   "id": 5,
+   "title": "데이터베이스 기초",
+   "parent_id": 1,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 6,
+   "title": "SQL 마스터",
+   "parent_id": 5,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 7,
+   "title": "MySQL/PostgreSQL",
+   "parent_id": 6,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 8,
+   "title": "NoSQL (MongoDB)",
+   "parent_id": 6,
+   "isOptional": true,
+   "edgeStyle": "dotted",
+   "category": "skill"
+ },
+ {
+   "id": 9,
+   "title": "웹 개발 기초",
+   "parent_id": 1,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 10,
+   "title": "HTTP/HTTPS 프로토콜",
+   "parent_id": 9,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 11,
+   "title": "RESTful API 설계",
+   "parent_id": 10,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 12,
+   "title": "Spring Framework",
+   "parent_id": 3,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 13,
+   "title": "Spring Boot",
+   "parent_id": 12,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 14,
+   "title": "Spring Security",
+   "parent_id": 13,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 15,
+   "title": "JPA/Hibernate",
+   "parent_id": 13,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 16,
+   "title": "Django/Flask",
+   "parent_id": 4,
+   "isOptional": true,
+   "edgeStyle": "dotted",
+   "category": "skill"
+ },
+ {
+   "id": 17,
+   "title": "버전 관리 시스템",
+   "parent_id": 1,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 18,
+   "title": "Git/GitHub",
+   "parent_id": 17,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 19,
+   "title": "테스트 주도 개발",
+   "parent_id": 13,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 20,
+   "title": "JUnit/Mockito",
+   "parent_id": 19,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 21,
+   "title": "클라우드 컴퓨팅",
+   "parent_id": 14,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 22,
+   "title": "AWS/Azure 기초",
+   "parent_id": 21,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 23,
+   "title": "Docker/Kubernetes",
+   "parent_id": 22,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 24,
+   "title": "마이크로서비스 아키텍처",
+   "parent_id": 23,
+   "isOptional": true,
+   "edgeStyle": "dotted",
+   "category": "skill"
+ },
+ {
+   "id": 25,
+   "title": "CI/CD 파이프라인",
+   "parent_id": 23,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 26,
+   "title": "Jenkins/GitLab CI",
+   "parent_id": 25,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "skill"
+ },
+ {
+   "id": 27,
+   "title": "주니어 개발자",
+   "parent_id": 20,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "careerStage"
+ },
+ {
+   "id": 28,
+   "title": "시니어 개발자",
+   "parent_id": 27,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "careerStage"
+ },
+ {
+   "id": 29,
+   "title": "리드 개발자",
+   "parent_id": 28,
+   "isOptional": false,
+   "edgeStyle": "solid",
+   "category": "careerStage"
+ },
+ {
+   "id": 30,
+   "title": "AWS 공인 개발자",
+   "parent_id": 22,
+   "isOptional": true,
+   "edgeStyle": "dotted",
+   "category": "certificate"
+ },
+ {
+   "id": 31,
+   "title": "Oracle OCP",
+   "parent_id": 7,
+   "isOptional": true,
+   "edgeStyle": "dotted",
+   "category": "certificate"
+ },
+ {
+   "id": 32,
+   "title": "Redis 캐싱",
+   "parent_id": 15,
+   "isOptional": true,
+   "edgeStyle": "dotted",
+   "category": "skill"
+ },
+ {
+   "id": 33,
+   "title": "메시지 큐 시스템",
+   "parent_id": 24,
+   "isOptional": true,
+   "edgeStyle": "dotted",
+   "category": "skill"
+ },
+ {
+   "id": 34,
+   "title": "RabbitMQ/Kafka",
+   "parent_id": 33,
+   "isOptional": true,
+   "edgeStyle": "dotted",
+   "category": "skill"
+ },
+ {
+   "id": 35,
+   "title": "시스템 아키텍트",
+   "parent_id": 29,
+   "isOptional": true,
+   "edgeStyle": "dotted",
+   "category": "careerStage"
+ }
 ]

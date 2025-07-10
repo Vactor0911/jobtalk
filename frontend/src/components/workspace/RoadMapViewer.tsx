@@ -4,6 +4,7 @@ import { Controls, ReactFlow } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useState } from "react";
+import type { JSX } from "@emotion/react/jsx-runtime";
 
 // 로드맵 데이터 타입
 interface NodeData {
@@ -11,15 +12,17 @@ interface NodeData {
   title: string;
   parent_id: number | string | null;
   isOptional?: boolean;
+  category?: string;
 }
 
 // 노드 데이터 타입
 interface Node {
   id: string;
-  data: { label: string };
+  data: { label: JSX.Element | string };
   position: { x: number; y: number };
   style: {
     backgroundColor: string;
+    border: string;
     color: string;
   };
 }
@@ -38,21 +41,47 @@ const RoadMapViewer = () => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
 
+  // 노드 배경색 추출
+  const getNodeBackgroundColor = useCallback(
+    (category: string) => {
+      switch (category) {
+        case "job":
+          return theme.palette.primary.main;
+        case "certificate":
+          return theme.palette.secondary.main;
+        default:
+          return "inherit"; // 기본 배경색
+      }
+    },
+    [theme.palette]
+  );
+
   // 노드 구성
   const createNodes = useCallback(
     (data: NodeData[]) => {
       const nodes = data.map((node) => ({
         id: `node-${node.id}`,
-        data: { label: node.title },
+        data: {
+          label:
+            node.category === "job" ? (
+              <span css={{ fontWeight: "bold" }}>{node.title}</span>
+            ) : (
+              node.title
+            ),
+        },
         position: { x: 0, y: 0 }, // 초기 위치는 나중에 조정
         style: {
-          backgroundColor: node.isOptional ? "inherit" : theme.palette.secondary.main,
-          color: "black",
+          backgroundColor: getNodeBackgroundColor(node.category || "default"),
+          border:
+            node.category === "skill"
+              ? `2px solid ${theme.palette.primary.main}`
+              : "2px solid black",
+          color: node.category === "job" ? "white" : "black",
         },
       }));
       return nodes;
     },
-    [theme]
+    [getNodeBackgroundColor, theme.palette.primary.main]
   );
 
   // 노드 위치 조정

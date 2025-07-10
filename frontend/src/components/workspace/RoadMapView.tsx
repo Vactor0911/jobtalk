@@ -25,6 +25,11 @@ const RoadMapView = () => {
   const theme = useTheme();
   const isPC = useMediaQuery(theme.breakpoints.up("md"));
 
+  // 화면 크기
+  const isMd = useMediaQuery(theme.breakpoints.only("md"));
+  const isLg = useMediaQuery(theme.breakpoints.only("lg"));
+  const isXl = useMediaQuery(theme.breakpoints.only("xl"));
+
   const [isDetailsOpen, setIsDetailsOpen] = useState(true); // 세부사항 패널 열림 상태
   const [isChatbotOpen, setIsChatbotOpen] = useState(true); // 챗봇 패널 열림 상태
   const detailsPanel = useRef<ImperativePanelHandle>(null);
@@ -79,6 +84,13 @@ const RoadMapView = () => {
     [setTab]
   );
 
+  // 패널 축소 크기 반환
+  const getCollapsedSize = useCallback(() => {
+    if (isMd) return 5; // 태블릿
+    if (isLg) return 4; // 작은 PC
+    if (isXl) return 3; // 큰 PC
+  }, [isLg, isMd, isXl]);
+
   // PC 화면 렌더링
   if (isPC) {
     return (
@@ -90,7 +102,7 @@ const RoadMapView = () => {
             defaultSize={25}
             minSize={20}
             collapsible
-            collapsedSize={4}
+            collapsedSize={getCollapsedSize()}
             onCollapse={() => handleSetDetailsOpen(false)}
             onExpand={() => handleSetDetailsOpen(true)}
             css={{
@@ -139,7 +151,7 @@ const RoadMapView = () => {
             defaultSize={25}
             minSize={20}
             collapsible
-            collapsedSize={4}
+            collapsedSize={getCollapsedSize()}
             onCollapse={() => handleSetChatbotOpen(false)}
             onExpand={() => handleSetChatbotOpen(true)}
             css={{

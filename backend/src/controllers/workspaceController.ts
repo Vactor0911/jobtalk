@@ -75,10 +75,9 @@ export const getWorkspaceByUuid = async (req: Request, res: Response) => {
         w.updated_at,
         r.id AS roadmap_id,
         r.job_title,
-        r.job_description,
         r.roadmap_data
        FROM workspace w
-       LEFT JOIN workspace_roadmaps r ON w.id = r.workspace_id
+       LEFT JOIN workspace_roadmaps r ON w.workspace_uuid = r.workspace_uuid
        WHERE w.workspace_uuid = ? AND w.user_uuid = ? AND w.is_active = TRUE`,
       [uuid, user.userUuid]
     );
@@ -98,7 +97,6 @@ export const getWorkspaceByUuid = async (req: Request, res: Response) => {
       ? {
           id: workspace.roadmap_id,
           jobTitle: workspace.job_title,
-          jobDescription: workspace.job_description,
           data: JSON.parse(workspace.roadmap_data),
         }
       : null;

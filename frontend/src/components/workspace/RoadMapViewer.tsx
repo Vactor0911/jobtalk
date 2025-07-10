@@ -270,13 +270,6 @@ const RoadMapViewer = () => {
     setEdges(newEdges);
   }, [adjustNodePositions, createEdges, createNodes, roadmapData]);
 
-  // 컴포넌트 마운트 시 최상위 노드로 시점 이동
-  useEffect(() => {
-    // 최상위 노드로 시점 이동
-    const firstJob = roadmapData.find((n) => n.category === "job");
-    if (firstJob) fitViewToNode(`node-${firstJob.id}`, 1);
-  }, [fitViewToNode, roadmapData, nodes]);
-
   return (
     <Box width="100%" height="100%" position="relative">
       {/* 로드맵 레전드 */}
@@ -354,8 +347,23 @@ const RoadMapViewer = () => {
         nodesConnectable={false}
         nodesDraggable={false}
         nodesFocusable={false}
+        fitView
+        fitViewOptions={{
+          nodes: [{ id: "node-1" }],
+          padding: 0.1,
+          duration: 800,
+          maxZoom: 0.75,
+        }}
       >
-        <Controls />
+        <Controls
+          showInteractive={false}
+          fitViewOptions={{
+            nodes: [{ id: "node-1" }],
+            padding: 0.1,
+            duration: 800,
+            maxZoom: 0.75,
+          }}
+        />
       </ReactFlow>
     </Box>
   );

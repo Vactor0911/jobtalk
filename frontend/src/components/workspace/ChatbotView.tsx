@@ -7,29 +7,27 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import { grey } from "@mui/material/colors";
 import FaceRoundedIcon from "@mui/icons-material/FaceRounded";
-import axiosInstance, {
-  getCsrfToken,
-  SERVER_HOST,
-} from "../../utils/axiosInstance";
-import { jobTalkLoginStateAtom, profileImageAtom } from "../../state";
+import axiosInstance, { getCsrfToken } from "../../utils/axiosInstance";
+import {
+  jobTalkLoginStateAtom,
+  profileImageAtom,
+  selectedInterestAtom,
+} from "../../state";
 import { useAtomValue } from "jotai";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import { enqueueSnackbar } from "notistack";
 import JobOptionsButtons from "./JobOptionsButtons";
+import { useParams } from "react-router";
 
 interface Chat {
   isBot: boolean; // 챗봇인지 여부
   content: string; // 메시지 내용
   date: string; // 메시지 전송 날짜
   jobOptions?: string[]; // 직업 옵션이 있는 경우
-}
-
-interface ChatbotViewProps {
-  workspaceUuid: string;
 }
 
 // AI 응답에서 직업 옵션 추출 함수
@@ -69,8 +67,12 @@ const cleanBotMessage = (message: string) => {
   return cleaned;
 };
 
-const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
+const ChatbotView = () => {
   const theme = useTheme();
+  const { uuid } = useParams<{ uuid: string }>(); // URL에서 워크스페이스 UUID 가져오기
+
+  // 관심 분야 상태
+  const selectedInterest = useAtomValue(selectedInterestAtom); // 선택된 관심 분야
 
   // 채팅 관련 상태
   const [chats, setChats] = useState<Chat[]>([]);
@@ -86,9 +88,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   const [recommendedJobs, setRecommendedJobs] = useState<string[]>([]); // 추천된 직업 목록
 
   // 프로필 이미지와 닉네임 상태
-  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
-  const [imageVersion, setImageVersion] = useState(0);
 
   // 자격증과 관심분야 정보
   const [userCertificates, setUserCertificates] = useState<string>("");
@@ -97,7 +97,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
 
   // 워크스페이스와 사용자 기본 정보 한번에 가져오기
   const fetchBasicInfo = useCallback(async () => {
-    if (!workspaceUuid) return;
+    if (!uuid) return;
 
     try {
       setIsInputLoading(true);
@@ -105,31 +105,19 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
       const csrfToken = await getCsrfToken();
 
       // 통합 API 호출
-      const response = await axiosInstance.get(
-        `/workspace/${workspaceUuid}/basicinfo`,
-        {
-          headers: { "X-CSRF-Token": csrfToken },
-        }
-      );
+      const response = await axiosInstance.get(`/workspace/${uuid}/basicinfo`, {
+        headers: { "X-CSRF-Token": csrfToken },
+      });
 
       if (response.data.success) {
         const { workspace, user } = response.data.data;
 
-        // 1. 워크스페이스 관심분야 설정
+        // 워크스페이스 관심분야 설정
         setInterestCategory(workspace.interestCategory || "");
 
-        // 2. 사용자 정보 설정
+        // 사용자 정보 설정
         setUserCertificates(user.certificates || "없음");
         setUserName(user.name || "");
-
-        // 3. 프로필 이미지 설정
-        if (user.profileImage) {
-          const imageUrl = `${SERVER_HOST}${
-            user.profileImage
-          }?t=${new Date().getTime()}`;
-          setProfileImage(imageUrl);
-          setImageVersion((prev) => prev + 1);
-        }
 
         setDataLoaded(true);
       }
@@ -139,7 +127,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
     } finally {
       setIsInputLoading(false);
     }
-  }, [workspaceUuid]);
+  }, [uuid]);
 
   // 컴포넌트 마운트 시 통합 API 호출
   useEffect(() => {
@@ -148,14 +136,14 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
 
   // 워크스페이스 대화 모드로 업데이트
   const updateWorkspaceChat = useCallback(async () => {
-    if (!workspaceUuid || !interestCategory) return;
+    if (!uuid || !interestCategory) return;
 
     try {
       // CSRF 토큰 획득
       const csrfToken = await getCsrfToken();
 
       await axiosInstance.put(
-        `/workspace/${workspaceUuid}/chat`,
+        `/workspace/${uuid}/chat`,
         {
           chatTopic: `${interestCategory} 진로 상담`,
         },
@@ -168,7 +156,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
     } catch (err) {
       console.error("워크스페이스 대화 모드 업데이트 실패:", err);
     }
-  }, [workspaceUuid, interestCategory]);
+  }, [uuid, interestCategory]);
 
   // 대화 내용 워크스페이스에 저장
   const saveMessageToWorkspace = useCallback(
@@ -177,14 +165,14 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
       content: string,
       currentResponseId: string | null = null
     ) => {
-      if (!workspaceUuid) return;
+      if (!uuid) return;
 
       try {
         // CSRF 토큰 획득
         const csrfToken = await getCsrfToken();
 
         await axiosInstance.post(
-          `/workspace/${workspaceUuid}/chats`,
+          `/workspace/${uuid}/chats`,
           {
             role,
             content,
@@ -200,26 +188,23 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
         console.error("대화 저장 실패:", err);
       }
     },
-    [workspaceUuid, responseId]
+    [uuid, responseId]
   );
 
   // 이전 대화 불러오기
   const fetchChatHistory = useCallback(async () => {
-    if (!workspaceUuid) return;
+    if (!uuid) return;
 
     try {
       // CSRF 토큰 획득
       const csrfToken = await getCsrfToken();
 
       // 워크스페이스의 채팅 기록 가져오기
-      const response = await axiosInstance.get(
-        `/workspace/${workspaceUuid}/chats`,
-        {
-          headers: {
-            "X-CSRF-Token": csrfToken,
-          },
-        }
-      );
+      const response = await axiosInstance.get(`/workspace/${uuid}/chats`, {
+        headers: {
+          "X-CSRF-Token": csrfToken,
+        },
+      });
 
       if (response.data.success && response.data.data.chats.length > 0) {
         const chatHistory = response.data.data.chats;
@@ -261,7 +246,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
       setIsRecommendLimit(false);
       return false;
     }
-  }, [workspaceUuid]);
+  }, [uuid]);
 
   useEffect(() => {
     // 채팅 내역에서 직업 옵션 누적
@@ -287,7 +272,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
           {
             message: message,
             previousResponseId: responseId, // 현재 저장된 응답 ID 사용
-            workspaceUuid: workspaceUuid,
+            workspaceUuid: uuid,
             userName: userName,
           },
           {
@@ -390,13 +375,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
         setIsInputLoading(false);
       }
     },
-    [
-      isInputLoading,
-      responseId,
-      workspaceUuid,
-      userName,
-      saveMessageToWorkspace,
-    ]
+    [isInputLoading, responseId, uuid, userName, saveMessageToWorkspace]
   );
 
   // 사용자 메시지 전송 핸들러
@@ -449,7 +428,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
               message: initialMessage,
               interests: interestCategory,
               certificates: userCertificates,
-              workspaceUuid: workspaceUuid,
+              workspaceUuid: uuid,
               userName: userName,
             },
             {
@@ -509,7 +488,7 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
     saveMessageToWorkspace,
     interestCategory,
     userCertificates,
-    workspaceUuid,
+    uuid,
     userName,
   ]);
 
@@ -559,118 +538,134 @@ const ChatbotView = ({ workspaceUuid }: ChatbotViewProps) => {
   );
 
   return (
-    <Stack gap={4} marginTop={10} flex={1}>
-      {chats.map((chat, index) => (
-        <Stack
-          width="66%"
-          direction={chat.isBot ? "row" : "row-reverse"}
-          key={`chat-${index}`}
-          alignSelf={chat.isBot ? "flex-start" : "flex-end"}
-          alignItems="flex-start"
-          gap={2}
-        >
-          {/* 프로필 이미지 */}
-          <Stack
-            padding={1}
-            borderRadius={3}
-            border={`2px solid ${
-              chat.isBot ? theme.palette.primary.main : grey[400]
-            }`}
-          >
-            {chat.isBot ? (
-              <SmartToyRoundedIcon
-                color="primary"
-                sx={{ width: 40, height: 40 }}
-              />
-            ) : (
-              profileAvatar
-            )}
-          </Stack>
-
-          <Stack>
-            {/* 닉네임 */}
-            <Typography
-              variant="subtitle1"
-              fontWeight="bold"
-              color={chat.isBot ? "primary" : "inherit"}
-              alignSelf={chat.isBot ? "flex-start" : "flex-end"}
-            >
-              {chat.isBot ? "잡톡AI" : loginState.userName}
-            </Typography>
-
-            {/* 대화 내용 */}
-            <Box
-              padding={0.5}
-              paddingX={1}
-              borderRadius={2}
-              bgcolor={grey[100]}
-            >
-              <Typography variant="subtitle1">
-                {cleanBotMessage(chat.content)}
-              </Typography>
-              {/* 직업 옵션 버튼 표시 */}
-              {chat.jobOptions && chat.jobOptions.length > 0 && (
-                <JobOptionsButtons
-                  jobOptions={chat.jobOptions}
-                  onSelectJob={(job) => {
-                    // TODO: 직업 선택 시 로드맵 요청 등 처리
-                    enqueueSnackbar(`선택한 직업: ${job}`, {
-                      variant: "success",
-                    });
-                  }}
-                />
-              )}
-            </Box>
-          </Stack>
-        </Stack>
-      ))}
-
-      {isRecommendLimit && recommendedJobs.length > 0 && (
-        <JobOptionsButtons
-          jobOptions={recommendedJobs}
-          onSelectJob={(job) => {
-            enqueueSnackbar(`선택한 직업: ${job}`, { variant: "success" });
-            // TODO: 선택 후 로드맵 요청 등 추가
-          }}
-        />
-      )}
-
-      {/* 채팅 입력란 */}
-      <Box position="relative" width="100%" marginTop="auto">
-        {/* 입력란 */}
-        <TextField
-          fullWidth
-          multiline
-          placeholder="잡톡AI에게 무엇이든 물어보세요"
-          value={input}
-          onChange={handleInputChange}
-          onKeyDown={handleInputKeyDown}
-          disabled={isInputLoading || isRecommendLimit}
-          slotProps={{
-            input: {
-              sx: { paddingBottom: 6, borderRadius: 3 },
-            },
-          }}
-        />
-
-        {/* 입력 버튼 */}
-        <Button
-          endIcon={<SendRoundedIcon />}
-          loading={isInputLoading}
-          sx={{
-            position: "absolute",
-            bottom: 6,
-            right: 6,
-            borderRadius: "50px",
-          }}
-          onClick={handleSendButtonClick}
-          disabled={isInputLoading || isRecommendLimit}
-        >
-          <Typography variant="subtitle1" fontWeight="bold">
-            입력
-          </Typography>
-        </Button>
+    <Stack>
+      <Box textAlign="center">
+        <Typography variant="h4" color="primary" gutterBottom>
+          맞춤형 진로 상담
+        </Typography>
+        <Typography variant="subtitle1" color="text.secondary">
+          <span css={{ fontWeight: "bold" }}>{"[ "}</span>
+          {/* 선택된 관심 분야 강조 */}
+          <span css={{ color: theme.palette.primary.main, fontWeight: "bold" }}>
+            {selectedInterest}
+          </span>
+          <span css={{ fontWeight: "bold" }}>{" ]"}</span> 분야에 관한 상담을
+          시작합니다.
+        </Typography>
       </Box>
+      <Stack gap={4} marginTop={10} flex={1}>
+        {chats.map((chat, index) => (
+          <Stack
+            width="66%"
+            direction={chat.isBot ? "row" : "row-reverse"}
+            key={`chat-${index}`}
+            alignSelf={chat.isBot ? "flex-start" : "flex-end"}
+            alignItems="flex-start"
+            gap={2}
+          >
+            {/* 프로필 이미지 */}
+            <Stack
+              padding={1}
+              borderRadius={3}
+              border={`2px solid ${
+                chat.isBot ? theme.palette.primary.main : grey[400]
+              }`}
+            >
+              {chat.isBot ? (
+                <SmartToyRoundedIcon
+                  color="primary"
+                  sx={{ width: 40, height: 40 }}
+                />
+              ) : (
+                profileAvatar
+              )}
+            </Stack>
+
+            <Stack>
+              {/* 닉네임 */}
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                color={chat.isBot ? "primary" : "inherit"}
+                alignSelf={chat.isBot ? "flex-start" : "flex-end"}
+              >
+                {chat.isBot ? "잡톡AI" : loginState.userName}
+              </Typography>
+
+              {/* 대화 내용 */}
+              <Box
+                padding={0.5}
+                paddingX={1}
+                borderRadius={2}
+                bgcolor={grey[100]}
+              >
+                <Typography variant="subtitle1">
+                  {cleanBotMessage(chat.content)}
+                </Typography>
+                {/* 직업 옵션 버튼 표시 */}
+                {chat.jobOptions && chat.jobOptions.length > 0 && (
+                  <JobOptionsButtons
+                    jobOptions={chat.jobOptions}
+                    onSelectJob={(job) => {
+                      // TODO: 직업 선택 시 로드맵 요청 등 처리
+                      enqueueSnackbar(`선택한 직업: ${job}`, {
+                        variant: "success",
+                      });
+                    }}
+                  />
+                )}
+              </Box>
+            </Stack>
+          </Stack>
+        ))}
+
+        {isRecommendLimit && recommendedJobs.length > 0 && (
+          <JobOptionsButtons
+            jobOptions={recommendedJobs}
+            onSelectJob={(job) => {
+              enqueueSnackbar(`선택한 직업: ${job}`, { variant: "success" });
+              // TODO: 선택 후 로드맵 요청 등 추가
+            }}
+          />
+        )}
+
+        {/* 채팅 입력란 */}
+        <Box position="relative" width="100%" marginTop="auto">
+          {/* 입력란 */}
+          <TextField
+            fullWidth
+            multiline
+            placeholder="잡톡AI에게 무엇이든 물어보세요"
+            value={input}
+            onChange={handleInputChange}
+            onKeyDown={handleInputKeyDown}
+            disabled={isInputLoading || isRecommendLimit}
+            slotProps={{
+              input: {
+                sx: { paddingBottom: 6, borderRadius: 3 },
+              },
+            }}
+          />
+
+          {/* 입력 버튼 */}
+          <Button
+            endIcon={<SendRoundedIcon />}
+            loading={isInputLoading}
+            sx={{
+              position: "absolute",
+              bottom: 6,
+              right: 6,
+              borderRadius: "50px",
+            }}
+            onClick={handleSendButtonClick}
+            disabled={isInputLoading || isRecommendLimit}
+          >
+            <Typography variant="subtitle1" fontWeight="bold">
+              입력
+            </Typography>
+          </Button>
+        </Box>
+      </Stack>
     </Stack>
   );
 };

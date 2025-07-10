@@ -110,7 +110,7 @@ const ChatBox = (props: ChatDialogsProps) => {
         </Typography>
       );
     }
-  }, [chat.content, chatContent, loading]);
+  }, [chat.content, chatContent, loading, theme.typography.subtitle2.fontSize]);
 
   return (
     <Stack

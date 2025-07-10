@@ -1,5 +1,4 @@
 import {
-  Avatar,
   Box,
   Button,
   Stack,
@@ -7,22 +6,15 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
-import { grey } from "@mui/material/colors";
-import FaceRoundedIcon from "@mui/icons-material/FaceRounded";
+import { useCallback, useEffect, useState } from "react";
 import axiosInstance, { getCsrfToken } from "../../utils/axiosInstance";
-import {
-  jobTalkLoginStateAtom,
-  profileImageAtom,
-  selectedInterestAtom,
-  workspaceStepAtom,
-} from "../../state";
+import { selectedInterestAtom, workspaceStepAtom } from "../../state";
 import { useAtom, useAtomValue } from "jotai";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import { enqueueSnackbar } from "notistack";
 import JobOptionsButtons from "./JobOptionsButtons";
 import { useParams } from "react-router";
+import ChatBox from "../chat/ChatBox";
 
 interface Chat {
   isBot: boolean; // 챗봇인지 여부
@@ -81,8 +73,6 @@ const ChatbotView = () => {
   const [isInputLoading, setIsInputLoading] = useState(false);
   const [responseId, setResponseId] = useState<string | null>(null);
   const [, setChatHistoryLoaded] = useState(false); // 이전 대화 불러온 여부
-  const loginState = useAtomValue(jobTalkLoginStateAtom); // 로그인 상태
-  const profileImage = useAtomValue(profileImageAtom); // 프로필 이미지 상태
   const [, setIsRecommendStage] = useState(false); // 직업 추천 단계 여부
   const [, setForceRecommendCount] = useState(0); // 직업 추천 강제 카운트
   const [isRecommendLimit, setIsRecommendLimit] = useState(false); // 직업 추천 제한 여부
@@ -496,31 +486,6 @@ const ChatbotView = () => {
     userName,
   ]);
 
-  // 프로필 이미지 요소
-  const profileAvatar = useMemo(() => {
-    return (
-      <Avatar
-        src={profileImage || undefined}
-        sx={{
-          bgcolor: grey[400],
-          width: 40,
-          height: 40,
-        }}
-      >
-        {!profileImage &&
-          (loginState.userName ? (
-            loginState.userName.charAt(0).toUpperCase()
-          ) : (
-            <FaceRoundedIcon
-              sx={{
-                fontSize: "2rem",
-              }}
-            />
-          ))}
-      </Avatar>
-    );
-  }, [loginState.userName, profileImage]);
-
   // 메시지 입력
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -628,6 +593,7 @@ const ChatbotView = () => {
 
   return (
     <Stack>
+      {/* 헤더 */}
       <Box textAlign="center">
         <Typography variant="h4" color="primary" gutterBottom>
           맞춤형 진로 상담
@@ -642,55 +608,26 @@ const ChatbotView = () => {
           시작합니다.
         </Typography>
       </Box>
+
+      {/* 채팅 영역 */}
+
       <Stack gap={4} marginTop={10} flex={1}>
         {chats.map((chat, index) => (
-          <Stack
-            width="66%"
-            direction={chat.isBot ? "row" : "row-reverse"}
+          <ChatBox
             key={`chat-${index}`}
-            alignSelf={chat.isBot ? "flex-start" : "flex-end"}
-            alignItems="flex-start"
-            gap={2}
-          >
-            {/* 프로필 이미지 */}
-            <Stack
-              padding={1}
-              borderRadius={3}
-              border={`2px solid ${
-                chat.isBot ? theme.palette.primary.main : grey[400]
-              }`}
-            >
-              {chat.isBot ? (
-                <SmartToyRoundedIcon
-                  color="primary"
-                  sx={{ width: 40, height: 40 }}
-                />
-              ) : (
-                profileAvatar
-              )}
-            </Stack>
-
-            <Stack>
-              {/* 닉네임 */}
-              <Typography
-                variant="subtitle1"
-                fontWeight="bold"
-                color={chat.isBot ? "primary" : "inherit"}
-                alignSelf={chat.isBot ? "flex-start" : "flex-end"}
-              >
-                {chat.isBot ? "잡톡AI" : loginState.userName}
-              </Typography>
-
-              {/* 대화 내용 */}
-              <Box
-                padding={0.5}
-                paddingX={1}
-                borderRadius={2}
-                bgcolor={grey[100]}
-              >
-                <Typography variant="subtitle1">
+            chat={chat}
+            chatContent={
+              <>
+                {/* 채팅 텍스트 */}
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    wordBreak: "break-all",
+                  }}
+                >
                   {cleanBotMessage(chat.content)}
                 </Typography>
+
                 {/* 직업 옵션 버튼 표시 */}
                 {chat.jobOptions && chat.jobOptions.length > 0 && (
                   <JobOptionsButtons
@@ -698,9 +635,9 @@ const ChatbotView = () => {
                     onSelectJob={handleSelectJob}
                   />
                 )}
-              </Box>
-            </Stack>
-          </Stack>
+              </>
+            }
+          />
         ))}
 
         {isRecommendLimit && recommendedJobs.length > 0 && (

@@ -20,6 +20,7 @@ import { useCallback, useRef, useState } from "react";
 import { useAtom } from "jotai";
 import { roadmapTabAtom } from "../../state";
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded";
+import RoadMapChatBot from "./RoadMapChatBot";
 
 const RoadMapView = () => {
   const theme = useTheme();
@@ -174,7 +175,7 @@ const RoadMapView = () => {
                 </IconButton>
               }
             >
-              {/* TODO: 챗봇 구현 */}
+              <RoadMapChatBot />
             </TitledContainer>
           </Panel>
         </PanelGroup>
@@ -201,7 +202,11 @@ const RoadMapView = () => {
       {tab === 1 && <RoadMapViewer />}
 
       {/* 챗봇 */}
-      {tab === 2 && <></>}
+      {tab === 2 && (
+        <Box padding={2} height="100%">
+          <RoadMapChatBot />
+        </Box>
+      )}
     </Stack>
   );
 };

@@ -211,7 +211,7 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     // 로드맵 생성용 프롬프트
-    const inputMessages = [
+    const getInputMessages = () => [
       {
         role: "system",
         content: `
@@ -253,7 +253,7 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
           • 프레임워크·언어·툴은 “기본 설정 → 필수 기능 → 고급 기능” 식으로 2-3단계로 쪼갭니다.  
           • **최종 leaf-skill** 은 ‘실무 단위로 더 쪼갤 수 없는 구체 항목’이어야 합니다.  
 
-          *5-A.* 위 분해 규칙이 지켜지지 않거나 minNodes < 40 이면 **“오류”** 만 출력합니다.
+          *5-A.* 위 분해 규칙이 지켜지지 않거나 minNodes < 50 이면 **“오류”** 만 출력합니다.
 
         6. 병렬 대안 기술 (선택 분기)  
           • 비슷한 기술(예: Java / Python / Node.js)은 같은 parent_id 를 공유하고  
@@ -262,15 +262,16 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
         7. 노드 수 제한  
           • **maxNodes = 80** (초과 시 중요도가 낮은 선택 노드부터 제거)  
 
-        8. 최소 분량 목표  
-          • **minNodes = 40** 이상을 반드시 만족하십시오.  
+        8. 최소‧권장 분량 목표  
+          • **minNodes = 50** 이상을 반드시 만족하십시오.  
+          • 단, 50은 절대 최소치일 뿐이며 **가능하면 100~150개** 정도로 풍부하게 작성하십시오.  
           • 부족할 때는 leaf-skill 을 더 세분화해 노드를 늘리십시오.
 
         9. 금지 규칙  
           • 위 5개 필드 외의 속성, 마크다운, 설명, 주석을 **절대 포함하지 마십시오.**
 
         10. 검증 & 오류  
-          • minNodes < 40 이거나 금지된 텍스트가 포함되면  
+          • minNodes < 50 이거나 금지된 텍스트가 포함되면  
             출력은 오직 한 단어 **“오류”** 만 적으십시오.
         `,
       },
@@ -285,15 +286,20 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
       },
     ];
 
-    // OpenAI API 호출
-    const response = await openai.responses.create({
-      model: "gpt-4o",
-      input: inputMessages as any,
-      max_output_tokens: 15000,
-      temperature: 0.7,
-    });
+    const MAX_RETRY = 3;
+    let retryCount = 0;
+    let roadmapData = null;
+    let lastOutput = "";
 
-    try {
+    while (retryCount < MAX_RETRY) {
+      // OpenAI API 호출
+      const response = await openai.responses.create({
+        model: "gpt-4o",
+        input: getInputMessages() as any,
+        max_output_tokens: 15000,
+        temperature: 0.7,
+      });
+
       let output = response.output_text.trim();
       // 마크다운 코드블록 제거
       if (output.startsWith("```")) {
@@ -302,32 +308,39 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
           .replace(/```$/, "")
           .trim();
       }
-      const roadmapData = JSON.parse(output);
 
-      // usage.total_tokens 체크
-      const usage = response.usage;
-      const totalTokens = usage?.total_tokens ?? 0;
-      console.log("총 토큰 수:", totalTokens);
+      lastOutput = output;
 
-      // 결과 반환
-      res.status(200).json({
-        success: true,
-        data: roadmapData,
-        message: "로드맵이 성공적으로 생성되었습니다.",
-      });
-    } catch (jsonError) {
-      console.error("JSON 파싱 오류:", jsonError);
-      const errorMessage =
-        jsonError instanceof Error
-          ? jsonError.message
-          : "Unknown parsing error";
+      // "오류"만 반환된 경우 재시도
+      if (output === "오류") {
+        retryCount += 1;
+        continue;
+      }
+
+      try {
+        roadmapData = JSON.parse(output);
+        break; // 파싱 성공 시 반복 종료
+      } catch (jsonError) {
+        // 파싱 실패 시 재시도
+        retryCount += 1;
+      }
+    }
+
+    if (!roadmapData) {
       res.status(500).json({
         success: false,
         message: "로드맵 데이터 파싱에 실패했습니다.",
-        error: errorMessage,
-        rawData: response.output_text,
+        error: "유효한 JSON 로드맵을 생성하지 못했습니다.",
+        rawData: lastOutput,
       });
+      return;
     }
+
+    res.status(200).json({
+      success: true,
+      data: roadmapData,
+      message: "로드맵이 성공적으로 생성되었습니다.",
+    });
   } catch (err: any) {
     console.error("로드맵 생성 API 오류:", err);
     res.status(err?.statusCode || 500).json({

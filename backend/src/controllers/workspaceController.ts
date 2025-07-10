@@ -302,7 +302,7 @@ export const updateWorkspaceForChat = async (req: Request, res: Response) => {
 
     // 워크스페이스 소유자 확인
     const workspaces = await dbPool.query(
-      "SELECT id FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
+      "SELECT id, status FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
       [uuid, user.userUuid]
     );
 
@@ -310,6 +310,20 @@ export const updateWorkspaceForChat = async (req: Request, res: Response) => {
       res.status(404).json({
         success: false,
         message: "워크스페이스를 찾을 수 없거나 권한이 없습니다.",
+      });
+      return;
+    }
+
+    if (workspaces[0].status === "roadmap_generated") {
+      // 이미 로드맵 생성된 워크스페이스는 상태/이름 변경하지 않음
+      res.status(200).json({
+        success: true,
+        message: "이미 로드맵이 생성된 워크스페이스입니다.",
+        data: {
+          name: workspaces[0].name,
+          status: workspaces[0].status,
+          chatTopic,
+        },
       });
       return;
     }

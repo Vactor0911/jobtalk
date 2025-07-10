@@ -163,6 +163,7 @@ const MyWorkspace = () => {
                   <Stack
                     width="100%"
                     height="20vh"
+                    minHeight="180px"
                     padding={2}
                     direction="row"
                     gap={2}

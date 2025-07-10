@@ -1,164 +1,296 @@
 [
   {
     "id": 1,
-    "title": "Computer Science Fundamentals",
+    "title": "데이터 엔지니어",
     "parent_id": null,
-    "isOptional": false
+    "isOptional": false,
+    "category": "job"
   },
   {
     "id": 2,
-    "title": "Programming Basics with Java",
+    "title": "기초",
     "parent_id": 1,
-    "isOptional": false
+    "isOptional": false,
+    "category": "stage"
   },
   {
     "id": 3,
-    "title": "Object-Oriented Programming (Java)",
+    "title": "핵심",
     "parent_id": 2,
-    "isOptional": false
+    "isOptional": false,
+    "category": "stage"
   },
   {
     "id": 4,
-    "title": "Java Standard Library & Collections",
+    "title": "심화",
     "parent_id": 3,
-    "isOptional": false
+    "isOptional": false,
+    "category": "stage"
   },
   {
     "id": 5,
-    "title": "Data Structures & Algorithms",
+    "title": "고급",
     "parent_id": 4,
-    "isOptional": false
+    "isOptional": false,
+    "category": "stage"
   },
   {
     "id": 6,
-    "title": "Version Control (Git)",
-    "parent_id": 3,
-    "isOptional": false
+    "title": "전문/특화",
+    "parent_id": 5,
+    "isOptional": false,
+    "category": "stage"
   },
   {
     "id": 7,
-    "title": "Build Tools & Dependency Management (Maven/Gradle)",
-    "parent_id": 3,
-    "isOptional": false
+    "title": "프로그래밍 기초",
+    "parent_id": 2,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 8,
-    "title": "Web Fundamentals (HTTP, REST, HTML basics)",
-    "parent_id": 3,
-    "isOptional": false
+    "title": "Python",
+    "parent_id": 7,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 9,
-    "title": "Relational Databases & SQL",
-    "parent_id": 5,
-    "isOptional": false
+    "title": "SQL",
+    "parent_id": 7,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 10,
-    "title": "JDBC & ORM (JPA/Hibernate)",
-    "parent_id": 9,
-    "isOptional": false
+    "title": "데이터베이스 기본",
+    "parent_id": 2,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 11,
-    "title": "Spring Framework Core & Spring Boot",
-    "parent_id": 8,
-    "isOptional": false
+    "title": "데이터 모델링",
+    "parent_id": 10,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 12,
-    "title": "Spring Data JPA Integration",
-    "parent_id": 11,
-    "isOptional": false
+    "title": "RDBMS",
+    "parent_id": 10,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 13,
-    "title": "Building RESTful APIs with Spring",
-    "parent_id": 11,
-    "isOptional": false
+    "title": "데이터 처리",
+    "parent_id": 3,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 14,
-    "title": "Authentication & Authorization (Spring Security)",
+    "title": "ETL 프로세스 설계",
     "parent_id": 13,
-    "isOptional": false
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 15,
-    "title": "Testing (JUnit, Mockito)",
-    "parent_id": 11,
-    "isOptional": false
+    "title": "데이터 웨어하우스",
+    "parent_id": 13,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 16,
-    "title": "Containerization with Docker",
+    "title": "데이터 파이프라인",
     "parent_id": 13,
-    "isOptional": false
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 17,
-    "title": "CI/CD (GitHub Actions, Jenkins)",
+    "title": "데이터 파이프라인 설계",
     "parent_id": 16,
-    "isOptional": false
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 18,
-    "title": "Cloud Deployment Basics (AWS EC2/Elastic Beanstalk)",
-    "parent_id": 17,
-    "isOptional": false
+    "title": "데이터 파이프라인 자동화",
+    "parent_id": 16,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 19,
-    "title": "Microservices Architecture (Spring Cloud, Kubernetes)",
-    "parent_id": 18,
-    "isOptional": false
+    "title": "클라우드 컴퓨팅",
+    "parent_id": 4,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 20,
-    "title": "Monitoring & Logging (ELK, Prometheus, Grafana)",
+    "title": "AWS",
     "parent_id": 19,
-    "isOptional": false
+    "isOptional": true,
+    "category": "skill"
   },
   {
     "id": 21,
-    "title": "NoSQL Databases (MongoDB, Redis)",
-    "parent_id": 9,
-    "isOptional": true
+    "title": "GCP",
+    "parent_id": 19,
+    "isOptional": true,
+    "category": "skill"
   },
   {
     "id": 22,
-    "title": "Reactive Programming (Spring WebFlux)",
-    "parent_id": 11,
-    "isOptional": true
+    "title": "Azure",
+    "parent_id": 19,
+    "isOptional": true,
+    "category": "skill"
   },
   {
     "id": 23,
-    "title": "Kotlin for Backend",
-    "parent_id": 11,
-    "isOptional": true
+    "title": "데이터 분석 역량",
+    "parent_id": 4,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 24,
-    "title": "GraphQL with Spring",
-    "parent_id": 13,
-    "isOptional": true
+    "title": "데이터 시각화",
+    "parent_id": 23,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 25,
-    "title": "Oracle Certified Professional: Java SE",
-    "parent_id": 4,
-    "isOptional": true
+    "title": "대규모 데이터 처리",
+    "parent_id": 23,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 26,
-    "title": "AWS Certified Cloud Practitioner",
-    "parent_id": 18,
-    "isOptional": true
+    "title": "빅데이터 기술",
+    "parent_id": 5,
+    "isOptional": false,
+    "category": "skill"
   },
   {
     "id": 27,
-    "title": "Certified Kubernetes Application Developer (CKAD)",
-    "parent_id": 19,
-    "isOptional": true
+    "title": "Hadoop",
+    "parent_id": 26,
+    "isOptional": true,
+    "category": "skill"
+  },
+  {
+    "id": 28,
+    "title": "Spark",
+    "parent_id": 26,
+    "isOptional": true,
+    "category": "skill"
+  },
+  {
+    "id": 29,
+    "title": "데이터 엔지니어링 도구",
+    "parent_id": 5,
+    "isOptional": false,
+    "category": "skill"
+  },
+  {
+    "id": 30,
+    "title": "Airflow",
+    "parent_id": 29,
+    "isOptional": true,
+    "category": "skill"
+  },
+  {
+    "id": 31,
+    "title": "Kafka",
+    "parent_id": 29,
+    "isOptional": true,
+    "category": "skill"
+  },
+  {
+    "id": 32,
+    "title": "데이터 보안 이해",
+    "parent_id": 5,
+    "isOptional": false,
+    "category": "skill"
+  },
+  {
+    "id": 33,
+    "title": "데이터 암호화",
+    "parent_id": 32,
+    "isOptional": false,
+    "category": "skill"
+  },
+  {
+    "id": 34,
+    "title": "접근 제어",
+    "parent_id": 32,
+    "isOptional": false,
+    "category": "skill"
+  },
+  {
+    "id": 35,
+    "title": "프로젝트 관리",
+    "parent_id": 6,
+    "isOptional": false,
+    "category": "skill"
+  },
+  {
+    "id": 36,
+    "title": "애자일 방법론",
+    "parent_id": 35,
+    "isOptional": false,
+    "category": "skill"
+  },
+  {
+    "id": 37,
+    "title": "데이터 아키텍처 설계",
+    "parent_id": 6,
+    "isOptional": false,
+    "category": "skill"
+  },
+  {
+    "id": 38,
+    "title": "데이터 아키텍처 계획",
+    "parent_id": 37,
+    "isOptional": false,
+    "category": "skill"
+  },
+  {
+    "id": 39,
+    "title": "데이터 아키텍처 구축",
+    "parent_id": 37,
+    "isOptional": false,
+    "category": "skill"
+  },
+  {
+    "id": 40,
+    "title": "자격증 준비",
+    "parent_id": 4,
+    "isOptional": false,
+    "category": "stage"
+  },
+  {
+    "id": 41,
+    "title": "정보처리기사",
+    "parent_id": 40,
+    "isOptional": false,
+    "category": "certificate"
+  },
+  {
+    "id": 42,
+    "title": "데이터 엔지니어링 인증",
+    "parent_id": 40,
+    "isOptional": true,
+    "category": "certificate"
   }
 ]

@@ -30,7 +30,6 @@ const RoadMapView = () => {
           }}
         >
           <TitledContainer title="로드맵">
-            {/* TODO: 로드맵 뷰어 구현 */}
             <RoadMapViewer />
           </TitledContainer>
         </Panel>

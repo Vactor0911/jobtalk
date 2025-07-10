@@ -1,8 +1,10 @@
-import { Box, useTheme } from "@mui/material";
-import { Controls, ReactFlow } from "@xyflow/react";
+import { Box, Paper, Stack, Typography, useTheme } from "@mui/material";
+import roadmapData from "../../assets/roadmap_test.json";
+import { Controls, ReactFlow, type ReactFlowInstance } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { JSX } from "@emotion/react/jsx-runtime";
 import { useParams } from "react-router";
 import axiosInstance from "../../utils/axiosInstance";
 
@@ -12,18 +14,23 @@ interface NodeData {
   title: string;
   parent_id: number | string | null;
   isOptional?: boolean;
-  category: string; // "skill" | "certificate" | "job" | "stage"
+  category?: string;
 }
 
 // 노드 데이터 타입
 interface Node {
   id: string;
-  data: { label: string };
+  type?: string;
+  data: { label: JSX.Element | string };
   position: { x: number; y: number };
   style: {
     backgroundColor: string;
+    border: string;
     color: string;
+    boxShadow?: string;
   };
+  width?: number;
+  height?: number;
 }
 
 // 엣지 데이터 타입
@@ -41,6 +48,7 @@ const RoadMapViewer = () => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [roadmapData, setRoadmapData] = useState<NodeData[]>([]);
+  const reactFlowInstance = useRef<ReactFlowInstance<Node, Edge> | null>(null);
 
   // DB에서 로드맵 데이터 조회
   useEffect(() => {
@@ -61,23 +69,96 @@ const RoadMapViewer = () => {
     fetchRoadmap();
   }, [uuid]);
 
+  // 노드 배경색 추출
+  const getNodeBackgroundColor = useCallback(
+    (category: string) => {
+      switch (category) {
+        case "job":
+        case "stage":
+          return theme.palette.primary.main;
+        case "certificate":
+          return theme.palette.secondary.main;
+        default:
+          return "inherit"; // 기본 배경색
+      }
+    },
+    [theme.palette]
+  );
+
   // 노드 구성
   const createNodes = useCallback(
     (data: NodeData[]) => {
-      const nodes = data.map((node) => ({
+      const nodes: Node[] = data.map((node) => ({
         id: `node-${node.id}`,
-        data: { label: node.title },
+        data: {
+          label:
+            node.category === "job" || node.category === "stage" ? (
+              <div
+                css={{
+                  display: "flex",
+                  height: "100%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <span
+                  css={{ fontSize: "1rem", fontWeight: "bold", color: "white" }}
+                >
+                  {node.title}
+                </span>
+              </div>
+            ) : (
+              <div
+                css={{
+                  display: "flex",
+                  height: "100%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <span>{node.title}</span>
+              </div>
+            ),
+        },
         position: { x: 0, y: 0 }, // 초기 위치는 나중에 조정
+        width: 150,
+        height: 40,
         style: {
-          backgroundColor: node.isOptional
-            ? "inherit"
-            : theme.palette.secondary.main,
-          color: "black",
+          padding: "0",
+          backgroundColor: getNodeBackgroundColor(node.category || "default"),
+          border:
+            node.category === "skill"
+              ? `2px solid ${theme.palette.primary.main}`
+              : "2px solid black",
+          color:
+            node.category === "job" || node.category === "stage"
+              ? "white"
+              : "black",
         },
       }));
+
+      // 자식 노드가 없는 노드의 타입을 "output"으로 설정
+      const parentIdSet = new Set(
+        data.map((n) => n.parent_id).filter((id) => id !== null)
+      );
+      nodes.forEach((node) => {
+        const nodeData = data.find((d) => `node-${d.id}` === node.id);
+
+        if (!nodeData) {
+          // 노드 데이터가 없는 경우
+          return;
+        } else if (nodeData.category === "job") {
+          // category가 "job"인 경우
+          node.type = "input";
+        } else if (!parentIdSet.has(nodeData.id)) {
+          // 자식 노드가 없는 경우
+          node.type = "output";
+        }
+      });
+
       return nodes;
     },
-    [theme]
+    [getNodeBackgroundColor, theme.palette.primary.main]
   );
 
   // 노드 위치 조정
@@ -159,18 +240,104 @@ const RoadMapViewer = () => {
     setEdges(newEdges);
   }, [adjustNodePositions, createEdges, createNodes, roadmapData]);
 
+  // 노드로 시점 이동
+  const fitViewToNode = useCallback((nodeId: string, zoomLevel = 1.5) => {
+    // reactFlowInstance 참조
+    const instance = reactFlowInstance.current;
+    if (!instance) return;
+
+    // 선택한 노드 가져오기
+    const node = instance.getNode(nodeId);
+    if (!node) return;
+
+    // 노드를 가운데로 이동
+    const centerX = node.position.x + (node.width ? node.width / 2 : 0);
+    const centerY = node.position.y + (node.height ? node.height / 2 : 0);
+
+    instance.setCenter(centerX, centerY, { zoom: zoomLevel, duration: 800 });
+  }, []);
+
   return (
-    <Box width="100%" height="100%">
+    <Box width="100%" height="100%" position="relative">
+      {/* 로드맵 레전드 */}
+      <Paper
+        variant="outlined"
+        sx={{
+          position: "absolute",
+          top: 10,
+          left: 10,
+          padding: 1,
+          bgcolor: "#f6f6f6",
+          zIndex: 2,
+        }}
+      >
+        <Stack gap={0.75}>
+          {/* 학습 단계 */}
+          <Stack direction="row" gap={1} alignItems="center">
+            <Box
+              width="60px"
+              height="30px"
+              bgcolor={theme.palette.primary.main}
+              border="2px solid black"
+              borderRadius={1}
+            />
+            <Typography variant="subtitle1">학습 단계</Typography>
+          </Stack>
+
+          {/* 학습 내용 */}
+          <Stack direction="row" gap={1} alignItems="center">
+            <Box
+              width="60px"
+              height="30px"
+              bgcolor="white"
+              border={`2px solid ${theme.palette.primary.main}`}
+              borderRadius={1}
+            />
+            <Typography variant="subtitle1">학습 내용</Typography>
+          </Stack>
+
+          {/* 자격증 */}
+          <Stack direction="row" gap={1} alignItems="center">
+            <Box
+              width="60px"
+              height="30px"
+              bgcolor={theme.palette.secondary.main}
+              border="2px solid black"
+              borderRadius={1}
+            />
+            <Typography variant="subtitle1">자격증</Typography>
+          </Stack>
+
+          {/* 정규 학습 과정 */}
+          <Stack direction="row" gap={1} alignItems="center">
+            <Box width="60px" border="2px solid #b1b1b7" borderRadius={1} />
+            <Typography variant="subtitle1">정규 과정</Typography>
+          </Stack>
+
+          {/* 선택 학습 과정 */}
+          <Stack direction="row" gap={1} alignItems="center">
+            <Box width="60px" border="2px dashed #b1b1b7" borderRadius={1} />
+            <Typography variant="subtitle1">선택 학습 과정</Typography>
+          </Stack>
+        </Stack>
+      </Paper>
+
+      {/* 로드맵 플로우 */}
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodeClick={(event, node) => {
-          console.log("Node clicked:", event, node);
+        onInit={(instance) => {
+          reactFlowInstance.current = instance;
+
+          const firstJob = roadmapData.find((n) => n.category === "job");
+          if (firstJob) fitViewToNode(`node-${firstJob.id}`, 1);
         }}
+        onNodeClick={(_, node) => fitViewToNode(node.id)}
         fitView
         disableKeyboardA11y
         nodesConnectable={false}
-        elementsSelectable={false}
+        nodesDraggable={false}
+        nodesFocusable={false}
       >
         <Controls />
       </ReactFlow>

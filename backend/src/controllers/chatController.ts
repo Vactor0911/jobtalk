@@ -224,10 +224,10 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
 
           2. 각 노드는 아래 5개 필드만 포함합니다.  
             • id          : 1부터 증가하는 정수  
-            • title       : 과목·기술·자격증·경력 단계 등 노드 이름  
+            • title       : 과목·기술·자격증·경력 단계 등 한글로 된 노드 이름  
             • parent_id   : 부모 id (최상위는 null)  
             • isOptional  : 필수 과정이 아니면 true, 그 외 false  
-            • category    : "skill" | "certificate" | "job" 등 노드 유형  
+            • category    : 노드 카테고리 유형. "skill" | "certificate" | "job" 중 하나  
 
           3. 선후관계 규칙  
             • A 과목을 배우려면 B 과목이 선행 → B 다음에 A 연결  
@@ -237,7 +237,7 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
           4. **노드 수·깊이 제한**  
             • 기본값: maxNodes = 35, maxDepth = 6  
             • 사용자 프롬프트 끝에 "옵션" 객체가 주어지면 해당 값으로 덮어쓰십시오.  
-            • 제약을 초과하면 중요도가 낮은 **선택 노드**부터 제거하여 조건을 만족시킵니다.
+            • 제약을 초과하면 중요도가 낮은 **선택 노드**부터 제거하여 조건을 만족시킵니다.  
 
           5. 위 규칙을 어기거나 JSON 외의 텍스트가 포함되면 출력은 **오류**로 간주됩니다.
         `,

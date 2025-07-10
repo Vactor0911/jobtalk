@@ -39,3 +39,6 @@ interface Workspace {
 export const selectedWorkspaceAtom = atom<Workspace | null>(null); // 선택된 워크스페이스
 export const workspaceStepAtom = atom<number>(1); // 현재 워크스페이스 단계
 export const selectedInterestAtom = atom<string | null>(null); // 선택된 관심사 카테고리
+
+// 로드맵 뷰어 상태
+export const roadmapTabAtom = atom(1);

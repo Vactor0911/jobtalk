@@ -1,10 +1,18 @@
-import { Avatar, Box, Stack, Typography, useTheme } from "@mui/material";
+import {
+  Avatar,
+  Box,
+  keyframes,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { useAtomValue } from "jotai";
 import { jobTalkLoginStateAtom, profileImageAtom } from "../../state";
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import FaceRoundedIcon from "@mui/icons-material/FaceRounded";
 import { useMemo } from "react";
+import CircleIcon from "@mui/icons-material/Circle";
 
 export interface Chat {
   isBot: boolean; // 챗봇인지 여부
@@ -16,10 +24,20 @@ export interface Chat {
 interface ChatDialogsProps {
   chat: Chat;
   chatContent?: React.ReactNode; // 대화 내용 컴포넌트
+  loading?: boolean;
 }
 
+const loadingAnimation = keyframes`
+  0%, 100% {
+    transform: translateY(2px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+`;
+
 const ChatBox = (props: ChatDialogsProps) => {
-  const { chat, chatContent } = props;
+  const { chat, chatContent, loading } = props;
 
   const theme = useTheme();
 
@@ -50,6 +68,49 @@ const ChatBox = (props: ChatDialogsProps) => {
       </Avatar>
     );
   }, [loginState.userName, profileImage]);
+
+  // 채팅 렌더 요소
+  const chatRender = useMemo(() => {
+    if (loading) {
+      return (
+        <Stack
+          direction="row"
+          color="text.secondary"
+          padding={0.5}
+          gap={0.5}
+          sx={{
+            "& .MuiSvgIcon-root": {
+              fontSize: theme.typography.subtitle2.fontSize,
+              animation: `${loadingAnimation} 1s infinite ease-in-out`,
+            },
+            "& .MuiSvgIcon-root:nth-of-type(2)": {
+              animationDelay: "0.2s",
+            },
+            "& .MuiSvgIcon-root:nth-of-type(3)": {
+              animationDelay: "0.4s",
+            },
+          }}
+        >
+          <CircleIcon fontSize="inherit" color="inherit" />
+          <CircleIcon fontSize="inherit" color="inherit" />
+          <CircleIcon fontSize="inherit" color="inherit" />
+        </Stack>
+      );
+    } else if (chatContent) {
+      return chatContent;
+    } else {
+      return (
+        <Typography
+          variant="subtitle1"
+          sx={{
+            wordBreak: "break-all",
+          }}
+        >
+          {chat.content}
+        </Typography>
+      );
+    }
+  }, [chat.content, chatContent, loading]);
 
   return (
     <Stack
@@ -97,18 +158,7 @@ const ChatBox = (props: ChatDialogsProps) => {
           borderRadius={2}
           bgcolor={grey[100]}
         >
-          {chatContent ? (
-            chatContent
-          ) : (
-            <Typography
-              variant="subtitle1"
-              sx={{
-                wordBreak: "break-all",
-              }}
-            >
-              {chat.content}
-            </Typography>
-          )}
+          {chatRender}
         </Box>
       </Stack>
     </Stack>

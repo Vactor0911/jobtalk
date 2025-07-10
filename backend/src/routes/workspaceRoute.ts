@@ -5,6 +5,7 @@ import {
   getWorkspaceAndUserBasicInfo,
   getWorkspaceByUuid,
   getWorkspaceChats,
+  getWorkspaceRoadmap,
   saveWorkspaceChat,
   saveWorkspaceRoadmap,
   updateWorkspaceForChat,
@@ -46,15 +47,6 @@ workspaceRoute.put(
   updateWorkspaceForChat
 );
 
-// 워크스페이스 로드맵 저장/업데이트
-workspaceRoute.post(
-  "/:uuid/roadmap",
-  csrfProtection,
-  limiter,
-  authenticateToken,
-  saveWorkspaceRoadmap
-);
-
 // 워크스페이스 관심 분야 설정
 workspaceRoute.put(
   "/:uuid/interest",
@@ -70,6 +62,23 @@ workspaceRoute.get(
   limiter,
   authenticateToken,
   getWorkspaceAndUserBasicInfo
+);
+
+// 워크스페이스 로드맵 저장
+workspaceRoute.post(
+  "/:uuid/roadmap",
+  csrfProtection,
+  limiter,
+  authenticateToken,
+  saveWorkspaceRoadmap
+);
+
+// 워크스페이스 uuid로 로드맵 조회
+workspaceRoute.get(
+  "/:uuid/roadmap",
+  limiter,
+  authenticateToken,
+  getWorkspaceRoadmap
 );
 
 export default workspaceRoute;

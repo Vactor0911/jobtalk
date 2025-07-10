@@ -242,17 +242,6 @@ const RoadMapViewer = () => {
     }));
   }, []);
 
-  useEffect(() => {
-    // 노드 생성
-    const newNodes = createNodes(roadmapData);
-    const adjustedNodes = adjustNodePositions(newNodes);
-    setNodes(adjustedNodes);
-
-    // 엣지 생성
-    const newEdges = createEdges(roadmapData);
-    setEdges(newEdges);
-  }, [adjustNodePositions, createEdges, createNodes, roadmapData]);
-
   // 노드로 시점 이동
   const fitViewToNode = useCallback((nodeId: string, zoomLevel = 1.5) => {
     // reactFlowInstance 참조
@@ -269,6 +258,24 @@ const RoadMapViewer = () => {
 
     instance.setCenter(centerX, centerY, { zoom: zoomLevel, duration: 800 });
   }, []);
+
+  useEffect(() => {
+    // 노드 생성
+    const newNodes = createNodes(roadmapData);
+    const adjustedNodes = adjustNodePositions(newNodes);
+    setNodes(adjustedNodes);
+
+    // 엣지 생성
+    const newEdges = createEdges(roadmapData);
+    setEdges(newEdges);
+  }, [adjustNodePositions, createEdges, createNodes, roadmapData]);
+
+  // 컴포넌트 마운트 시 최상위 노드로 시점 이동
+  useEffect(() => {
+    // 최상위 노드로 시점 이동
+    const firstJob = roadmapData.find((n) => n.category === "job");
+    if (firstJob) fitViewToNode(`node-${firstJob.id}`, 1);
+  }, [fitViewToNode, roadmapData, nodes]);
 
   return (
     <Box width="100%" height="100%" position="relative">
@@ -341,12 +348,8 @@ const RoadMapViewer = () => {
         edges={edges}
         onInit={(instance) => {
           reactFlowInstance.current = instance;
-
-          const firstJob = roadmapData.find((n) => n.category === "job");
-          if (firstJob) fitViewToNode(`node-${firstJob.id}`, 1);
         }}
         onNodeClick={(_, node) => fitViewToNode(node.id)}
-        fitView
         disableKeyboardA11y
         nodesConnectable={false}
         nodesDraggable={false}

@@ -16,6 +16,9 @@ interface Chat {
   jobOptions?: string[]; // 직업 옵션이 있는 경우
 }
 
+// 최대 대화 횟수
+const MAX_CHAT_COUNT = 15;
+
 // AI 응답에서 직업 옵션 추출 함수
 const extractJobOptions = (message: string): string[] | null => {
   const regex = /JOB_OPTIONS:\s*(\[[^\]]+\])/;
@@ -627,13 +630,27 @@ const ChatbotView = () => {
         )}
 
         {/* 채팅 입력란 */}
-        <Box width="100%" marginTop="auto">
+        <Box width="100%" marginTop="auto" position="relative">
+          {/* 채팅 입력란 */}
           <ChatInput
             onSend={handleMessageSend}
             placeholder="잡톡 AI에게 무엇이든 물어보세요"
             multiline={true}
             disabled={fetchLoading || isRecommendLimit}
           />
+
+          {/* 남은 채팅 횟수 */}
+          <Typography position="absolute" bottom={6} left={16}>
+            <span
+              css={{
+                color: theme.palette.primary.main,
+                fontWeight: "bold",
+              }}
+            >
+              {MAX_CHAT_COUNT - chats.filter((chat) => chat.isBot).length}
+            </span>{" "}
+            회 대화 가능
+          </Typography>
         </Box>
       </Stack>
     </Stack>

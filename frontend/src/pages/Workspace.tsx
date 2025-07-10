@@ -35,21 +35,14 @@ const Workspace = () => {
         const workspaceData = response.data.data.workspace;
         setWorkspace(workspaceData);
 
-        // // 워크스페이스 상태에 따른 화면 전환 로직 수정
-        // if (workspaceData.status === "roadmap_generated") {
-        //   // setStep(6); // 로드맵 뷰어로 바로 이동
-        // } else if (workspaceData.status === "chatting") {
-        //   setSelectedInterest(workspaceData.interestCategory || "");
-        //   setStep(3); // 챗봇 단계로 바로 이동
-        // }
-
-        // 워크스페이스 상태에 따른 화면 전환 로직 수정
-        if (
-          workspaceData.status === "chatting" ||
-          workspaceData.interestCategory
-        ) {
+        // 워크스페이스 상태에 따른 화면 전환
+        if (workspaceData.status === "roadmap_generated") {
+          setStep(6); // 로드맵 뷰어로 이동
+        } else if (workspaceData.status === "chatting") {
           setSelectedInterest(workspaceData.interestCategory || "");
-          setStep(3); // 챗봇 단계로 바로 이동
+          setStep(3); // 챗봇 단계로 이동
+        } else {
+          setStep(1); // 관심 분야 선택 단계로 이동
         }
       } else {
         throw new Error(

@@ -97,7 +97,18 @@ const ChatBox = (props: ChatDialogsProps) => {
           borderRadius={2}
           bgcolor={grey[100]}
         >
-          {chatContent}
+          {chatContent ? (
+            chatContent
+          ) : (
+            <Typography
+              variant="subtitle1"
+              sx={{
+                wordBreak: "break-all",
+              }}
+            >
+              {chat.content}
+            </Typography>
+          )}
         </Box>
       </Stack>
     </Stack>

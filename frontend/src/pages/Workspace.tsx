@@ -36,7 +36,9 @@ const Workspace = () => {
         setWorkspace(workspaceData);
 
         // 워크스페이스 상태에 따른 화면 전환 로직 수정
-        if (
+        if (workspaceData.status === "roadmap_generated") {
+          setStep(6); // 로드맵 뷰어로 바로 이동
+        } else if (
           workspaceData.interestCategory ||
           workspaceData.status === "chatting"
         ) {

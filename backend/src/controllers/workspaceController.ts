@@ -344,115 +344,6 @@ export const updateWorkspaceForChat = async (req: Request, res: Response) => {
   }
 };
 
-// 워크스페이스 로드맵 생성/업데이트
-export const saveWorkspaceRoadmap = async (req: Request, res: Response) => {
-  try {
-    const { uuid } = req.params;
-    const { jobTitle, jobDescription, roadmapData } = req.body;
-    const user = req.user as { userUuid: string };
-    const connection = await dbPool.getConnection();
-
-    try {
-      await connection.beginTransaction();
-
-      // 필수 입력값 확인
-      if (!jobTitle || !roadmapData) {
-        res.status(400).json({
-          success: false,
-          message: "직업명과 로드맵 데이터는 필수입니다.",
-        });
-        return;
-      }
-
-      // 워크스페이스 소유자 확인
-      const workspaces = await connection.query(
-        "SELECT id FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
-        [uuid, user.userUuid]
-      );
-
-      if (workspaces.length === 0) {
-        res.status(404).json({
-          success: false,
-          message: "워크스페이스를 찾을 수 없거나 권한이 없습니다.",
-        });
-        return;
-      }
-
-      const workspaceId = workspaces[0].id;
-
-      // 새로운 이름 설정
-      const newName = `${jobTitle} 로드맵 🗺️`;
-
-      // 기존 로드맵이 있는지 확인
-      const existingRoadmap = await connection.query(
-        "SELECT id FROM workspace_roadmaps WHERE workspace_id = ?",
-        [workspaceId]
-      );
-
-      // roadmapData가 JSON 문자열인지 확인하고 변환
-      const roadmapDataJson =
-        typeof roadmapData === "string"
-          ? roadmapData
-          : JSON.stringify(roadmapData);
-
-      if (existingRoadmap.length > 0) {
-        // 기존 로드맵 업데이트
-        await connection.query(
-          `UPDATE workspace_roadmaps 
-           SET job_title = ?, job_description = ?, roadmap_data = ?, updated_at = CURRENT_TIMESTAMP
-           WHERE id = ?`,
-          [
-            jobTitle,
-            jobDescription || null,
-            roadmapDataJson,
-            existingRoadmap[0].id,
-          ]
-        );
-      } else {
-        // 새 로드맵 생성
-        await connection.query(
-          `INSERT INTO workspace_roadmaps 
-           (workspace_id, job_title, job_description, roadmap_data) 
-           VALUES (?, ?, ?, ?)`,
-          [workspaceId, jobTitle, jobDescription || null, roadmapDataJson]
-        );
-      }
-
-      // 워크스페이스 상태 업데이트
-      await connection.query(
-        `UPDATE workspace 
-         SET name = ?, status = 'roadmap_generated', chat_topic = NULL, updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [newName, workspaceId]
-      );
-
-      await connection.commit();
-
-      res.status(200).json({
-        success: true,
-        message: "로드맵이 성공적으로 저장되었습니다.",
-        data: {
-          name: newName,
-          status: "roadmap_generated",
-          jobTitle,
-        },
-      });
-    } catch (error) {
-      await connection.rollback();
-      throw error;
-    } finally {
-      connection.release();
-    }
-  } catch (error: any) {
-    console.error("로드맵 저장 오류:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "로드맵 저장에 실패했습니다.",
-      error: error.message,
-    });
-  }
-};
-
 // 워크스페이스 관심 분야 설정
 export const updateWorkspaceInterest = async (req: Request, res: Response) => {
   try {
@@ -592,6 +483,173 @@ export const getWorkspaceAndUserBasicInfo = async (
     res.status(500).json({
       success: false,
       message: "정보 조회에 실패했습니다.",
+      error: error.message,
+    });
+  }
+};
+
+// 워크스페이스 로드맵 저장
+export const saveWorkspaceRoadmap = async (req: Request, res: Response) => {
+  try {
+    const { uuid } = req.params; // workspace_uuid
+    const { jobTitle, roadmapData } = req.body;
+    const user = req.user as { userUuid: string };
+    const connection = await dbPool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      // 필수 입력값 확인
+      if (!jobTitle || !roadmapData) {
+        res.status(400).json({
+          success: false,
+          message: "직업명과 로드맵 데이터는 필수입니다.",
+        });
+        return;
+      }
+
+      // 워크스페이스 소유자 확인
+      const workspaces = await connection.query(
+        "SELECT id FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
+        [uuid, user.userUuid]
+      );
+
+      if (workspaces.length === 0) {
+        res.status(404).json({
+          success: false,
+          message: "워크스페이스를 찾을 수 없거나 권한이 없습니다.",
+        });
+        return;
+      }
+
+      // roadmapData가 JSON 문자열인지 확인하고 변환
+      const roadmapDataJson =
+        typeof roadmapData === "string"
+          ? roadmapData
+          : JSON.stringify(roadmapData);
+
+      // 기존 로드맵이 있는지 확인
+      const existingRoadmap = await connection.query(
+        "SELECT id FROM workspace_roadmaps WHERE workspace_uuid = ?",
+        [uuid]
+      );
+
+      if (existingRoadmap.length > 0) {
+        // 기존 로드맵 UPDATE
+        await connection.query(
+          `UPDATE workspace_roadmaps 
+           SET job_title = ?, roadmap_data = ?, created_at = CURRENT_TIMESTAMP
+           WHERE workspace_uuid = ?`,
+          [jobTitle, roadmapDataJson, uuid]
+        );
+      } else {
+        // 새 로드맵 INSERT (roadmap_uuid는 uuid()로 생성)
+        await connection.query(
+          `INSERT INTO workspace_roadmaps 
+           (workspace_uuid, job_title, roadmap_data)
+           VALUES (?, ?, ?)`,
+          [uuid, jobTitle, roadmapDataJson]
+        );
+      }
+
+      // 워크스페이스 상태 및 이름 업데이트
+      await connection.query(
+        `UPDATE workspace 
+         SET status = 'roadmap_generated', 
+             name = CONCAT(?, ' 로드맵 💼'), 
+             updated_at = CURRENT_TIMESTAMP
+         WHERE workspace_uuid = ? AND user_uuid = ?`,
+        [jobTitle, uuid, user.userUuid]
+      );
+
+      await connection.commit();
+
+      res.status(200).json({
+        success: true,
+        message: "로드맵이 성공적으로 저장되었습니다.",
+        data: {
+          jobTitle,
+        },
+      });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  } catch (error: any) {
+    console.error("로드맵 저장 오류:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "로드맵 저장에 실패했습니다.",
+      error: error.message,
+    });
+  }
+};
+
+// 워크스페이스 uuid로 로드맵 조회
+export const getWorkspaceRoadmap = async (req: Request, res: Response) => {
+  try {
+    const { uuid } = req.params; // workspace_uuid
+    const user = req.user as { userUuid: string };
+
+    // 워크스페이스 소유자 확인
+    const workspaces = await dbPool.query(
+      "SELECT id FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
+      [uuid, user.userUuid]
+    );
+
+    if (workspaces.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "워크스페이스를 찾을 수 없거나 권한이 없습니다.",
+      });
+      return;
+    }
+
+    // 로드맵 조회
+    const roadmaps = await dbPool.query(
+      `SELECT 
+        id,
+        roadmap_uuid,
+        workspace_uuid,
+        job_title,
+        roadmap_data,
+        created_at
+       FROM workspace_roadmaps
+       WHERE workspace_uuid = ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [uuid]
+    );
+
+    if (roadmaps.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "해당 워크스페이스에 저장된 로드맵이 없습니다.",
+      });
+      return;
+    }
+
+    const roadmap = roadmaps[0];
+
+    res.status(200).json({
+      success: true,
+      data: {
+        id: roadmap.id,
+        roadmapUuid: roadmap.roadmap_uuid,
+        workspaceUuid: roadmap.workspace_uuid,
+        jobTitle: roadmap.job_title,
+        roadmapData: JSON.parse(roadmap.roadmap_data),
+        createdAt: roadmap.created_at,
+      },
+      message: "로드맵 조회를 완료했습니다.",
+    });
+  } catch (error: any) {
+    console.error("로드맵 조회 오류:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "로드맵 조회에 실패했습니다.",
       error: error.message,
     });
   }

@@ -226,61 +226,51 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
 
         2. 각 노드는 아래 5개 필드만 포함합니다.  
           • id          : 1부터 증가하는 정수  
-          • title       : 과목·기술·자격증·경력 단계 등 한글 이름  
+          • title       : 과목·기술·자격증·단계 등 한글 이름  
           • parent_id   : 부모 id (최상위는 null)  
           • isOptional  : 필수 과정이 아니면 true, 그 외 false  
-          • category    : "skill" | "certificate" | "job" 중 하나  
+          • category    : **"job" | "stage" | "skill" | "certificate"** 중 하나  
 
         3. 노드 생성 규칙  
           • **id = 1** 노드는 반드시 사용자의 직업명으로 지정하고  
-            "parent_id": null, "isOptional": false, "category": "job" 로 설정합니다.  
-          • 나머지 노드는 자격증이면 "certificate", 그 외는 "skill" 로 지정합니다.
+            "parent_id": null, "isOptional": false, "category": "job" 으로 설정합니다.  
+          • **단계 노드(id = 2~6)** 는 반드시 "category": "stage" 로 지정합니다.  
+          • 자격증 노드는 "certificate", 그 밖의 학습 항목은 "skill" 로 지정합니다.
 
         4. 학습 단계 & 선후관계  
           • 단계 구분: ① 기초 → ② 핵심 → ③ 심화 → ④ 고급 → ⑤ 전문/특화(연구·프로젝트)  
-          • “앞 단계 이수 → 뒷 단계 진행” 흐름으로 parent-child 를 연결합니다.  
+          • 단계 노드는 세로형으로 연결합니다.  
+              2️⃣(기초) parent_id = 1  
+              3️⃣(핵심) parent_id = 2  
+              4️⃣(심화) parent_id = 3  
+              5️⃣(고급) parent_id = 4  
+              6️⃣(전문) parent_id = 5  
           • 자격증은 **직접 준비 단계(skill)** 를 선행 노드로 두고,  
             그 단계가 모두 끝난 뒤 certificate 노드를 연결합니다.  
 
-          *4-A.* **id = 2~6** 노드는 각각  
-                "기초 단계", "핵심 단계", "심화 단계", "고급 단계", "전문 단계"로 고정하고  
-                아래처럼 **세로(계단식)로** 연결합니다.  
-                ─ 2: parent_id = 1  
-                ─ 3: parent_id = 2  
-                ─ 4: parent_id = 3  
-                ─ 5: parent_id = 4  
-                ─ 6: parent_id = 5  
-                isOptional = false, category = "skill" 로 지정합니다.  
-
-          *4-B.* id = 2~6 을 제외한 모든 skill·certificate 노드는  
-                자신이 속한 단계 노드를 parent_id 로 가져야 합니다.  
-                (예: "HTML/CSS 기초" → parent_id = 2, "웹 프레임워크(Django)" → parent_id = 3)
-
         5. 세부 분해 지침  
-          • 모든 **핵심·고급 단계 skill** 은 *반드시 최소 2개* 이상의 세부 skill 로 분해합니다.  
-            (예: “SQL” → “기초 문법”, “조인·서브쿼리”, “인덱스·최적화”)  
-          • 프레임워크·언어·툴 역시 “기본 설정 → 필수 기능 → 고급 기능” 식으로 2-3단계로 쪼갭니다.  
+          • 모든 **핵심·고급 단계(stage 3·5)의 skill 노드**는 *반드시 최소 2개* 이상의 세부 skill 로 분해합니다.  
+          • 프레임워크·언어·툴은 “기본 설정 → 필수 기능 → 고급 기능” 식으로 2-3단계로 쪼갭니다.  
           • **최종 leaf-skill** 은 ‘실무 단위로 더 쪼갤 수 없는 구체 항목’이어야 합니다.  
 
-          *5-A.* 위 분해 규칙이 지켜지지 않거나 minNodes < 40 이면  
-                출력은 오직 한 단어 **“오류”** 만 적으십시오.
+          *5-A.* 위 분해 규칙이 지켜지지 않거나 minNodes < 40 이면 **“오류”** 만 출력합니다.
 
         6. 병렬 대안 기술 (선택 분기)  
           • 비슷한 기술(예: Java / Python / Node.js)은 같은 parent_id 를 공유하고  
             각 노드의 isOptional 을 true 로 지정해 **선택 분기**를 만듭니다.
 
         7. 노드 수 제한  
-          • **maxNodes = 80** (초과 시 중요도가 낮은 선택 노드부터 제거)
+          • **maxNodes = 80** (초과 시 중요도가 낮은 선택 노드부터 제거)  
 
         8. 최소 분량 목표  
-          • **minNodes = 50** 이상을 반드시 만족하십시오.  
+          • **minNodes = 40** 이상을 반드시 만족하십시오.  
           • 부족할 때는 leaf-skill 을 더 세분화해 노드를 늘리십시오.
 
         9. 금지 규칙  
           • 위 5개 필드 외의 속성, 마크다운, 설명, 주석을 **절대 포함하지 마십시오.**
 
         10. 검증 & 오류  
-          • minNodes < 50 이거나 금지된 텍스트가 포함되면  
+          • minNodes < 40 이거나 금지된 텍스트가 포함되면  
             출력은 오직 한 단어 **“오류”** 만 적으십시오.
         `,
       },

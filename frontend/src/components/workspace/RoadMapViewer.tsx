@@ -1,5 +1,4 @@
 import { Box, Paper, Stack, Typography, useTheme } from "@mui/material";
-import roadmapData from "../../assets/roadmap_test.json";
 import { Controls, ReactFlow, type ReactFlowInstance } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
@@ -30,7 +29,6 @@ interface Node {
     boxShadow?: string;
   };
   width?: number;
-  height?: number;
 }
 
 // 엣지 데이터 타입
@@ -102,7 +100,13 @@ const RoadMapViewer = () => {
                 }}
               >
                 <span
-                  css={{ fontSize: "1rem", fontWeight: "bold", color: "white" }}
+                  css={{
+                    fontSize: "1rem",
+                    fontWeight: "bold",
+                    color: "white",
+                    wordBreak: "keep-all",
+                    textWrap: "balance",
+                  }}
                 >
                   {node.title}
                 </span>
@@ -116,15 +120,21 @@ const RoadMapViewer = () => {
                   alignItems: "center",
                 }}
               >
-                <span>{node.title}</span>
+                <span
+                  css={{
+                    wordBreak: "keep-all",
+                    textWrap: "balance",
+                  }}
+                >
+                  {node.title}
+                </span>
               </div>
             ),
         },
         position: { x: 0, y: 0 }, // 초기 위치는 나중에 조정
         width: 150,
-        height: 40,
         style: {
-          padding: "0",
+          padding: "10px 0",
           backgroundColor: getNodeBackgroundColor(node.category || "default"),
           border:
             node.category === "skill"
@@ -162,62 +172,65 @@ const RoadMapViewer = () => {
   );
 
   // 노드 위치 조정
-  const adjustNodePositions = useCallback((nodes: Node[]) => {
-    // id와 parent_id 매핑
-    const idToNode = new Map();
-    roadmapData.forEach((node: NodeData) =>
-      idToNode.set(`node-${node.id}`, node)
-    );
+  const adjustNodePositions = useCallback(
+    (nodes: Node[]) => {
+      // id와 parent_id 매핑
+      const idToNode = new Map();
+      roadmapData.forEach((node: NodeData) =>
+        idToNode.set(`node-${node.id}`, node)
+      );
 
-    // 트리 구조 생성 (children 정보 추가)
-    const childrenMap: Record<string, string[]> = {};
-    roadmapData.forEach((node) => {
-      if (node.parent_id) {
-        const parentKey = `node-${node.parent_id}`;
-        if (!childrenMap[parentKey]) childrenMap[parentKey] = [];
-        childrenMap[parentKey].push(`node-${node.id}`);
-      }
-    });
+      // 트리 구조 생성 (children 정보 추가)
+      const childrenMap: Record<string, string[]> = {};
+      roadmapData.forEach((node) => {
+        if (node.parent_id) {
+          const parentKey = `node-${node.parent_id}`;
+          if (!childrenMap[parentKey]) childrenMap[parentKey] = [];
+          childrenMap[parentKey].push(`node-${node.id}`);
+        }
+      });
 
-    // 루트 노드 찾기
-    const rootNodes = nodes.filter((node) => {
-      const data = idToNode.get(node.id);
-      return !data?.parent_id;
-    });
+      // 루트 노드 찾기
+      const rootNodes = nodes.filter((node) => {
+        const data = idToNode.get(node.id);
+        return !data?.parent_id;
+      });
 
-    // 재귀적으로 위치 계산
-    let currentX = 0;
-    const nodePositions: Record<string, { x: number; y: number }> = {};
+      // 재귀적으로 위치 계산
+      let currentX = 0;
+      const nodePositions: Record<string, { x: number; y: number }> = {};
 
-    const setPositions = (nodeId: string, depth: number) => {
-      const children = childrenMap[nodeId] || [];
+      const setPositions = (nodeId: string, depth: number) => {
+        const children = childrenMap[nodeId] || [];
 
-      if (children.length === 0) {
-        // 리프 노드를 현재 x에 위치
-        nodePositions[nodeId] = { x: currentX * 200, y: depth * 150 };
-        currentX += 1;
-      } else {
-        // 자식 먼저 배치
-        const childXs: number[] = [];
-        children.forEach((childId) => {
-          setPositions(childId, depth + 1);
-          childXs.push(nodePositions[childId].x);
-        });
-        // 부모는 자식들의 x의 중앙에 위치
-        const minX = Math.min(...childXs);
-        const maxX = Math.max(...childXs);
-        nodePositions[nodeId] = { x: (minX + maxX) / 2, y: depth * 150 };
-      }
-    };
+        if (children.length === 0) {
+          // 리프 노드를 현재 x에 위치
+          nodePositions[nodeId] = { x: currentX * 200, y: depth * 150 };
+          currentX += 1;
+        } else {
+          // 자식 먼저 배치
+          const childXs: number[] = [];
+          children.forEach((childId) => {
+            setPositions(childId, depth + 1);
+            childXs.push(nodePositions[childId].x);
+          });
+          // 부모는 자식들의 x의 중앙에 위치
+          const minX = Math.min(...childXs);
+          const maxX = Math.max(...childXs);
+          nodePositions[nodeId] = { x: (minX + maxX) / 2, y: depth * 150 };
+        }
+      };
 
-    rootNodes.forEach((node) => setPositions(node.id, 0));
+      rootNodes.forEach((node) => setPositions(node.id, 0));
 
-    // 노드에 position 할당
-    return nodes.map((node) => ({
-      ...node,
-      position: nodePositions[node.id] || { x: 0, y: 0 },
-    }));
-  }, [roadmapData]);
+      // 노드에 position 할당
+      return nodes.map((node) => ({
+        ...node,
+        position: nodePositions[node.id] || { x: 0, y: 0 },
+      }));
+    },
+    [roadmapData]
+  );
 
   // 엣지 구성
   const createEdges = useCallback((data: NodeData[]) => {
@@ -252,7 +265,7 @@ const RoadMapViewer = () => {
 
     // 노드를 가운데로 이동
     const centerX = node.position.x + (node.width ? node.width / 2 : 0);
-    const centerY = node.position.y + (node.height ? node.height / 2 : 0);
+    const centerY = node.position.y;
 
     instance.setCenter(centerX, centerY, { zoom: zoomLevel, duration: 800 });
   }, []);

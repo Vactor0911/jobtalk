@@ -106,7 +106,7 @@ const ChatInput = (props: ChatInputProps) => {
           borderRadius: "50px",
         }}
         onClick={handleSendButtonClick}
-        disabled={disabled}
+        disabled={!input || input.trim() === "" || disabled}
       >
         <Typography variant="subtitle1" fontWeight="bold">
           입력

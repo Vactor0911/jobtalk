@@ -12,7 +12,7 @@ interface NodeData {
   title: string;
   parent_id: number | string | null;
   isOptional?: boolean;
-  category: string; // "skill" | "certificate" | "job"
+  category: string; // "skill" | "certificate" | "job" | "stage"
 }
 
 // 노드 데이터 타입

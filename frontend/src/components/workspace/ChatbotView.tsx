@@ -16,8 +16,9 @@ import {
   jobTalkLoginStateAtom,
   profileImageAtom,
   selectedInterestAtom,
+  workspaceStepAtom,
 } from "../../state";
-import { useAtomValue } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import { enqueueSnackbar } from "notistack";
 import JobOptionsButtons from "./JobOptionsButtons";
@@ -94,6 +95,9 @@ const ChatbotView = () => {
   const [userCertificates, setUserCertificates] = useState<string>("");
   const [interestCategory, setInterestCategory] = useState<string>("");
   const [dataLoaded, setDataLoaded] = useState(false);
+
+  // 워크스페이스 단계 상태
+  const [, setStep] = useAtom(workspaceStepAtom);
 
   // 워크스페이스와 사용자 기본 정보 한번에 가져오기
   const fetchBasicInfo = useCallback(async () => {
@@ -537,6 +541,91 @@ const ChatbotView = () => {
     [handleSendButtonClick]
   );
 
+  // 로드맵 저장 핸들러
+  const handleSaveRoadmap = useCallback(
+    async (jobTitle: string, roadmapData: string) => {
+      if (!uuid) return;
+      try {
+        // CSRF 토큰 획득
+        const csrfToken = await getCsrfToken();
+
+        const response = await axiosInstance.post(
+          `/workspace/${uuid}/roadmap`,
+          {
+            jobTitle,
+            roadmapData,
+          },
+          {
+            headers: { "X-CSRF-Token": csrfToken },
+          }
+        );
+
+        if (response.data.success) {
+          enqueueSnackbar("로드맵이 성공적으로 저장되었습니다.", {
+            variant: "success",
+          });
+          setStep(6); // 로드맵 뷰어 스텝으로 이동
+        } else {
+          enqueueSnackbar(
+            response.data.message || "로드맵 저장에 실패했습니다.",
+            { variant: "error" }
+          );
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        enqueueSnackbar(
+          err.response?.data?.message || "로드맵 저장에 실패했습니다.",
+          { variant: "error" }
+        );
+      }
+    },
+    [setStep, uuid]
+  );
+
+  // 직업 선택 시 로드맵 생성 핸들러
+  const handleSelectJob = useCallback(
+    async (job: string) => {
+      try {
+        setStep(5); // 로드맵 생성(로딩) 스텝으로 이동
+
+        // CSRF 토큰 획득
+        const csrfToken = await getCsrfToken();
+
+        // 로드맵 생성 API 호출
+        const response = await axiosInstance.post(
+          "/chat/career/roadmap",
+          {
+            jobTitle: job,
+            interests: interestCategory,
+            certificates: userCertificates,
+          },
+          {
+            headers: { "X-CSRF-Token": csrfToken },
+          }
+        );
+
+        if (response.data.success) {
+          // 로드맵 생성 성공 시, DB 저장 함수 호출
+          await handleSaveRoadmap(job, response.data.data);
+        } else {
+          enqueueSnackbar(
+            response.data.message || "로드맵 생성에 실패했습니다.",
+            { variant: "error" }
+          );
+          setStep(3); // 실패 시 다시 챗봇 단계로
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        enqueueSnackbar(
+          err.response?.data?.message || "로드맵 생성에 실패했습니다.",
+          { variant: "error" }
+        );
+        setStep(3);
+      }
+    },
+    [setStep, interestCategory, userCertificates, handleSaveRoadmap]
+  );
+
   return (
     <Stack>
       <Box textAlign="center">
@@ -606,12 +695,7 @@ const ChatbotView = () => {
                 {chat.jobOptions && chat.jobOptions.length > 0 && (
                   <JobOptionsButtons
                     jobOptions={chat.jobOptions}
-                    onSelectJob={(job) => {
-                      // TODO: 직업 선택 시 로드맵 요청 등 처리
-                      enqueueSnackbar(`선택한 직업: ${job}`, {
-                        variant: "success",
-                      });
-                    }}
+                    onSelectJob={handleSelectJob}
                   />
                 )}
               </Box>
@@ -622,10 +706,7 @@ const ChatbotView = () => {
         {isRecommendLimit && recommendedJobs.length > 0 && (
           <JobOptionsButtons
             jobOptions={recommendedJobs}
-            onSelectJob={(job) => {
-              enqueueSnackbar(`선택한 직업: ${job}`, { variant: "success" });
-              // TODO: 선택 후 로드맵 요청 등 추가
-            }}
+            onSelectJob={handleSelectJob}
           />
         )}
 

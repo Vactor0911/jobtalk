@@ -401,6 +401,8 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
           detailObj = { ...existing, overview: existing.description };
         }
       }
+
+      // 데이터 반환
       res.status(200).json({
         success: true,
         source: "database",
@@ -462,7 +464,7 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
       temperature: 0.7,
     });
 
-    let description = response.output_text;
+    const description = response.output_text;
     // (필요시 JSON 파싱 검증 후 저장)
     await dbPool.query(
       `INSERT INTO node_details (roadmap_uuid, node_id, title, description, created_at)
@@ -470,10 +472,23 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
       [roadmap_uuid, node_id, title, description]
     );
 
+    // 반환 데이터 구성
+    let detailObj;
+    if (typeof description === "string") {
+      try {
+        const parsed = JSON.parse(description);
+        detailObj = { ...existing, ...parsed };
+      } catch {
+        // 파싱 실패 시 overview만 제공
+        detailObj = { ...existing, overview: description };
+      }
+    }
+
+    // 데이터 반환
     res.status(200).json({
       success: true,
       source: "openai",
-      data: { nodeDetail: { roadmap_uuid, node_id, title, description } },
+      data: { nodeDetail: detailObj },
     });
     return;
   } catch (err: any) {

@@ -12,6 +12,7 @@ import {
 import { grey } from "@mui/material/colors";
 import Section1 from "../components/main-page/Section1";
 import Section2 from "../components/main-page/Section2";
+import Section3 from "../components/main-page/Section3";
 
 const Main = () => {
   const navigate = useNavigate();
@@ -82,6 +83,9 @@ const Main = () => {
 
         {/* 2페이지 */}
         <Section2 />
+
+        {/* 3페이지 */}
+        <Section3 />
       </Stack>
     </ThemeProvider>
   );

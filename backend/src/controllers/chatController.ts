@@ -456,7 +456,7 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
     ];
 
     const response = await openai.responses.create({
-      model: "gpt-4",
+      model: "gpt-4o-mini",
       input: inputMessages as any,
       max_output_tokens: 5000,
       temperature: 0.7,

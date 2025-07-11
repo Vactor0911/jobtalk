@@ -562,98 +562,126 @@ const ChatbotView = () => {
   );
 
   return (
-    <Stack>
-      {/* 헤더 */}
-      <Box textAlign="center">
-        <Typography variant="h4" color="primary" gutterBottom>
-          맞춤형 진로 상담
-        </Typography>
-        <Typography variant="subtitle1" color="text.secondary">
-          <span css={{ fontWeight: "bold" }}>{"[ "}</span>
-          {/* 선택된 관심 분야 강조 */}
-          <span css={{ color: theme.palette.primary.main, fontWeight: "bold" }}>
-            {selectedInterest}
-          </span>
-          <span css={{ fontWeight: "bold" }}>{" ]"}</span> 분야에 관한 상담을
-          시작합니다.
-        </Typography>
-      </Box>
-
-      {/* 채팅 영역 */}
-
-      <Stack gap={4} marginTop={10} flex={1}>
-        {chats.map((chat, index) => (
-          <ChatBox
-            key={`chat-${index}`}
-            chat={chat}
-            chatContent={
-              <>
-                {/* 채팅 텍스트 */}
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    wordBreak: "break-all",
-                  }}
-                >
-                  {cleanBotMessage(chat.content)}
-                </Typography>
-
-                {/* 직업 옵션 버튼 표시 */}
-                {chat.jobOptions && chat.jobOptions.length > 0 && (
-                  <JobOptionsButtons
-                    jobOptions={chat.jobOptions}
-                    onSelectJob={handleSelectJob}
-                  />
-                )}
-              </>
-            }
-          />
-        ))}
-
-        {/* 챗봇 응답 로딩중 대화상자 */}
-        {chatbotLoading && (
-          <ChatBox
-            chat={{
-              isBot: true,
-              content: "",
-              date: new Date().toISOString(),
-            }}
-            loading={true}
-          />
-        )}
-
-        {isRecommendLimit && recommendedJobs.length > 0 && (
-          <JobOptionsButtons
-            jobOptions={recommendedJobs}
-            onSelectJob={handleSelectJob}
-          />
-        )}
-
-        {/* 채팅 입력란 */}
-        <Box width="100%" marginTop="auto" position="relative">
-          {/* 채팅 입력란 */}
-          <ChatInput
-            onSend={handleMessageSend}
-            placeholder="잡톡 AI에게 무엇이든 물어보세요"
-            multiline={true}
-            disabled={fetchLoading || isRecommendLimit}
-          />
-
-          {/* 남은 채팅 횟수 */}
-          <Typography position="absolute" bottom={6} left={16}>
+    <>
+      <Stack flex={1}>
+        {/* 헤더 */}
+        <Box textAlign="center">
+          <Typography variant="h4" color="primary" gutterBottom>
+            맞춤형 진로 상담
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            <span css={{ fontWeight: "bold" }}>{"[ "}</span>
+            {/* 선택된 관심 분야 강조 */}
             <span
-              css={{
-                color: theme.palette.primary.main,
-                fontWeight: "bold",
-              }}
+              css={{ color: theme.palette.primary.main, fontWeight: "bold" }}
             >
-              {MAX_CHAT_COUNT - chats.filter((chat) => chat.isBot).length}
-            </span>{" "}
-            회 대화 가능
+              {selectedInterest}
+            </span>
+            <span css={{ fontWeight: "bold" }}>{" ]"}</span> 분야에 관한 상담을
+            시작합니다.
           </Typography>
         </Box>
+
+        {/* 채팅 영역 */}
+
+        <Stack gap={4} marginTop={10} flex={1}>
+          {chats.map((chat, index) => (
+            <ChatBox
+              key={`chat-${index}`}
+              chat={chat}
+              chatContent={
+                <>
+                  {/* 채팅 텍스트 */}
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      wordBreak: "break-all",
+                    }}
+                  >
+                    {cleanBotMessage(chat.content)}
+                  </Typography>
+
+                  {/* 직업 옵션 버튼 표시 */}
+                  {chat.jobOptions && chat.jobOptions.length > 0 && (
+                    <JobOptionsButtons
+                      jobOptions={chat.jobOptions}
+                      onSelectJob={handleSelectJob}
+                    />
+                  )}
+                </>
+              }
+            />
+          ))}
+
+          {/* 챗봇 응답 로딩중 대화상자 */}
+          {chatbotLoading && (
+            <ChatBox
+              chat={{
+                isBot: true,
+                content: "",
+                date: new Date().toISOString(),
+              }}
+              loading={true}
+            />
+          )}
+
+          {isRecommendLimit && recommendedJobs.length > 0 && (
+            <JobOptionsButtons
+              jobOptions={recommendedJobs}
+              onSelectJob={handleSelectJob}
+            />
+          )}
+        </Stack>
       </Stack>
-    </Stack>
+
+      {/* 채팅 입력란 */}
+      <Box width="100%" position="sticky" bottom={80}>
+        {/* 하단 가림 요소 */}
+        <Stack
+          width="100%"
+          height="80px"
+          position="absolute"
+          bottom={0}
+          left={0}
+          bgcolor="white"
+          paddingTop={1}
+          sx={{
+            transform: "translateY(100%)",
+          }}
+        >
+          <Typography
+            variant="subtitle2"
+            color="text.secondary"
+            textAlign="center"
+            fontWeight={400}
+          >
+            잡톡 AI는 실수를 할 수 있습니다. 입력하시기 전 메시지를 확인해
+            주세요.
+          </Typography>
+        </Stack>
+
+        {/* 채팅 입력란 */}
+        <ChatInput
+          onSend={handleMessageSend}
+          placeholder="잡톡 AI에게 무엇이든 물어보세요"
+          multiline={true}
+          disabled={fetchLoading || isRecommendLimit}
+        />
+
+        {/* 남은 채팅 횟수 */}
+        <Typography position="absolute" bottom={6} left={16}>
+          <span
+            css={{
+              color: theme.palette.primary.main,
+              fontWeight: "bold",
+            }}
+          >
+            {MAX_CHAT_COUNT - chats.filter((chat) => chat.isBot).length}
+          </span>{" "}
+          회 대화 가능
+        </Typography>
+      </Box>
+    </>
   );
 };
 

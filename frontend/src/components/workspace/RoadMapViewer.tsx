@@ -292,7 +292,7 @@ const RoadMapViewer = ({
         return;
       }
 
-      // 2. 세부사항 API 호출
+      // 세부사항 API 호출
       const nodeId = node.id.replace("node-", "");
       onNodeDetail(null, true); // 로딩 시작
 

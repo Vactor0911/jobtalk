@@ -430,7 +430,13 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
           - importance: 왜 필요한지 (중요성)
           - applications: 어디에 쓰이는지 (활용 분야)
           - resources: 관련 공식 문서/학습 자료 링크 배열 (title, url, type 포함)
-          - examInfo: 자격증일 경우만 포함 (registrationUrl, organization 등)
+           resources 항목 구성 시 아래 기준 엄수:
+            1. 각 링크 도메인에 대해 DNS A 레코드 조회가 성공해야 합니다.
+            2. HTTP HEAD 또는 GET 요청 시 반드시 200 상태 코드를 반환해야 합니다.
+
+          위 조건을 만족하지 않는 링크는 모두 제외하고,
+          국내(한국) 공식 → 해외 공식 순으로 우선순위를 정하며, 
+          가능하면 공식 문서에 정확한 URL을 찾아 대체해 주세요.
 
           아래와 같은 JSON 예시 참고:
           {

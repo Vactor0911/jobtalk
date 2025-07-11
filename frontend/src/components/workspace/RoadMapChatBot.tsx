@@ -1,5 +1,5 @@
 import { Box, Stack } from "@mui/material";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import axiosInstance, { getCsrfToken } from "../../utils/axiosInstance";
 import { useParams } from "react-router";
 import ChatBox from "../chat/ChatBox";
@@ -16,6 +16,7 @@ const RoadMapChatBot = () => {
   const { uuid } = useParams<{ uuid: string }>(); // 워크스페이스 uuid
   const [chats, setChats] = useState<Chat[]>([]);
   const [chatbotLoading, setChatbotLoading] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // 로드맵 챗봇 대화 내역 불러오기
   const fetchChats = useCallback(async () => {
@@ -36,13 +37,9 @@ const RoadMapChatBot = () => {
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
-      setChats([
-        {
-          isBot: true,
-          content: "대화 내역을 불러오지 못했습니다.",
-          date: new Date().toISOString(),
-        },
-      ]);
+      enqueueSnackbar("챗봇 대화 내역을 불러오지 못했습니다.", {
+        variant: "error",
+      });
     }
   }, [uuid]);
 
@@ -50,28 +47,50 @@ const RoadMapChatBot = () => {
     fetchChats();
   }, [fetchChats]);
 
+  // 채팅 컨테이너 스크롤을 최하단으로 이동
+  const scrollToBottom = useCallback(() => {
+    // 대화 스크롤 최하단으로 이동
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, []);
+
   // 메시지 전송
   const handleMessageSend = useCallback(
     async (message: string) => {
-      if (!uuid || !message.trim()) return;
+      // uuid가 없거나 메시지가 비어있다면 종료
+      if (!uuid || !message || !message.trim()) {
+        return;
+      }
 
+      // 사용자 메시지 추가
       setChats((prev) => [
         ...prev,
         { isBot: false, content: message, date: new Date().toISOString() },
       ]);
+
+      // 챗봇 응답 요청
       setChatbotLoading(true);
+
+      // 대화 스크롤 최하단으로 이동
+      Promise.resolve().then(() => {
+        scrollToBottom();
+      });
 
       try {
         // CSRF 토큰 획득
         const csrfToken = await getCsrfToken();
 
-        // 1. 챗봇 응답 요청
+        // 챗봇 응답 요청
         const res = await axiosInstance.post("/chat/roadmap/chatbot", {
           workspaceUuid: uuid,
           message,
         });
 
-        // rate limit 등 에러 메시지 처리
+        // 에러 메시지 처리 (rate limit 등)
         if (res.data?.success === false && res.data?.message) {
           enqueueSnackbar(res.data.message, { variant: "error" });
           setChats((prev) => [
@@ -85,7 +104,7 @@ const RoadMapChatBot = () => {
           return;
         }
 
-        // 2. 챗봇 응답 UI에 추가
+        // 챗봇 응답 UI에 추가
         setChats((prev) => [
           ...prev,
           {
@@ -95,7 +114,7 @@ const RoadMapChatBot = () => {
           },
         ]);
 
-        // 3. 대화 저장 (user/AI 모두)
+        // 대화 저장
         await axiosInstance.post(
           `/workspace/${uuid}/roadmap-chatbot/chats`,
           {
@@ -120,12 +139,14 @@ const RoadMapChatBot = () => {
             },
           }
         );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (err: any) {
+
+        // 대화 스크롤 최하단으로 이동
+        scrollToBottom();
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
         // 응답이 너무 길거나 기타 에러 메시지 처리
-        const errorMsg =
-          err?.response?.data?.message ||
-          "챗봇 응답 오류입니다. 잠시 후 다시 시도해주세요.";
+        const errorMsg = "챗봇 응답 오류입니다. 잠시 후 다시 시도해주세요.";
         enqueueSnackbar(errorMsg, { variant: "error" });
         setChats((prev) => [
           ...prev,
@@ -143,26 +164,29 @@ const RoadMapChatBot = () => {
   );
 
   return (
-    <Stack gap={4} height="100%">
+    <Stack height="100%" gap={1}>
       {/* 채팅 기록 */}
-      {chats.map((chat, index) => (
-        <ChatBox key={`chat-${index}`} chat={chat} />
-      ))}
+      <Stack ref={chatContainerRef} gap={4} paddingTop={1} overflow="auto">
+        {/* 채팅 기록 */}
+        {chats.map((chat, index) => (
+          <ChatBox key={`chat-${index}`} chat={chat} />
+        ))}
 
-      {/* 챗봇 응답 로딩중 대화상자 */}
-      {chatbotLoading && (
-        <ChatBox
-          chat={{
-            isBot: true,
-            content: "",
-            date: new Date().toISOString(),
-          }}
-          loading={true}
-        />
-      )}
+        {/* 챗봇 응답 로딩중 대화상자 */}
+        {chatbotLoading && (
+          <ChatBox
+            chat={{
+              isBot: true,
+              content: "",
+              date: new Date().toISOString(),
+            }}
+            loading={true}
+          />
+        )}
+      </Stack>
 
       {/* 채팅 입력란 */}
-      <Box width="100%" marginTop="auto">
+      <Box width="100%">
         <ChatInput
           onSend={handleMessageSend}
           placeholder="로드맵 AI에게 무엇이든 물어보세요"

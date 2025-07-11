@@ -44,31 +44,6 @@ const ChatBox = (props: ChatDialogsProps) => {
   const loginState = useAtomValue(jobTalkLoginStateAtom);
   const profileImage = useAtomValue(profileImageAtom); // 프로필 이미지 상태
 
-  // 프로필 이미지 요소
-  const profileAvatar = useMemo(() => {
-    return (
-      <Avatar
-        src={profileImage || undefined}
-        sx={{
-          bgcolor: grey[400],
-          width: 40,
-          height: 40,
-        }}
-      >
-        {!profileImage &&
-          (loginState.userName ? (
-            loginState.userName.charAt(0).toUpperCase()
-          ) : (
-            <FaceRoundedIcon
-              sx={{
-                fontSize: "2rem",
-              }}
-            />
-          ))}
-      </Avatar>
-    );
-  }, [loginState.userName, profileImage]);
-
   // 채팅 렌더 요소
   const chatRender = useMemo(() => {
     if (loading) {
@@ -114,11 +89,7 @@ const ChatBox = (props: ChatDialogsProps) => {
 
   return (
     <Stack
-      width={{
-        xs: "85%",
-        sm: "75%",
-        md: "66%",
-      }}
+      width="100%"
       direction={chat.isBot ? "row" : "row-reverse"}
       alignSelf={chat.isBot ? "flex-start" : "flex-end"}
       alignItems="flex-start"
@@ -126,6 +97,8 @@ const ChatBox = (props: ChatDialogsProps) => {
     >
       {/* 프로필 이미지 */}
       <Stack
+        width={50}
+        height={50}
         padding={1}
         borderRadius={3}
         border={`2px solid ${
@@ -133,13 +106,38 @@ const ChatBox = (props: ChatDialogsProps) => {
         }`}
       >
         {chat.isBot ? (
-          <SmartToyRoundedIcon color="primary" sx={{ width: 40, height: 40 }} />
+          <SmartToyRoundedIcon
+            color="primary"
+            sx={{
+              width: "100%",
+              height: "100%",
+            }}
+          />
         ) : (
-          profileAvatar
+          <Avatar
+            src={profileImage || undefined}
+            sx={{
+              bgcolor: grey[400],
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            {!profileImage &&
+              (loginState.userName ? (
+                loginState.userName.charAt(0).toUpperCase()
+              ) : (
+                <FaceRoundedIcon
+                  sx={{
+                    fontSize: "2rem",
+                  }}
+                />
+              ))}
+          </Avatar>
         )}
       </Stack>
 
-      <Stack>
+      {/* 대화 내용 */}
+      <Stack flex={1} alignItems={chat.isBot ? "flex-start" : "flex-end"}>
         {/* 닉네임 */}
         <Typography
           variant="subtitle1"
@@ -151,16 +149,13 @@ const ChatBox = (props: ChatDialogsProps) => {
         </Typography>
 
         {/* 대화 내용 */}
-        <Box
-          width="100%"
-          padding={0.5}
-          paddingX={1}
-          borderRadius={2}
-          bgcolor={grey[100]}
-        >
+        <Box padding={0.5} paddingX={1} borderRadius={2} bgcolor={grey[100]}>
           {chatRender}
         </Box>
       </Stack>
+
+      {/* 여백 */}
+      <Box width={50} />
     </Stack>
   );
 };

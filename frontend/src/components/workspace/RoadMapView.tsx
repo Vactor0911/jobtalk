@@ -26,7 +26,7 @@ import RoadMapDetails, { type NodeDetail } from "./RoadMapDetails";
 
 const RoadMapView = () => {
   const theme = useTheme();
-  const isPC = useMediaQuery(theme.breakpoints.up("md"));
+  const isPC = useMediaQuery(theme.breakpoints.up("lg"));
 
   // 화면 크기
   const isMd = useMediaQuery(theme.breakpoints.only("md"));

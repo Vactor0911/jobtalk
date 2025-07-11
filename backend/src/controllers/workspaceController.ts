@@ -285,6 +285,67 @@ export const saveWorkspaceChat = async (req: Request, res: Response) => {
   }
 };
 
+// 로드맵 챗봇 대화 저장
+export const saveRoadmapChatbotChat = async (req: Request, res: Response) => {
+  try {
+    const { uuid } = req.params;
+    const { role, content } = req.body;
+    if (!uuid || !role || !content) {
+      res.status(400).json({ success: false, message: "필수값 누락" });
+      return;
+    }
+
+    // workspaceUuid로 roadmapUuid 조회
+    const [roadmapRow] = await dbPool.query(
+      "SELECT roadmap_uuid FROM workspace_roadmaps WHERE workspace_uuid = ? ORDER BY created_at DESC LIMIT 1",
+      [uuid]
+    );
+    if (!roadmapRow || !roadmapRow.roadmap_uuid) {
+      res.status(404).json({ success: false, message: "로드맵이 없습니다." });
+      return;
+    }
+    const roadmapUuid = roadmapRow.roadmap_uuid;
+
+    await dbPool.query(
+      `INSERT INTO roadmap_chatbot_chats (workspace_uuid, roadmap_uuid, role, content) VALUES (?, ?, ?, ?)`,
+      [uuid, roadmapUuid, role, content]
+    );
+    res.status(201).json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// 로드맵 챗봇 대화 조회
+export const getRoadmapChatbotChats = async (req: Request, res: Response) => {
+  try {
+    const { uuid } = req.params;
+    if (!uuid) {
+      res.status(400).json({ success: false, message: "필수값 누락" });
+      return;
+    }
+
+    // workspaceUuid로 roadmapUuid 조회
+    const [roadmapRow] = await dbPool.query(
+      "SELECT roadmap_uuid FROM workspace_roadmaps WHERE workspace_uuid = ? ORDER BY created_at DESC LIMIT 1",
+      [uuid]
+    );
+    if (!roadmapRow || !roadmapRow.roadmap_uuid) {
+      res.status(404).json({ success: false, message: "로드맵이 없습니다." });
+      return;
+    }
+    const roadmapUuid = roadmapRow.roadmap_uuid;
+
+    const chats = await dbPool.query(
+      `SELECT id, role, content, created_at FROM roadmap_chatbot_chats WHERE workspace_uuid = ? AND roadmap_uuid = ? ORDER BY created_at ASC`,
+      [uuid, roadmapUuid]
+    );
+    res.status(200).json({ success: true, data: chats });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // 워크스페이스 이름 업데이트 (챗봇 대화 시작 시)
 export const updateWorkspaceForChat = async (req: Request, res: Response) => {
   try {

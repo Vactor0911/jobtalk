@@ -354,40 +354,73 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
 // 로드맵 노드 세부사항 제공 API
 export const nodeDetailProvider = async (req: Request, res: Response) => {
   try {
-    const { roadmap_uuid, node_id, title } = req.body;
+    const { workspace_uuid, node_id, title } = req.body;
 
     // 필수 입력값 체크
-    if (!roadmap_uuid || !node_id || !title) {
+    if (!workspace_uuid || !node_id || !title) {
       res.status(400).json({
         success: false,
-        message: "roadmap_uuid, node_id, title은 필수 입력값입니다.",
+        message: "workspace_uuid, node_id, title은 필수 입력값입니다.",
       });
       return;
     }
 
-    // 1. DB에서 상세 정보 조회
+    // workspace_uuid로 roadmap_uuid 조회
+    const [roadmapRow] = await dbPool.query(
+      "SELECT roadmap_uuid, roadmap_data FROM workspace_roadmaps WHERE workspace_uuid = ? ORDER BY created_at DESC LIMIT 1",
+      [workspace_uuid]
+    );
+    if (!roadmapRow || !roadmapRow.roadmap_uuid) {
+      res.status(400).json({
+        success: false,
+        message: "해당 워크스페이스에 저장된 로드맵이 없습니다.",
+      });
+      return;
+    }
+    const roadmap_uuid = roadmapRow.roadmap_uuid;
+    const roadmapData = roadmapRow.roadmap_data
+      ? JSON.parse(roadmapRow.roadmap_data)
+      : null;
+
+    // DB에서 상세 정보 조회
     const [existing] = await dbPool.query(
       "SELECT * FROM node_details WHERE roadmap_uuid = ? AND node_id = ?",
       [roadmap_uuid, node_id]
     );
 
+    // 이미 존재하면 반환
     if (existing) {
-      // 이미 있으면 DB 값 반환
+      // description이 string이면 파싱
+      let detailObj = existing;
+      if (typeof existing.description === "string") {
+        try {
+          const parsed = JSON.parse(existing.description);
+          detailObj = { ...existing, ...parsed };
+        } catch {
+          // 파싱 실패 시 overview만 제공
+          detailObj = { ...existing, overview: existing.description };
+        }
+      }
       res.status(200).json({
         success: true,
         source: "database",
-        data: { nodeDetail: existing },
+        data: { nodeDetail: detailObj },
       });
       return;
     }
 
-    // 2. 없으면 OpenAI로 상세 설명 생성
+    // OpenAI로 세부사항 생성
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const inputMessages = [
       {
         role: "system",
         content: `
           당신은 진로·기술·자격증 로드맵 전문가입니다.
+          아래는 사용자가 만든 전체 로드맵 데이터입니다. 반드시 이 구조와 맥락을 참고하여, 요청한 노드에 대해 설명하세요.
+
+          [로드맵 전체 데이터]
+          ${JSON.stringify(roadmapData, null, 2)}
+
           아래 노드명에 대해 상세 설명을 아래 JSON 스키마에 맞춰 작성하세요.
 
           반드시 아래 항목 포함:
@@ -429,7 +462,6 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
       temperature: 0.7,
     });
 
-    // 3. 결과 파싱 및 DB 저장
     let description = response.output_text;
     // (필요시 JSON 파싱 검증 후 저장)
     await dbPool.query(

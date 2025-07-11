@@ -429,19 +429,12 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
           - overview: 개요 및 설명
           - importance: 왜 필요한지 (중요성)
           - applications: 어디에 쓰이는지 (활용 분야)
-          - resources: 관련 공식 문서/학습 자료 링크 배열 (title, url, type 포함)
-          - examInfo: 자격증일 경우만 포함 (registrationUrl, organization 등)
 
           아래와 같은 JSON 예시 참고:
           {
             "overview": "...",
             "importance": "...",
             "applications": "...",
-            "resources": [{ "title": "...", "url": "...", "type": "공식 문서" }],
-            "examInfo": {
-              "registrationUrl": "...",
-              "organization": "..."
-            }
           }
 
           반드시 JSON만 출력하세요.`,

@@ -99,7 +99,7 @@ export const careerMentor = async (req: Request, res: Response) => {
     if (isFirstMessage) {
       inputMessages.push({
         role: "user",
-        content: `안녕하세요! 진로 상담을 받고 싶습니다. 
+        content: `안녕하세요! 진로 상담을 받고 싶은 학생입니다. 
           제가 보유한 자격증은 ${certificates}이고, 
           관심 분야는 ${interests}입니다. 
           ${message}

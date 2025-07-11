@@ -332,12 +332,19 @@ const Header = () => {
       >
         <Stack padding={2} width={250} gap={1}>
           {/* 헤더 */}
-          <Stack direction="row" alignItems="center" gap={1}>
+          <Stack direction="row" alignItems="center" gap={1} overflow="hidden">
             {/* 프로필 이미지 */}
             {profileAvatar}
 
             {/* 닉네임 */}
-            <Typography variant="h6">
+            <Typography
+              variant="h6"
+              width="50%"
+              whiteSpace="nowrap"
+              textOverflow="ellipsis"
+              overflow="hidden"
+              flex={1}
+            >
               {userName || loginState.userName || "사용자"}
             </Typography>
 

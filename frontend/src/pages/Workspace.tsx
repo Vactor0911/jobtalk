@@ -80,6 +80,7 @@ const Workspace = () => {
         paddingY={4}
         paddingBottom={10}
         gap={4}
+        position="relative"
       >
         {/* 스테퍼 */}
         <WorkspaceStepper activeStep={step} />

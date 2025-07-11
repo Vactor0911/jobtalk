@@ -46,12 +46,43 @@ const termsOfServices: TermsOfService[] = [
     title: "개인정보 수집 및 이용약관 동의",
     isOptional: false,
     content: (
-      <Typography variant="subtitle1">
-        Lorem ipsum dolor, sit amet consectetur adipisicing elit. Itaque
-        corrupti recusandae voluptate adipisci aliquam fugiat deserunt omnis
-        maxime earum neque debitis, quasi perferendis! Qui nihil distinctio
-        doloremque voluptatem corrupti est.
-      </Typography>
+      <Stack gap={1}>
+        <Typography variant="subtitle1" fontWeight="bold">
+          1. 수집 목적
+        </Typography>
+        <Typography variant="body2">
+          - 회원가입 및 서비스 이용자 식별
+          <br />
+          - 진로 상담, 로드맵 생성, 챗봇 서비스 제공
+          <br />
+          - 사용자 맞춤형 서비스 제공(관심분야, 자격증 등)
+          <br />- 서비스 운영 및 관리, 문의/불만 처리
+        </Typography>
+
+        <Typography variant="subtitle1" fontWeight="bold" mt={2}>
+          2. 수집 항목
+        </Typography>
+        <Typography variant="body2">
+          - 필수: 이메일, 비밀번호, 별명(닉네임)
+          <br />- 선택: 자격증 정보
+        </Typography>
+
+        <Typography variant="subtitle1" fontWeight="bold" mt={2}>
+          3. 보유 및 이용기간
+        </Typography>
+        <Typography variant="body2">
+          - 2025 SW중심대학 디지털 경진대회 : SW부문 종료 시까지 보관하며, 종료
+          후 즉시 파기합니다.
+        </Typography>
+
+        <Typography variant="subtitle1" fontWeight="bold" mt={2}>
+          4. 동의 거부 권리 및 불이익
+        </Typography>
+        <Typography variant="body2">
+          - 개인정보 수집 및 이용에 동의하지 않을 권리가 있습니다.
+          <br />- 단, 동의하지 않을 경우 회원가입 및 서비스 이용이 제한됩니다.
+        </Typography>
+      </Stack>
     ),
   },
 ];

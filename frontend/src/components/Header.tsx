@@ -330,7 +330,14 @@ const Header = () => {
           transform: "translateY(8px)",
         }}
       >
-        <Stack padding={2} width={250} gap={1}>
+        <Stack
+          padding={2}
+          width={{
+            xs: "100%",
+            sm: "320px",
+          }}
+          gap={1}
+        >
           {/* 헤더 */}
           <Stack direction="row" alignItems="center" gap={1} overflow="hidden">
             {/* 프로필 이미지 */}

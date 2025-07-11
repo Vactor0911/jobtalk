@@ -88,6 +88,9 @@ const ChatInput = (props: ChatInputProps) => {
         onChange={handleInputChange}
         onKeyDown={handleInputKeyDown}
         disabled={disabled}
+        sx={{
+          background: "white",
+        }}
         slotProps={{
           input: {
             sx: { paddingBottom: 6, borderRadius: 3 },

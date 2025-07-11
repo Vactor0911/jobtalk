@@ -45,9 +45,11 @@ const TitledContainer = (props: TitledContainerProps) => {
         <Divider />
 
         {/* 내용 */}
-        {!collapsed && <Box flex={1} sx={{
-          overflowY: "auto",
-        }}>{children}</Box>}
+        {!collapsed && (
+          <Box flex={1} overflow="hidden">
+            {children}
+          </Box>
+        )}
       </Stack>
     </Paper>
   );

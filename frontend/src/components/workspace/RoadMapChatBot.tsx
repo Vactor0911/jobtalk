@@ -1,5 +1,5 @@
 import { Box, Stack } from "@mui/material";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import axiosInstance, { getCsrfToken } from "../../utils/axiosInstance";
 import { useParams } from "react-router";
 import ChatBox from "../chat/ChatBox";
@@ -16,6 +16,7 @@ const RoadMapChatBot = () => {
   const { uuid } = useParams<{ uuid: string }>(); // 워크스페이스 uuid
   const [chats, setChats] = useState<Chat[]>([]);
   const [chatbotLoading, setChatbotLoading] = useState(false);
+  const inputRef = useRef<HTMLDivElement>(null);
 
   // 로드맵 챗봇 대화 내역 불러오기
   const fetchChats = useCallback(async () => {
@@ -36,13 +37,9 @@ const RoadMapChatBot = () => {
       }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
-      setChats([
-        {
-          isBot: true,
-          content: "대화 내역을 불러오지 못했습니다.",
-          date: new Date().toISOString(),
-        },
-      ]);
+      enqueueSnackbar("챗봇 대화 내역을 불러오지 못했습니다.", {
+        variant: "error",
+      });
     }
   }, [uuid]);
 
@@ -120,12 +117,11 @@ const RoadMapChatBot = () => {
             },
           }
         );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (err: any) {
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
         // 응답이 너무 길거나 기타 에러 메시지 처리
-        const errorMsg =
-          err?.response?.data?.message ||
-          "챗봇 응답 오류입니다. 잠시 후 다시 시도해주세요.";
+        const errorMsg = "챗봇 응답 오류입니다. 잠시 후 다시 시도해주세요.";
         enqueueSnackbar(errorMsg, { variant: "error" });
         setChats((prev) => [
           ...prev,
@@ -142,27 +138,34 @@ const RoadMapChatBot = () => {
     [uuid]
   );
 
-  return (
-    <Stack gap={4} height="100%">
-      {/* 채팅 기록 */}
-      {chats.map((chat, index) => (
-        <ChatBox key={`chat-${index}`} chat={chat} />
-      ))}
+  useEffect(() => {
+    console.log(inputRef.current?.clientHeight);
+  });
 
-      {/* 챗봇 응답 로딩중 대화상자 */}
-      {chatbotLoading && (
-        <ChatBox
-          chat={{
-            isBot: true,
-            content: "",
-            date: new Date().toISOString(),
-          }}
-          loading={true}
-        />
-      )}
+  return (
+    <Stack height="100%" gap={1}>
+      {/* 채팅 기록 */}
+      <Stack gap={4} paddingTop={1} overflow="auto">
+        {/* 채팅 기록 */}
+        {chats.map((chat, index) => (
+          <ChatBox key={`chat-${index}`} chat={chat} />
+        ))}
+
+        {/* 챗봇 응답 로딩중 대화상자 */}
+        {chatbotLoading && (
+          <ChatBox
+            chat={{
+              isBot: true,
+              content: "",
+              date: new Date().toISOString(),
+            }}
+            loading={true}
+          />
+        )}
+      </Stack>
 
       {/* 채팅 입력란 */}
-      <Box width="100%" marginTop="auto">
+      <Box width="100%">
         <ChatInput
           onSend={handleMessageSend}
           placeholder="로드맵 AI에게 무엇이든 물어보세요"

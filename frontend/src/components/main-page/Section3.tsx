@@ -62,7 +62,7 @@ const ChatBox = (props: ChatBoxProps) => {
         )}
       </Stack>
 
-      <Stack flex={1}>
+      <Stack flex={1} alignItems={isBot ? "flex-start" : "flex-end"}>
         {/* 닉네임 */}
         <Typography
           variant={zoomed ? "h5" : "h6"}

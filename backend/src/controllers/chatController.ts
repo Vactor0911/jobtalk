@@ -453,3 +453,65 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
     });
   }
 };
+
+// 로드맵 챗봇 AI
+export const roadmapChatbot = async (req: Request, res: Response) => {
+  try {
+    const { workspaceUuid, message } = req.body;
+
+    if (!workspaceUuid || !message?.trim()) {
+      res.status(400).json({ success: false, message: "입력값이 부족합니다." });
+      return;
+    }
+
+    // 1. workspace_uuid로 roadmap_data 조회
+    const [roadmapRow] = await dbPool.query(
+      "SELECT roadmap_data, job_title FROM workspace_roadmaps WHERE workspace_uuid = ? ORDER BY created_at DESC LIMIT 1",
+      [workspaceUuid]
+    );
+    if (!roadmapRow || !roadmapRow.roadmap_data) {
+      res.status(404).json({ success: false, message: "로드맵이 없습니다." });
+      return;
+    }
+    const roadmapData = JSON.parse(roadmapRow.roadmap_data);
+    const jobTitle = roadmapRow.job_title;
+
+    // 2. system 프롬프트 생성
+    const systemPrompt = `
+      당신은 "${jobTitle}" 로드맵에 대해 전문적으로 답변하는 수십년 경험의 진로·기술·자격증 로드맵 전문가입니다.
+      아래는 사용자가 만든 전체 로드맵 데이터입니다.
+      반드시 이 구조와 맥락을 참고하여, 사용자의 질문에 친절하고 구체적으로 답변하세요.
+
+      [로드맵 전체 데이터]
+      ${JSON.stringify(roadmapData, null, 2)}
+
+      답변은 항상 "~요"체로, 최대 5문장 이내로 작성하세요.
+    `;
+
+    // 3. OpenAI 호출
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const inputMessages = [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: message },
+    ];
+
+    const response = await openai.responses.create({
+      model: "gpt-4o-mini",
+      input: inputMessages as any,
+      max_output_tokens: 5000,
+      temperature: 0.7,
+    });
+
+    res.status(200).json({
+      success: true,
+      answer: response.output_text,
+    });
+  } catch (err: any) {
+    console.error("로드맵 챗봇 API 오류:", err);
+    res.status(err?.statusCode || 500).json({
+      success: false,
+      message: "로드맵 챗봇 API 호출에 실패했습니다.",
+      error: err?.response?.data ?? err.message,
+    });
+  }
+};

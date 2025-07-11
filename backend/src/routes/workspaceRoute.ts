@@ -2,10 +2,12 @@ import express from "express";
 import { csrfProtection, limiter } from "../utils"; // 기존 rate limiter 사용
 import {
   getAllWorkspaces,
+  getRoadmapChatbotChats,
   getWorkspaceAndUserBasicInfo,
   getWorkspaceByUuid,
   getWorkspaceChats,
   getWorkspaceRoadmap,
+  saveRoadmapChatbotChat,
   saveWorkspaceChat,
   saveWorkspaceRoadmap,
   updateWorkspaceForChat,
@@ -36,6 +38,23 @@ workspaceRoute.post(
   limiter,
   authenticateToken,
   saveWorkspaceChat
+);
+
+// 로드맵 챗봇 대화 조회
+workspaceRoute.get(
+  "/:uuid/roadmap-chatbot/chats",
+  limiter,
+  authenticateToken,
+  getRoadmapChatbotChats
+);
+
+// 로드맵 챗봇 대화 저장
+workspaceRoute.post(
+  "/:uuid/roadmap-chatbot/chats",
+  csrfProtection,
+  limiter,
+  authenticateToken,
+  saveRoadmapChatbotChat
 );
 
 // 워크스페이스를 대화 모드로 업데이트

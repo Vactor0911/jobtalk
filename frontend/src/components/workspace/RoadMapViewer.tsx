@@ -382,6 +382,7 @@ const RoadMapViewer = ({
         nodesConnectable={false}
         nodesDraggable={false}
         nodesFocusable={false}
+        edgesFocusable={false}
         fitView
         fitViewOptions={{
           nodes: [{ id: "node-1" }],

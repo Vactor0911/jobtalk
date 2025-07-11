@@ -280,18 +280,27 @@ const RoadMapViewer = ({
     async (_: unknown, node: Node) => {
       fitViewToNode(node.id); // 1. 시점 이동
 
+      // 노드의 카테고리가 "job" 또는 "stage"인 경우 세부사항을 불러오지 않음
+      const selectedNode = roadmapData.find(
+        (n) =>
+          `node-${n.id}` === node.id &&
+          n.category !== "job" &&
+          n.category !== "stage"
+      );
+      if (!selectedNode) {
+        onNodeDetail(null, false); // 세부사항 없음
+        return;
+      }
+
       // 2. 세부사항 API 호출
       const nodeId = node.id.replace("node-", "");
-      const nodeData = roadmapData.find((n) => String(n.id) === String(nodeId));
-      if (!nodeData) return;
-
       onNodeDetail(null, true); // 로딩 시작
 
       try {
         const response = await axiosInstance.post("/chat/roadmap/node/detail", {
           workspace_uuid: uuid,
           node_id: nodeId,
-          title: nodeData.title,
+          title: selectedNode.title,
         });
         if (response.data.success && response.data.data?.nodeDetail) {
           onNodeDetail(response.data.data.nodeDetail, false);

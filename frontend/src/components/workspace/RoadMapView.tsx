@@ -5,6 +5,7 @@ import {
   Stack,
   Tab,
   Tabs,
+  Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -35,6 +36,11 @@ const RoadMapView = () => {
   const [isChatbotOpen, setIsChatbotOpen] = useState(true); // 챗봇 패널 열림 상태
   const detailsPanel = useRef<ImperativePanelHandle>(null);
   const chatbotPanel = useRef<ImperativePanelHandle>(null);
+
+  // 세부사항 상태/로딩 관리
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedNodeDetail, setSelectedNodeDetail] = useState<any>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   // 탭 메뉴
   const [tab, setTab] = useAtom(roadmapTabAtom);
@@ -125,7 +131,99 @@ const RoadMapView = () => {
                   />
                 </IconButton>
               }
-            ></TitledContainer>
+            >
+              {detailLoading ? (
+                <Box p={2} textAlign="center">
+                  <span>불러오는 중...</span>
+                </Box>
+              ) : selectedNodeDetail ? (
+                <Stack gap={2} p={2}>
+                  {selectedNodeDetail.overview && (
+                    <>
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        개요
+                      </Typography>
+                      <Typography variant="body2">
+                        {selectedNodeDetail.overview}
+                      </Typography>
+                    </>
+                  )}
+                  {selectedNodeDetail.importance && (
+                    <>
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        중요성
+                      </Typography>
+                      <Typography variant="body2">
+                        {selectedNodeDetail.importance}
+                      </Typography>
+                    </>
+                  )}
+                  {selectedNodeDetail.applications && (
+                    <>
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        활용 분야
+                      </Typography>
+                      <Typography variant="body2">
+                        {selectedNodeDetail.applications}
+                      </Typography>
+                    </>
+                  )}
+                  {selectedNodeDetail.resources &&
+                    Array.isArray(selectedNodeDetail.resources) && (
+                      <>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          학습 자료
+                        </Typography>
+                        <ul>
+                          {selectedNodeDetail.resources.map(
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            (r: any, idx: number) => (
+                              <li key={idx}>
+                                <a
+                                  href={r.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  {r.title}
+                                </a>
+                                {r.type && ` (${r.type})`}
+                              </li>
+                            )
+                          )}
+                        </ul>
+                      </>
+                    )}
+                  {selectedNodeDetail.examInfo && (
+                    <>
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        자격증 정보
+                      </Typography>
+                      <Typography variant="body2">
+                        {selectedNodeDetail.examInfo.organization &&
+                          `기관: ${selectedNodeDetail.examInfo.organization}`}
+                        <br />
+                        {selectedNodeDetail.examInfo.registrationUrl && (
+                          <>
+                            접수:{" "}
+                            <a
+                              href={selectedNodeDetail.examInfo.registrationUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {selectedNodeDetail.examInfo.registrationUrl}
+                            </a>
+                          </>
+                        )}
+                      </Typography>
+                    </>
+                  )}
+                </Stack>
+              ) : (
+                <Typography p={2}>
+                  노드를 클릭하면 세부사항이 표시됩니다.
+                </Typography>
+              )}
+            </TitledContainer>
           </Panel>
 
           {/* 구분선 */}
@@ -139,7 +237,14 @@ const RoadMapView = () => {
             }}
           >
             <TitledContainer title="로드맵">
-              <RoadMapViewer />
+              <RoadMapViewer
+                onNodeDetail={(detail, loading) => {
+                  setSelectedNodeDetail(detail);
+                  setDetailLoading(loading);
+                  setIsDetailsOpen(true); // 세부사항 패널 자동 오픈(선택)
+                  /* 필요시 detailsPanel.current?.expand(); */
+                }}
+              />
             </TitledContainer>
           </Panel>
 
@@ -199,7 +304,16 @@ const RoadMapView = () => {
       {tab === 0 && <></>}
 
       {/* 로드맵 */}
-      {tab === 1 && <RoadMapViewer />}
+      {tab === 1 && (
+        <RoadMapViewer
+          onNodeDetail={(detail, loading) => {
+            setSelectedNodeDetail(detail);
+            setDetailLoading(loading);
+            setIsDetailsOpen(true); // 세부사항 패널 자동 오픈(선택)
+            /* 필요시 detailsPanel.current?.expand(); */
+          }}
+        />
+      )}
 
       {/* 챗봇 */}
       {tab === 2 && (

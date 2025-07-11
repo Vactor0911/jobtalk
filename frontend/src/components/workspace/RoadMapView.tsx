@@ -5,6 +5,7 @@ import {
   Stack,
   Tab,
   Tabs,
+  Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -21,6 +22,7 @@ import { useAtom } from "jotai";
 import { roadmapTabAtom } from "../../state";
 import KeyboardArrowRightRoundedIcon from "@mui/icons-material/KeyboardArrowRightRounded";
 import RoadMapChatBot from "./RoadMapChatBot";
+import RoadMapDetails, { type NodeDetail } from "./RoadMapDetails";
 
 const RoadMapView = () => {
   const theme = useTheme();
@@ -35,6 +37,11 @@ const RoadMapView = () => {
   const [isChatbotOpen, setIsChatbotOpen] = useState(true); // 챗봇 패널 열림 상태
   const detailsPanel = useRef<ImperativePanelHandle>(null);
   const chatbotPanel = useRef<ImperativePanelHandle>(null);
+
+  // 세부사항 상태/로딩 관리
+  const [selectedNodeDetail, setSelectedNodeDetail] =
+    useState<NodeDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   // 탭 메뉴
   const [tab, setTab] = useAtom(roadmapTabAtom);
@@ -56,6 +63,14 @@ const RoadMapView = () => {
   // 세부사항 패널 열림 상태 적용
   const handleSetDetailsOpen = useCallback((open: boolean) => {
     setIsDetailsOpen(open);
+
+    if (detailsPanel.current) {
+      if (open) {
+        detailsPanel.current.expand();
+      } else {
+        detailsPanel.current.collapse();
+      }
+    }
   }, []);
 
   // 챗봇 패널 열기/닫기
@@ -75,6 +90,14 @@ const RoadMapView = () => {
   // 챗봇 패널 열림 상태 적용
   const handleSetChatbotOpen = useCallback((open: boolean) => {
     setIsChatbotOpen(open);
+
+    if (chatbotPanel.current) {
+      if (open) {
+        chatbotPanel.current.expand();
+      } else {
+        chatbotPanel.current.collapse();
+      }
+    }
   }, []);
 
   // 탭 메뉴 변경
@@ -125,7 +148,18 @@ const RoadMapView = () => {
                   />
                 </IconButton>
               }
-            ></TitledContainer>
+            >
+              {detailLoading || selectedNodeDetail ? (
+                <RoadMapDetails
+                  nodeDetail={selectedNodeDetail}
+                  loading={detailLoading}
+                />
+              ) : (
+                <Typography variant="subtitle1" color="text.secondary" p={2}>
+                  노드를 클릭하면 세부사항이 표시됩니다.
+                </Typography>
+              )}
+            </TitledContainer>
           </Panel>
 
           {/* 구분선 */}
@@ -139,7 +173,13 @@ const RoadMapView = () => {
             }}
           >
             <TitledContainer title="로드맵">
-              <RoadMapViewer />
+              <RoadMapViewer
+                onNodeDetail={(detail, loading) => {
+                  handleSetDetailsOpen(true); // 세부사항 패널 자동 열기
+                  setSelectedNodeDetail(detail);
+                  setDetailLoading(loading);
+                }}
+              />
             </TitledContainer>
           </Panel>
 
@@ -196,10 +236,31 @@ const RoadMapView = () => {
       </Box>
 
       {/* 세부사항 */}
-      {tab === 0 && <></>}
+      {tab === 0 && (
+        <>
+          {detailLoading || selectedNodeDetail ? (
+            <RoadMapDetails
+              nodeDetail={selectedNodeDetail}
+              loading={detailLoading}
+            />
+          ) : (
+            <Typography variant="subtitle1" color="text.secondary" p={2}>
+              노드를 클릭하면 세부사항이 표시됩니다.
+            </Typography>
+          )}
+        </>
+      )}
 
       {/* 로드맵 */}
-      {tab === 1 && <RoadMapViewer />}
+      {tab === 1 && (
+        <RoadMapViewer
+          onNodeDetail={(detail, loading) => {
+            handleSetDetailsOpen(true); // 세부사항 패널 자동 열기
+            setSelectedNodeDetail(detail);
+            setDetailLoading(loading);
+          }}
+        />
+      )}
 
       {/* 챗봇 */}
       {tab === 2 && (

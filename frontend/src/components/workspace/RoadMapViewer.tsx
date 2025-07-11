@@ -39,7 +39,12 @@ interface Edge {
   animated?: boolean;
 }
 
-const RoadMapViewer = () => {
+const RoadMapViewer = ({
+  onNodeDetail,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onNodeDetail: (detail: any, loading: boolean) => void;
+}) => {
   const theme = useTheme();
   const { uuid } = useParams<{ uuid: string }>(); // URL에서 워크스페이스 UUID 가져오기
 
@@ -270,6 +275,45 @@ const RoadMapViewer = () => {
     setEdges(newEdges);
   }, [adjustNodePositions, createEdges, createNodes, roadmapData]);
 
+  // 노드 클릭 핸들러
+  const handleNodeClick = useCallback(
+    async (_: unknown, node: Node) => {
+      fitViewToNode(node.id); // 1. 시점 이동
+
+      // 노드의 카테고리가 "job" 또는 "stage"인 경우 세부사항을 불러오지 않음
+      const selectedNode = roadmapData.find(
+        (n) =>
+          `node-${n.id}` === node.id &&
+          n.category !== "job" &&
+          n.category !== "stage"
+      );
+      if (!selectedNode) {
+        onNodeDetail(null, false); // 세부사항 없음
+        return;
+      }
+
+      // 2. 세부사항 API 호출
+      const nodeId = node.id.replace("node-", "");
+      onNodeDetail(null, true); // 로딩 시작
+
+      try {
+        const response = await axiosInstance.post("/chat/roadmap/node/detail", {
+          workspace_uuid: uuid,
+          node_id: nodeId,
+          title: selectedNode.title,
+        });
+        if (response.data.success && response.data.data?.nodeDetail) {
+          onNodeDetail(response.data.data.nodeDetail, false);
+        } else {
+          onNodeDetail({ overview: "세부 정보를 불러오지 못했습니다." }, false);
+        }
+      } catch {
+        onNodeDetail({ overview: "세부 정보를 불러오지 못했습니다." }, false);
+      }
+    },
+    [fitViewToNode, roadmapData, uuid, onNodeDetail]
+  );
+
   return (
     <Box width="100%" height="100%" position="relative">
       {/* 로드맵 레전드 */}
@@ -342,11 +386,12 @@ const RoadMapViewer = () => {
         onInit={(instance) => {
           reactFlowInstance.current = instance;
         }}
-        onNodeClick={(_, node) => fitViewToNode(node.id)}
+        onNodeClick={handleNodeClick}
         disableKeyboardA11y
         nodesConnectable={false}
         nodesDraggable={false}
         nodesFocusable={false}
+        edgesFocusable={false}
         fitView
         fitViewOptions={{
           nodes: [{ id: "node-1" }],

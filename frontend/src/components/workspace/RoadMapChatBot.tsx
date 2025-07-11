@@ -16,7 +16,7 @@ const RoadMapChatBot = () => {
   const { uuid } = useParams<{ uuid: string }>(); // 워크스페이스 uuid
   const [chats, setChats] = useState<Chat[]>([]);
   const [chatbotLoading, setChatbotLoading] = useState(false);
-  const inputRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // 로드맵 챗봇 대화 내역 불러오기
   const fetchChats = useCallback(async () => {
@@ -47,28 +47,50 @@ const RoadMapChatBot = () => {
     fetchChats();
   }, [fetchChats]);
 
+  // 채팅 컨테이너 스크롤을 최하단으로 이동
+  const scrollToBottom = useCallback(() => {
+    // 대화 스크롤 최하단으로 이동
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, []);
+
   // 메시지 전송
   const handleMessageSend = useCallback(
     async (message: string) => {
-      if (!uuid || !message.trim()) return;
+      // uuid가 없거나 메시지가 비어있다면 종료
+      if (!uuid || !message || !message.trim()) {
+        return;
+      }
 
+      // 사용자 메시지 추가
       setChats((prev) => [
         ...prev,
         { isBot: false, content: message, date: new Date().toISOString() },
       ]);
+
+      // 챗봇 응답 요청
       setChatbotLoading(true);
+
+      // 대화 스크롤 최하단으로 이동
+      Promise.resolve().then(() => {
+        scrollToBottom();
+      });
 
       try {
         // CSRF 토큰 획득
         const csrfToken = await getCsrfToken();
 
-        // 1. 챗봇 응답 요청
+        // 챗봇 응답 요청
         const res = await axiosInstance.post("/chat/roadmap/chatbot", {
           workspaceUuid: uuid,
           message,
         });
 
-        // rate limit 등 에러 메시지 처리
+        // 에러 메시지 처리 (rate limit 등)
         if (res.data?.success === false && res.data?.message) {
           enqueueSnackbar(res.data.message, { variant: "error" });
           setChats((prev) => [
@@ -82,7 +104,7 @@ const RoadMapChatBot = () => {
           return;
         }
 
-        // 2. 챗봇 응답 UI에 추가
+        // 챗봇 응답 UI에 추가
         setChats((prev) => [
           ...prev,
           {
@@ -92,7 +114,7 @@ const RoadMapChatBot = () => {
           },
         ]);
 
-        // 3. 대화 저장 (user/AI 모두)
+        // 대화 저장
         await axiosInstance.post(
           `/workspace/${uuid}/roadmap-chatbot/chats`,
           {
@@ -118,6 +140,9 @@ const RoadMapChatBot = () => {
           }
         );
 
+        // 대화 스크롤 최하단으로 이동
+        scrollToBottom();
+
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (error) {
         // 응답이 너무 길거나 기타 에러 메시지 처리
@@ -138,14 +163,10 @@ const RoadMapChatBot = () => {
     [uuid]
   );
 
-  useEffect(() => {
-    console.log(inputRef.current?.clientHeight);
-  });
-
   return (
     <Stack height="100%" gap={1}>
       {/* 채팅 기록 */}
-      <Stack gap={4} paddingTop={1} overflow="auto">
+      <Stack ref={chatContainerRef} gap={4} paddingTop={1} overflow="auto">
         {/* 채팅 기록 */}
         {chats.map((chat, index) => (
           <ChatBox key={`chat-${index}`} chat={chat} />

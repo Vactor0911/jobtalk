@@ -8,7 +8,7 @@ import JobOptionsButtons from "./JobOptionsButtons";
 import { useParams } from "react-router";
 import ChatBox from "../chat/ChatBox";
 import ChatInput from "../chat/ChatInput";
-import { isChatMessageValid, MAX_MESSAGE_LENGTH } from "../../utils";
+import { isChatMessageValid } from "../../utils";
 
 interface Chat {
   isBot: boolean; // 챗봇인지 여부

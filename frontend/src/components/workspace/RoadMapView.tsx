@@ -33,12 +33,12 @@ const RoadMapView = () => {
   const isLg = useMediaQuery(theme.breakpoints.only("lg"));
   const isXl = useMediaQuery(theme.breakpoints.only("xl"));
 
-  const [isDetailsOpen, setIsDetailsOpen] = useState(true); // 세부사항 패널 열림 상태
+  const [isDetailsOpen, setIsDetailsOpen] = useState(true); // 상세정보 패널 열림 상태
   const [isChatbotOpen, setIsChatbotOpen] = useState(true); // 챗봇 패널 열림 상태
-  const detailsPanel = useRef<ImperativePanelHandle>(null);
-  const chatbotPanel = useRef<ImperativePanelHandle>(null);
+  const detailsPanel = useRef<ImperativePanelHandle>(null); // 상세정보 패널 참조
+  const chatbotPanel = useRef<ImperativePanelHandle>(null); // 챗봇 패널 참조ㄴ
 
-  // 세부사항 상태/로딩 관리
+  // 상세정보 상태/로딩 관리
   const [selectedNodeDetail, setSelectedNodeDetail] =
     useState<NodeDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -46,7 +46,7 @@ const RoadMapView = () => {
   // 탭 메뉴
   const [tab, setTab] = useAtom(roadmapTabAtom);
 
-  // 세부사항 패널 열기/닫기
+  // 상세정보 패널 열기/닫기
   const handleDetailsToggle = useCallback(() => {
     const newOpenState = !isDetailsOpen;
     setIsDetailsOpen(newOpenState);
@@ -60,7 +60,7 @@ const RoadMapView = () => {
     }
   }, [isDetailsOpen]);
 
-  // 세부사항 패널 열림 상태 적용
+  // 상세정보 패널 열림 상태 적용
   const handleSetDetailsOpen = useCallback((open: boolean) => {
     setIsDetailsOpen(open);
 
@@ -120,7 +120,7 @@ const RoadMapView = () => {
     return (
       <Stack padding={2} direction="row" height="calc(100vh - 64px)">
         <PanelGroup direction="horizontal">
-          {/* 세부사항 패널 */}
+          {/* 상세정보 패널 */}
           <Panel
             ref={detailsPanel}
             defaultSize={25}
@@ -134,7 +134,7 @@ const RoadMapView = () => {
             }}
           >
             <TitledContainer
-              title="세부사항"
+              title="상세정보"
               collapsed={!isDetailsOpen}
               toggleButton={
                 <IconButton size="small" onClick={handleDetailsToggle}>
@@ -156,7 +156,7 @@ const RoadMapView = () => {
                 />
               ) : (
                 <Typography variant="subtitle1" color="text.secondary" p={2}>
-                  노드를 클릭하면 세부사항이 표시됩니다.
+                  노드를 클릭하면 상세정보가 표시됩니다.
                 </Typography>
               )}
             </TitledContainer>
@@ -175,7 +175,11 @@ const RoadMapView = () => {
             <TitledContainer title="로드맵">
               <RoadMapViewer
                 onNodeDetail={(detail, loading) => {
-                  handleSetDetailsOpen(true); // 세부사항 패널 자동 열기
+                  handleSetDetailsOpen(true); // 상세정보 패널 자동 열기
+                  setTimeout(() => {
+                    // 1.5초 후에 상세정보 탭으로 전환
+                    setTab(0);
+                  }, 1000);
                   setSelectedNodeDetail(detail);
                   setDetailLoading(loading);
                 }}
@@ -228,14 +232,14 @@ const RoadMapView = () => {
     <Stack paddingTop={2} height="calc(100vh - 64px)">
       <Box>
         <Tabs value={tab} onChange={handleTabChange} centered>
-          <Tab label="세부사항" />
+          <Tab label="상세정보" />
           <Tab label="로드맵" />
           <Tab label="챗봇" />
         </Tabs>
         <Divider />
       </Box>
 
-      {/* 세부사항 */}
+      {/* 상세정보 */}
       {tab === 0 && (
         <>
           {detailLoading || selectedNodeDetail ? (
@@ -245,7 +249,7 @@ const RoadMapView = () => {
             />
           ) : (
             <Typography variant="subtitle1" color="text.secondary" p={2}>
-              노드를 클릭하면 세부사항이 표시됩니다.
+              노드를 클릭하면 상세정보가 표시됩니다.
             </Typography>
           )}
         </>
@@ -255,7 +259,11 @@ const RoadMapView = () => {
       {tab === 1 && (
         <RoadMapViewer
           onNodeDetail={(detail, loading) => {
-            handleSetDetailsOpen(true); // 세부사항 패널 자동 열기
+            handleSetDetailsOpen(true); // 상세정보 패널 자동 열기
+            setTimeout(() => {
+              // 1.5초 후에 상세정보 탭으로 전환
+              setTab(0);
+            }, 1000);
             setSelectedNodeDetail(detail);
             setDetailLoading(loading);
           }}

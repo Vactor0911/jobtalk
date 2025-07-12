@@ -280,7 +280,7 @@ const RoadMapViewer = ({
     async (_: unknown, node: Node) => {
       fitViewToNode(node.id); // 1. 시점 이동
 
-      // 노드의 카테고리가 "job" 또는 "stage"인 경우 세부사항을 불러오지 않음
+      // 노드의 카테고리가 "job" 또는 "stage"인 경우 상세정보를 불러오지 않음
       const selectedNode = roadmapData.find(
         (n) =>
           `node-${n.id}` === node.id &&
@@ -288,11 +288,11 @@ const RoadMapViewer = ({
           n.category !== "stage"
       );
       if (!selectedNode) {
-        onNodeDetail(null, false); // 세부사항 없음
+        onNodeDetail(null, false); // 상세정보 없음
         return;
       }
 
-      // 세부사항 API 호출
+      // 상세정보 API 호출
       const nodeId = node.id.replace("node-", "");
       onNodeDetail(null, true); // 로딩 시작
 

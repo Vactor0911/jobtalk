@@ -8,6 +8,7 @@ import JobOptionsButtons from "./JobOptionsButtons";
 import { useParams } from "react-router";
 import ChatBox from "../chat/ChatBox";
 import ChatInput from "../chat/ChatInput";
+import { isChatMessageValid, MAX_MESSAGE_LENGTH } from "../../utils";
 
 interface Chat {
   isBot: boolean; // 챗봇인지 여부
@@ -257,8 +258,8 @@ const ChatbotView = () => {
   // 메시지 전송 함수
   const handleMessageSend = useCallback(
     async (message: string) => {
-      // 메시지 내용이 없다면 종료
-      if (!message || !message.trim()) {
+      // 메시지 내용이 부적절한 경우
+      if (!isChatMessageValid(message)) {
         return;
       }
 

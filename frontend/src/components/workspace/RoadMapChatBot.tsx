@@ -5,6 +5,7 @@ import { useParams } from "react-router";
 import ChatBox from "../chat/ChatBox";
 import ChatInput from "../chat/ChatInput";
 import { enqueueSnackbar } from "notistack";
+import { isChatMessageValid } from "../../utils";
 
 interface Chat {
   isBot: boolean;
@@ -61,8 +62,8 @@ const RoadMapChatBot = () => {
   // 메시지 전송
   const handleMessageSend = useCallback(
     async (message: string) => {
-      // uuid가 없거나 메시지가 비어있다면 종료
-      if (!uuid || !message || !message.trim()) {
+      // uuid가 없거나 메시지가 유효하지 않은 경우 종료
+      if (!uuid || !isChatMessageValid(message)) {
         return;
       }
 
@@ -160,7 +161,7 @@ const RoadMapChatBot = () => {
         setChatbotLoading(false);
       }
     },
-    [uuid]
+    [scrollToBottom, uuid]
   );
 
   return (

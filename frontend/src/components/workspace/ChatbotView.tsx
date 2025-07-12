@@ -17,7 +17,7 @@ interface Chat {
 }
 
 // 최대 대화 횟수
-const MAX_CHAT_COUNT = 15;
+const MAX_CHAT_COUNT = 18;
 
 // AI 응답에서 직업 옵션 추출 함수
 const extractJobOptions = (message: string): string[] | null => {
@@ -674,7 +674,7 @@ const ChatbotView = () => {
           >
             {MAX_CHAT_COUNT - chats.filter((chat) => chat.isBot).length}
           </span>{" "}
-          회 대화 가능
+          회 응답 가능
         </Typography>
       </Box>
     </>

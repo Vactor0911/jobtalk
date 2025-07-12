@@ -33,7 +33,7 @@ import { useAtomValue } from "jotai";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import CertificateSelect from "../components/CertificateSelect";
 import { useSnackbar } from "notistack";
-import { isPasswordValid } from "../utils";
+import { isEmailValid, isPasswordValid } from "../utils";
 
 // 이용약관 데이터
 interface TermsOfService {
@@ -172,15 +172,13 @@ const Register = () => {
       return;
     }
 
-    // // 이메일이 올바르지 않다면 종료
-    // if (!isEmailValid(email)) {
-    //   setSnackbar({
-    //   open: true,
-    //   message: "유효한 이메일 주소를 입력해주세요.",
-    //   severity: "warning"
-    // });
-    // return;
-    // }
+    // 이메일이 올바르지 않다면 종료
+    if (!isEmailValid(email)) {
+      enqueueSnackbar("유효한 이메일 주소를 입력해주세요.", {
+        variant: "error",
+      });
+      return;
+    }
 
     // 인증번호 요청 API 호출
     try {

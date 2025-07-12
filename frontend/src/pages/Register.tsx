@@ -33,6 +33,7 @@ import { useAtomValue } from "jotai";
 import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
 import CertificateSelect from "../components/CertificateSelect";
 import { useSnackbar } from "notistack";
+import { isPasswordValid } from "../utils";
 
 // 이용약관 데이터
 interface TermsOfService {
@@ -442,6 +443,15 @@ const Register = () => {
         enqueueSnackbar("비밀번호가 일치하지 않습니다.", {
           variant: "error",
         });
+        return;
+      }
+
+      // 비밀번호 형식 검증
+      if (!isPasswordValid(password)) {
+        enqueueSnackbar(
+          "비밀번호는 8자리 이상, 영문, 숫자, 특수문자(!@#$%^&*?)를 포함해야 합니다.",
+          { variant: "error" }
+        );
         return;
       }
 

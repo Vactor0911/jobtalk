@@ -977,11 +977,6 @@ const storage = multer.diskStorage({
         ext = path.extname(file.originalname) || ".jpg"; // 기본값 제공
     }
 
-    // 추후에 삭제 예정
-    console.log(
-      `파일 업로드: 타입=${file.mimetype}, 파일명=${file.originalname}, 사용할 확장자=${ext}`
-    );
-
     const fileName = `${user.userUuid}${ext}`;
     cb(null, fileName);
   },

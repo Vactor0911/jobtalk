@@ -6,9 +6,9 @@ export interface NodeDetail {
   importance?: string;
   applications?: string;
   resources?: { url: string; title: string; type?: string }[];
-  examInfo?: {
+  others?: {
     organization?: string;
-    registrationUrl?: string;
+    url?: string;
   };
 }
 
@@ -60,6 +60,7 @@ const RoadMapDetails = (props: RoadMapDetailsProps) => {
   // 노드 세부사항 렌더링
   return (
     <Stack gap={3} padding={2}>
+      {/* 개요 */}
       {nodeDetail.overview && (
         <Stack>
           {/* 헤더 */}
@@ -71,6 +72,8 @@ const RoadMapDetails = (props: RoadMapDetailsProps) => {
           <Typography variant="body2">{nodeDetail.overview}</Typography>
         </Stack>
       )}
+
+      {/* 중요성 */}
       {nodeDetail.importance && (
         <Stack>
           {/* 헤더 */}
@@ -82,6 +85,8 @@ const RoadMapDetails = (props: RoadMapDetailsProps) => {
           <Typography variant="body2">{nodeDetail.importance}</Typography>
         </Stack>
       )}
+
+      {/* 활용 분야 */}
       {nodeDetail.applications && (
         <Stack>
           {/* 헤더 */}
@@ -93,6 +98,8 @@ const RoadMapDetails = (props: RoadMapDetailsProps) => {
           <Typography variant="body2">{nodeDetail.applications}</Typography>
         </Stack>
       )}
+
+      {/* 학습 자료 */}
       {nodeDetail.resources && Array.isArray(nodeDetail.resources) && (
         <Stack>
           {/* 헤더 */}
@@ -128,36 +135,40 @@ const RoadMapDetails = (props: RoadMapDetailsProps) => {
           </ul>
         </Stack>
       )}
-      {nodeDetail.examInfo && (
-        <Stack>
-          {/* 헤더 */}
-          <Typography variant="subtitle1" fontWeight="bold">
-            자격증 정보
-          </Typography>
 
-          {/* 내용 */}
-          <Typography variant="body2">
-            {nodeDetail.examInfo.organization &&
-              `기관: ${nodeDetail.examInfo.organization}`}
-            <br />
-            {nodeDetail.examInfo.registrationUrl && (
-              <>
-                접수:{" "}
-                <a
-                  href={nodeDetail.examInfo.registrationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  css={{
-                    color: theme.palette.primary.main,
-                  }}
-                >
-                  {nodeDetail.examInfo.registrationUrl}
-                </a>
-              </>
-            )}
-          </Typography>
-        </Stack>
-      )}
+      {/* 추가 정보 */}
+      {nodeDetail.others &&
+        nodeDetail.others.organization &&
+        nodeDetail.others.url && (
+          <Stack>
+            {/* 헤더 */}
+            <Typography variant="subtitle1" fontWeight="bold">
+              추가 정보
+            </Typography>
+
+            {/* 내용 */}
+            <Typography variant="body2">
+              {nodeDetail.others.organization &&
+                `기관: ${nodeDetail.others.organization}`}
+              <br />
+              {nodeDetail.others.url && (
+                <>
+                  링크:{" "}
+                  <a
+                    href={nodeDetail.others.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    css={{
+                      color: theme.palette.primary.main,
+                    }}
+                  >
+                    {nodeDetail.others.url}
+                  </a>
+                </>
+              )}
+            </Typography>
+          </Stack>
+        )}
     </Stack>
   );
 };

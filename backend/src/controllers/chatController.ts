@@ -433,6 +433,11 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
            resources 항목 구성 시 아래 기준 엄수:
             1. 각 링크 도메인에 대해 DNS A 레코드 조회가 성공해야 합니다.
             2. HTTP HEAD 또는 GET 요청 시 반드시 200 상태 코드를 반환해야 합니다.
+          - others: 추가 정보
+            1. 자격증의 경우 기관명 (organization)과 접수 URL (url) 포함
+            2. 기타 기술의 경우 관련 공식 문서 URL (url)과 기관명 (organization) 포함
+            3. others 객체는 선택 사항이며, 반드시 필요한 경우에만 포함합니다.
+            4. others 객체의 내용은 resources에 포함된 내용과 중복되지 않도록 합니다.
 
           위 조건을 만족하지 않는 링크는 모두 제외하고,
           국내(한국) 공식 → 해외 공식 순으로 우선순위를 정하며, 
@@ -444,8 +449,8 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
             "importance": "...",
             "applications": "...",
             "resources": [{ "title": "...", "url": "...", "type": "공식 문서" }],
-            "examInfo": {
-              "registrationUrl": "...",
+            "others": {
+              "url": "...",
               "organization": "..."
             }
           }

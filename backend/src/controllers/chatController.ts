@@ -504,10 +504,17 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
     return;
   } catch (err: any) {
     console.error("노드 상세 정보 API 오류:", err);
+
+    // 이미 존재하는 노드 ID로 인한 중복 오류 처리
+    if (err.message.includes("no: 1062")) {
+      res.status(204);
+      return;
+    }
+
+    // 기타 오류 처리
     res.status(err?.statusCode || 500).json({
       success: false,
       message: "노드 상세 정보 제공에 실패했습니다.",
-      error: err?.response?.data ?? err.message,
     });
   }
 };

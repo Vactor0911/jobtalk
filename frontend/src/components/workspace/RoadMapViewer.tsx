@@ -304,6 +304,8 @@ const RoadMapViewer = ({
         });
         if (response.data.success && response.data.data?.nodeDetail) {
           onNodeDetail(response.data.data.nodeDetail, false);
+        } else if (response.status === 204) {
+          return;
         } else {
           onNodeDetail({ overview: "세부 정보를 불러오지 못했습니다." }, false);
         }

@@ -281,6 +281,7 @@ const Header = () => {
       >
         <Toolbar
           sx={{
+            height: "64px",
             justifyContent: "space-between",
           }}
         >
@@ -294,7 +295,7 @@ const Header = () => {
               cursor: "pointer",
             }}
           >
-            <Typography variant="h4" color="primary">
+            <Typography variant="h4" color="primary" fontSize="2rem">
               JobTalk
             </Typography>
             <WorkRoundedIcon fontSize="large" color="primary" />

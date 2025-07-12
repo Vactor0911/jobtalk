@@ -167,7 +167,7 @@ const RoadMapChatBot = () => {
   return (
     <Stack height="100%" gap={1}>
       {/* 채팅 기록 */}
-      <Stack ref={chatContainerRef} gap={4} paddingTop={1} overflow="auto">
+      <Stack ref={chatContainerRef} gap={4} paddingTop={1} overflow="auto" flex={1}>
         {/* 채팅 기록 */}
         {chats.map((chat, index) => (
           <ChatBox key={`chat-${index}`} chat={chat} />

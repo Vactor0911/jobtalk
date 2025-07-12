@@ -21,7 +21,12 @@ const RoadMapChatBot = () => {
 
   // 로드맵 챗봇 대화 내역 불러오기
   const fetchChats = useCallback(async () => {
-    if (!uuid) return;
+    // uuid가 없으면 종료
+    if (!uuid) {
+      return;
+    }
+
+    // 로드맵 챗봇 대화 내역 요청
     try {
       const res = await axiosInstance.get(
         `/workspace/${uuid}/roadmap-chatbot/chats`
@@ -167,7 +172,13 @@ const RoadMapChatBot = () => {
   return (
     <Stack height="100%" gap={1}>
       {/* 채팅 기록 */}
-      <Stack ref={chatContainerRef} gap={4} paddingTop={1} overflow="auto" flex={1}>
+      <Stack
+        ref={chatContainerRef}
+        gap={4}
+        paddingTop={1}
+        overflow="auto"
+        flex={1}
+      >
         {/* 채팅 기록 */}
         {chats.map((chat, index) => (
           <ChatBox key={`chat-${index}`} chat={chat} />

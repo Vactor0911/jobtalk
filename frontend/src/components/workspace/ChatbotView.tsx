@@ -57,7 +57,13 @@ const cleanBotMessage = (message: string) => {
   return cleaned;
 };
 
-const ChatbotView = () => {
+interface ChatbotViewProps {
+  setRoadmapCreated: (created: boolean) => void;
+}
+
+const ChatbotView = (props: ChatbotViewProps) => {
+  const { setRoadmapCreated } = props;
+
   const theme = useTheme();
   const { uuid } = useParams<{ uuid: string }>(); // URL에서 워크스페이스 UUID 가져오기
 
@@ -472,7 +478,9 @@ const ChatbotView = () => {
   // 로드맵 저장 핸들러
   const handleSaveRoadmap = useCallback(
     async (jobTitle: string, roadmapData: string) => {
+      // uuid가 없으면 저장하지 않음
       if (!uuid) return;
+
       try {
         // CSRF 토큰 획득
         const csrfToken = await getCsrfToken();
@@ -492,7 +500,11 @@ const ChatbotView = () => {
           enqueueSnackbar("로드맵이 성공적으로 저장되었습니다.", {
             variant: "success",
           });
-          setStep(6); // 로드맵 뷰어 스텝으로 이동
+          setRoadmapCreated(true);
+
+          setTimeout(() => {
+            setStep(6); // 로드맵 뷰어 스텝으로 이동
+          }, 3000); // 3초 후 이동
         } else {
           enqueueSnackbar(
             response.data.message || "로드맵 저장에 실패했습니다.",
@@ -507,7 +519,7 @@ const ChatbotView = () => {
         );
       }
     },
-    [setStep, uuid]
+    [setRoadmapCreated, setStep, uuid]
   );
 
   // 직업 선택 시 로드맵 생성 핸들러

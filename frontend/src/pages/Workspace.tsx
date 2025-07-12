@@ -13,6 +13,7 @@ import {
   selectedWorkspaceAtom,
   workspaceStepAtom,
 } from "../state";
+import RoadMapCreateView from "../components/workspace/RoadMapCreateView";
 
 const Workspace = () => {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ const Workspace = () => {
   const [, setIsLoading] = useState(true); // 로딩 구현할 때 사용하려면
   const [workspace, setWorkspace] = useAtom(selectedWorkspaceAtom);
   const setSelectedInterest = useSetAtom(selectedInterestAtom);
+  const [roadmapCreated, setRoadmapCreated] = useState(false);
 
   // 워크스페이스 정보 가져오기
   const fetchWorkspaceInfo = useCallback(async () => {
@@ -89,7 +91,12 @@ const Workspace = () => {
         {step === 1 && <InterestsView />}
 
         {/* 챗봇 질문 */}
-        {step === 3 && workspace && <ChatbotView />}
+        {step === 3 && workspace && (
+          <ChatbotView setRoadmapCreated={setRoadmapCreated} />
+        )}
+
+        {/* 로드맵 생성 */}
+        {step === 5 && <RoadMapCreateView roadmapCreated={roadmapCreated} />}
       </Stack>
     </Container>
   );

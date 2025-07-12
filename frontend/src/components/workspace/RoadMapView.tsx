@@ -272,7 +272,7 @@ const RoadMapView = () => {
 
       {/* 챗봇 */}
       {tab === 2 && (
-        <Box padding={2} height="calc(100% - 48px)">
+        <Box padding={2} height="calc(100% - 50px)">
           <RoadMapChatBot />
         </Box>
       )}

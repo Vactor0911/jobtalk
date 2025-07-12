@@ -12,6 +12,8 @@ import { getRandomColor } from "../utils";
 import { enqueueSnackbar } from "notistack";
 import { useNavigate } from "react-router";
 import axiosInstance from "../utils/axiosInstance";
+import { useSetAtom } from "jotai";
+import { workspaceStepAtom } from "../state";
 
 // 워크스페이스 인터페이스 정의
 interface Workspace {
@@ -25,9 +27,11 @@ interface Workspace {
 }
 
 const MyWorkspace = () => {
+  const navigate = useNavigate();
+
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
+  const setStep = useSetAtom(workspaceStepAtom);
 
   // 워크스페이스 데이터 가져오기
   const fetchWorkspaces = useCallback(async () => {
@@ -92,8 +96,9 @@ const MyWorkspace = () => {
 
   // 컴포넌트 마운트 시 워크스페이스 데이터 가져오기
   useEffect(() => {
+    setStep(1); // 워크스페이스 단계 초기화
     fetchWorkspaces();
-  }, [fetchWorkspaces]);
+  }, [fetchWorkspaces, setStep]);
 
   // 워크스페이스 상태에 따른 텍스트 표시
   const getStatusText = useCallback(

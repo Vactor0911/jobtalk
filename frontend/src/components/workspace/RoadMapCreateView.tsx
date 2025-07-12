@@ -78,52 +78,53 @@ const RoadMapCreateView = (props: RoadMapCreateViewProps) => {
     const interval = setInterval(() => {
       setLoadingPercentage((prev) => {
         if (!roadmapCreated) {
-          return Math.min(prev + Math.round(Math.random() * 2), 80);
+          return Math.min(prev + Math.random() * 1.5, 80);
         } else {
           clearInterval(interval);
           return 100;
         }
       });
-    }, Math.max(500, Math.random() * 2000));
-  });
+    }, Math.max(1000, Math.random() * 2000));
+
+    if (roadmapCreated) {
+      clearInterval(interval);
+      setLoadingPercentage(100);
+    }
+  }, [roadmapCreated]);
 
   return (
-    <Stack alignItems="center" paddingBottom={2} flex={1}>
+    <Stack
+      justifyContent="space-around"
+      alignItems="center"
+      paddingBottom={2}
+      flex={1}
+    >
       {/* 헤더 */}
-      <Typography variant="h4" color="primary">
-        로드맵 생성
+      <Typography variant="h3" color="primary">
+        로드맵 생성 중
       </Typography>
 
-      <Stack
-        width="100%"
-        justifyContent="space-between"
-        alignItems="center"
-        flex={1}
-      >
-        {/* 여백 */}
-        <Box />
+      {/* 로딩 텍스트 */}
+      <LoadingText
+        items={[
+          "잡톡 AI가 문서 정리하는중...",
+          "로드맵에 노드 그리는중...",
+          "노드를 선으로 연결하는중...",
+          // TODO: 로딩 문구 추가
+        ]}
+      />
 
-        {/* 로딩 텍스트 */}
-        <LoadingText
-          items={[
-            "잡톡 AI가 문서 정리하는중...",
-            "로드맵에 노드 그리는중...",
-            "노드를 선으로 연결하는중...",
-          ]}
-        />
+      <Stack width="100%" gap={2}>
+        {/* 로딩바 */}
+        <LoadingBar percentage={loadingPercentage} />
 
-        <Stack width="100%" gap={2}>
-          {/* 로딩바 */}
-          <LoadingBar percentage={loadingPercentage} />
-
-          <Typography
-            variant="subtitle1"
-            color="text.secondary"
-            textAlign="center"
-          >
-            로드맵 생성은 약 1분 정도 소요됩니다. 잠시만 기다려주세요.
-          </Typography>
-        </Stack>
+        <Typography
+          variant="subtitle1"
+          color="text.secondary"
+          textAlign="center"
+        >
+          로드맵 생성은 약 30초 정도 소요됩니다. 잠시만 기다려주세요.
+        </Typography>
       </Stack>
     </Stack>
   );

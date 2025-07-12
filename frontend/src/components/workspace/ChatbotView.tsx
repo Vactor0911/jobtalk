@@ -320,8 +320,6 @@ const ChatbotView = () => {
           });
 
           const newResponseId = response.data.previous_response_id;
-          // 비용 확인용 콘솔
-          console.log("비용 : ", response.data.usage.total_tokens);
 
           // 응답 ID 업데이트
           setResponseId(newResponseId);
@@ -425,8 +423,6 @@ const ChatbotView = () => {
           if (response.data.success) {
             // 응답 ID 저장
             setResponseId(response.data.previous_response_id);
-
-            console.log("비용 : ", response.data.usage.total_tokens);
 
             // 워크스페이스에 AI 응답만 저장
             await saveMessageToWorkspace("JobtalkAI", response.data.answer);

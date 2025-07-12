@@ -246,6 +246,14 @@ const ChatbotView = () => {
     setRecommendedJobs(Array.from(new Set(allJobs)));
   }, [chats]);
 
+  // 스크롤을 맨 아래로 이동하는 함수
+  const scrollToBottom = useCallback(() => {
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth",
+    });
+  }, []);
+
   // 메시지 전송 함수
   const handleMessageSend = useCallback(
     async (message: string) => {
@@ -269,6 +277,11 @@ const ChatbotView = () => {
       try {
         setChatbotLoading(true);
 
+        // 페이지 스크롤을 맨 아래로 이동
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
+
         // CSRF 토큰 획득
         const csrfToken = await getCsrfToken();
 
@@ -288,28 +301,11 @@ const ChatbotView = () => {
           }
         );
 
-        // 1. 토큰 경고/차단 UX
-        if (response.data.usage?.total_tokens >= 15000) {
-          enqueueSnackbar("질문/응답이 너무 깁니다. 더 짧게 입력해주세요.", {
-            variant: "error",
-          });
-          return;
-        }
-
         if (response.data.success) {
           // 강제 직업 추천 단계인 경우
           setIsRecommendStage(!!response.data.isRecommendStage);
           setForceRecommendCount(response.data.forceRecommendCount ?? 0);
           setIsRecommendLimit(!!response.data.isRecommendLimit);
-
-          if (response.data.questionCount === 8) {
-            enqueueSnackbar(
-              "최대 15번까지만 질의응답이 진행됩니다. 사용자는 성의껏 대답해주세요.",
-              {
-                variant: "info",
-              }
-            );
-          }
 
           // 직업 옵션 누적
           const jobOptions = extractJobOptions(response.data.answer);
@@ -378,7 +374,7 @@ const ChatbotView = () => {
         setChatbotLoading(false);
       }
     },
-    [responseId, uuid, userName, saveMessageToWorkspace]
+    [saveMessageToWorkspace, responseId, uuid, userName, scrollToBottom]
   );
 
   // 첫 대화 또는 대화 기록 불러오기

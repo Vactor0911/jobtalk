@@ -351,7 +351,7 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
   }
 };
 
-// 로드맵 노드 세부사항 제공 API
+// 로드맵 노드 상세정보 제공 API
 export const nodeDetailProvider = async (req: Request, res: Response) => {
   try {
     const { workspace_uuid, node_id, title } = req.body;
@@ -411,7 +411,7 @@ export const nodeDetailProvider = async (req: Request, res: Response) => {
       return;
     }
 
-    // OpenAI로 세부사항 생성
+    // OpenAI로 상세정보 생성
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const inputMessages = [
       {

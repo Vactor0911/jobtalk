@@ -1,6 +1,6 @@
 import { Skeleton, Stack, Typography, useTheme } from "@mui/material";
 
-// 노드 세부사항 인터페이스
+// 노드 상세정보 인터페이스
 export interface NodeDetail {
   overview?: string;
   importance?: string;
@@ -22,7 +22,7 @@ const RoadMapDetails = (props: RoadMapDetailsProps) => {
 
   const theme = useTheme();
 
-  // 노드 세부사항 데이터가 부적절하거나 로딩 중이면 스켈레톤 UI 렌더링
+  // 노드 상세정보 데이터가 부적절하거나 로딩 중이면 스켈레톤 UI 렌더링
   if (loading || !nodeDetail) {
     return (
       <Stack gap={2} padding={2}>
@@ -57,7 +57,7 @@ const RoadMapDetails = (props: RoadMapDetailsProps) => {
     );
   }
 
-  // 노드 세부사항 렌더링
+  // 노드 상세정보 렌더링
   return (
     <Stack gap={3} padding={2}>
       {/* 개요 */}

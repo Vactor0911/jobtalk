@@ -1,6 +1,15 @@
-import { Box, Button, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Stack,
+  TextField,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import { useCallback, useState } from "react";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
+import { MAX_MESSAGE_LENGTH } from "../../utils";
+import { grey } from "@mui/material/colors";
 
 interface ChatInputProps {
   onSend: (message: string) => void; // 메시지 전송 함수
@@ -13,12 +22,15 @@ interface ChatInputProps {
 const ChatInput = (props: ChatInputProps) => {
   const { onSend, onError, placeholder, multiline, disabled } = props;
 
+  const theme = useTheme();
+
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setInput(event.target.value);
+      const newInput = event.target.value.slice(0, MAX_MESSAGE_LENGTH);
+      setInput(newInput);
     },
     []
   );
@@ -98,23 +110,41 @@ const ChatInput = (props: ChatInputProps) => {
         }}
       />
 
-      {/* 입력 버튼 */}
-      <Button
-        endIcon={<SendRoundedIcon />}
-        loading={loading}
-        sx={{
-          position: "absolute",
-          bottom: 6,
-          right: 6,
-          borderRadius: "50px",
-        }}
-        onClick={handleSendButtonClick}
-        disabled={!input || input.trim() === "" || disabled}
+      <Stack
+        direction="row"
+        alignItems="center"
+        position="absolute"
+        bottom={6}
+        right={6}
       >
-        <Typography variant="subtitle1" fontWeight="bold">
-          입력
+        {/* 메시지 길이 제한 */}
+        <Typography
+          variant="subtitle1"
+          fontWeight={500}
+          color={input.length > MAX_MESSAGE_LENGTH ? "error" : grey[400]}
+        >
+          {"( "}
+          <span css={{ color: theme.palette.primary.main }}>
+            {input.length}
+          </span>
+          {` / ${MAX_MESSAGE_LENGTH}자 )`}
         </Typography>
-      </Button>
+
+        {/* 입력 버튼 */}
+        <Button
+          endIcon={<SendRoundedIcon />}
+          loading={loading}
+          sx={{
+            borderRadius: "50px",
+          }}
+          onClick={handleSendButtonClick}
+          disabled={!input || input.trim() === "" || disabled}
+        >
+          <Typography variant="subtitle1" fontWeight="bold">
+            입력
+          </Typography>
+        </Button>
+      </Stack>
     </Box>
   );
 };

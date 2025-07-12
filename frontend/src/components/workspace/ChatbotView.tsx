@@ -681,7 +681,10 @@ const ChatbotView = (props: ChatbotViewProps) => {
               fontWeight: "bold",
             }}
           >
-            {MAX_CHAT_COUNT - chats.filter((chat) => chat.isBot).length}
+            {Math.max(
+              MAX_CHAT_COUNT - chats.filter((chat) => chat.isBot).length,
+              0
+            )}
           </span>{" "}
           회 응답 가능
         </Typography>

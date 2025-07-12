@@ -27,6 +27,7 @@ import axiosInstance, {
 import imageCompression from "browser-image-compression";
 import CertificateSelect from "../components/CertificateSelect";
 import { enqueueSnackbar } from "notistack";
+import { isPasswordValid } from "../utils";
 
 // 사용자 정보 인터페이스
 interface UserInfo {
@@ -323,6 +324,15 @@ const Profile = () => {
       enqueueSnackbar("새 비밀번호를 입력해주세요.", {
         variant: "error",
       });
+      return;
+    }
+
+    // 새 비밀번호 형식 검증 추가
+    if (!isPasswordValid(newPassword)) {
+      enqueueSnackbar(
+        "비밀번호는 8자리 이상, 영문, 숫자, 특수문자(!@#$%^&*?)를 포함해야 합니다.",
+        { variant: "error" }
+      );
       return;
     }
 

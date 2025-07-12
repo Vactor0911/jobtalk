@@ -19,6 +19,7 @@ import axiosInstance, { getCsrfToken } from "../utils/axiosInstance";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router";
 import { useSnackbar } from "notistack";
+import { isPasswordValid } from "../utils";
 
 const ChangePassword = () => {
   const location = useLocation();
@@ -88,6 +89,15 @@ const ChangePassword = () => {
       enqueueSnackbar("비밀번호가 일치하지 않습니다.", {
         variant: "error",
       });
+      return;
+    }
+
+    // 비밀번호 형식 검증
+    if (!isPasswordValid(password)) {
+      enqueueSnackbar(
+        "비밀번호는 8자리 이상, 영문, 숫자, 특수문자(!@#$%^&*?)를 포함해야 합니다.",
+        { variant: "error" }
+      );
       return;
     }
 

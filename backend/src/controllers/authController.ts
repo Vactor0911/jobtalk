@@ -40,23 +40,23 @@ export const register = async (req: Request, res: Response) => {
       return;
     }
 
-    // 비밀번호 검증 추가 (필요시 주석 해제)
-    // if (
-    //   !validator.isStrongPassword(password, {
-    //     minLength: 8,
-    //     minNumbers: 1,
-    //     minSymbols: 1,
-    //     minUppercase: 0,
-    //   }) ||
-    //   !allowedSymbolsForPassword.test(password) // 허용된 문자만 포함하는지 확인
-    // ) {
-    //   res.status(400).json({
-    //     success: false,
-    //     message:
-    //       "비밀번호는 8자리 이상, 영문, 숫자, 특수문자(!@#$%^&*?)를 포함해야 합니다.",
-    //   });
-    //   return;
-    // }
+    // 비밀번호 검증
+    if (
+      !validator.isStrongPassword(password, {
+        minLength: 8,
+        minNumbers: 1,
+        minSymbols: 1,
+        minUppercase: 0,
+      }) ||
+      !allowedSymbolsForPassword.test(password) // 허용된 문자만 포함하는지 확인
+    ) {
+      res.status(400).json({
+        success: false,
+        message:
+          "비밀번호는 8자리 이상, 영문, 숫자, 특수문자(!@#$%^&*?)를 포함해야 합니다.",
+      });
+      return;
+    }
 
     // Step 2: 비밀번호 암호화
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -756,15 +756,23 @@ export const updatePassword = async (req: Request, res: Response) => {
       return;
     }
 
-    // // 비밀번호 복잡성 검증
-    // const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*?]).{8,}$/;
-    // if (!passwordRegex.test(newPassword)) {
-    //   res.status(400).json({
-    //     success: false,
-    //     message: "비밀번호는 8자 이상, 영문, 숫자, 특수문자를 포함해야 합니다.",
-    //   });
-    //   return;
-    // }
+    // 비밀번호 검증
+    if (
+      !validator.isStrongPassword(newPassword, {
+        minLength: 8,
+        minNumbers: 1,
+        minSymbols: 1,
+        minUppercase: 0,
+      }) ||
+      !allowedSymbolsForPassword.test(newPassword) // 허용된 문자만 포함하는지 확인
+    ) {
+      res.status(400).json({
+        success: false,
+        message:
+          "비밀번호는 8자리 이상, 영문, 숫자, 특수문자(!@#$%^&*?)를 포함해야 합니다.",
+      });
+      return;
+    }
 
     // 현재 사용자의 비밀번호 조회
     const rows = await connection.query(
@@ -1151,23 +1159,23 @@ export const resetPassword = async (req: Request, res: Response) => {
     return;
   }
 
-  // 비밀번호 검증 추가 (필요시 주석 해제)
-  // if (
-  //   !validator.isStrongPassword(password, {
-  //     minLength: 8,
-  //     minNumbers: 1,
-  //     minSymbols: 1,
-  //     minUppercase: 0,
-  //   }) ||
-  //   !allowedSymbolsForPassword.test(password) // 허용된 문자만 포함하는지 확인
-  // ) {
-  //   res.status(400).json({
-  //     success: false,
-  //     message:
-  //       "비밀번호는 8자리 이상, 영문, 숫자, 특수문자(!@#$%^&*?)를 포함해야 합니다.",
-  //   });
-  //   return;
-  // }
+  // 비밀번호 검증
+  if (
+    !validator.isStrongPassword(password, {
+      minLength: 8,
+      minNumbers: 1,
+      minSymbols: 1,
+      minUppercase: 0,
+    }) ||
+    !allowedSymbolsForPassword.test(password) // 허용된 문자만 포함하는지 확인
+  ) {
+    res.status(400).json({
+      success: false,
+      message:
+        "비밀번호는 8자리 이상, 영문, 숫자, 특수문자(!@#$%^&*?)를 포함해야 합니다.",
+    });
+    return;
+  }
 
   // Step 1: 사용자 조회
   dbPool

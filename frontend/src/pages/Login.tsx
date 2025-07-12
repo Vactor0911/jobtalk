@@ -199,11 +199,7 @@ const Login = () => {
   // 로그인된 상태라면 이전 페이지로 이동
   useLayoutEffect(() => {
     if (loginState.isLoggedIn) {
-      if (window.history.length > 1) {
-        navigate(-1); // 이전 페이지로 이동
-      } else {
-        navigate("/workspace", { replace: true }); // 이전 페이지가 없으면 워크스페이스 페이지로 이동
-      }
+      navigate("/workspace", { replace: true });
     }
   }, [loginState.isLoggedIn, navigate]);
 

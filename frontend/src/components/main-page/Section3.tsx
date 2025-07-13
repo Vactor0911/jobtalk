@@ -10,7 +10,7 @@ import {
 import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import MotionWrapper from "../framer-motion/MotionWrapper";
 import MotionContainer from "../framer-motion/MotionContainer";
 
@@ -39,20 +39,20 @@ const ChatBox = (props: ChatBoxProps) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   // 프로필 이미지 크기 반환 함수
-  const getAvatarSize = () => {
+  const getAvatarSize = useCallback(() => {
     if (isMobile) {
       return zoomed ? "40px" : "30px";
     }
     return zoomed ? "60px" : "50px";
-  };
+  }, [isMobile, zoomed]);
 
   // 텍스트 크기 반환 함수
-  const getTextVariant = () => {
+  const getTextVariant = useCallback(() => {
     if (isMobile) {
       return "subtitle2";
     }
     return zoomed ? "h5" : "h6";
-  };
+  }, [isMobile, zoomed]);
 
   return (
     <Stack

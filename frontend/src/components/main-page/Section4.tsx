@@ -8,18 +8,26 @@ import {
 } from "@mui/material";
 import cycleImage from "../../assets/images/career_cycle.png";
 import { useCallback } from "react";
+import { useNavigate } from "react-router";
 
 const Section4 = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isSmallPc = useMediaQuery(theme.breakpoints.down("xl"));
 
+  // 텍스트 크기 반환 함수
   const getTextVariant = useCallback(() => {
     if (isMobile) return "h5";
     if (isSmallPc) return "h4";
     return "h3";
   }, [isMobile, isSmallPc]);
+
+  // 바로 시작하기 버튼 클릭
+  const handleStartButtonClick = useCallback(() => {
+    navigate("/login");
+  }, [navigate]);
 
   return (
     <Stack
@@ -93,6 +101,7 @@ const Section4 = () => {
               },
               borderRadius: "50px",
             }}
+            onClick={handleStartButtonClick}
           >
             <Typography variant={getTextVariant()} color="white">
               바로 시작하기

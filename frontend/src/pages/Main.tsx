@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { jobTalkLoginStateAtom } from "../state";
 import { useNavigate } from "react-router";
 import {
+  Box,
   createTheme,
   responsiveFontSizes,
   Stack,
@@ -13,6 +14,7 @@ import { grey } from "@mui/material/colors";
 import Section1 from "../components/main-page/Section1";
 import Section2 from "../components/main-page/Section2";
 import Section3 from "../components/main-page/Section3";
+import Section4 from "../components/main-page/Section4";
 
 const Main = () => {
   const navigate = useNavigate();
@@ -70,7 +72,6 @@ const Main = () => {
   return (
     <ThemeProvider theme={bigFontTheme}>
       <Stack
-        gap="20vh"
         bgcolor={grey[100]}
         sx={{
           "& .MuiTypography-root": {
@@ -82,10 +83,15 @@ const Main = () => {
         <Section1 />
 
         {/* 2페이지 */}
-        <Section2 />
+        <Box marginTop="20vh">
+          <Section2 />
+        </Box>
 
         {/* 3페이지 */}
         <Section3 />
+
+        {/* 4페이지 */}
+        <Section4 />
       </Stack>
     </ThemeProvider>
   );

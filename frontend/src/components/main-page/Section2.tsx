@@ -29,7 +29,7 @@ const Section2 = () => {
           {/* 헤더 */}
           <MotionWrapper>
             <Typography variant="h3" textAlign="center">
-              미래에 대한 설계는 어떻게 준비해야 할까요?
+              미래에 대한 설계, 이렇게 해보세요!
             </Typography>
           </MotionWrapper>
 

@@ -29,7 +29,6 @@ const Section4 = () => {
       }}
       minHeight="100vh"
       gap={5}
-      paddingTop={4}
     >
       {/* 패널 */}
       <Stack

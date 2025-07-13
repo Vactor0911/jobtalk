@@ -45,7 +45,7 @@ const Section2 = () => {
             {[
               {
                 title: "계획",
-                description: "내가 관심있는 분야를 찾고 계획해요!",
+                description: "어떤걸 좋아하는지 함께 알아가봐요!",
                 icon: <EditRoundedIcon />,
               },
               {

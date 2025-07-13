@@ -1,9 +1,39 @@
-import { Box, Container, Stack, Typography, useTheme } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  keyframes,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import MotionContainer from "../framer-motion/MotionContainer";
 import MotionWrapper from "../framer-motion/MotionWrapper";
+import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
+import RunningManImage from "../../assets/images/running_man.png";
+import { useCallback } from "react";
+import { useNavigate } from "react-router";
+
+const arrowAnimation = keyframes`
+  0%, 100% {
+    transform: translate(-50%, 20%);
+  }
+  50% {
+    transform: translate(-50%, 50%);
+  }
+`;
 
 const Section1 = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
+
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  // 바로 시작하기 버튼 클릭
+  const handleStartButtonClick = useCallback(() => {
+    navigate("/login");
+  }, [navigate]);
 
   return (
     <Box bgcolor="white" position="relative">
@@ -37,24 +67,35 @@ const Section1 = () => {
 
       <Container maxWidth="xl">
         <MotionContainer>
-          <Stack height="calc(100vh - 64px)">
+          <Stack
+            minHeight="calc(100vh - 64px)"
+            justifyContent="space-around"
+            paddingY={5}
+            paddingBottom="140px"
+            position="relative"
+            gap={10}
+          >
             {/* 슬로건 */}
-            <Stack gap={1} alignItems="flex-start">
+            <Stack gap={4} position="relative" zIndex={2}>
               <MotionWrapper direction="x">
-                {/* 첫번째 줄 */}
-                <Typography variant="h1">
-                  포트폴리오{" "}
-                  <span css={{ color: theme.palette.primary.main }}>
-                    로드맵
-                  </span>
-                  은 역시
-                </Typography>
+                <Stack gap={2}>
+                  {/* 첫번째 줄 */}
+                  <Typography variant={isMobile ? "h2" : "h1"}>
+                    진로{" "}
+                    <span css={{ color: theme.palette.primary.main }}>
+                      로드맵
+                    </span>
+                    은 이제
+                  </Typography>
 
-                {/* 두번째 줄 */}
-                <Typography variant="h1">
-                  <span css={{ color: theme.palette.primary.main }}>잡톡</span>
-                  으로 시작!
-                </Typography>
+                  {/* 두번째 줄 */}
+                  <Typography variant={isMobile ? "h2" : "h1"}>
+                    <span css={{ color: theme.palette.primary.main }}>
+                      잡톡
+                    </span>
+                    으로 시작!
+                  </Typography>
+                </Stack>
               </MotionWrapper>
 
               {/* 내용 */}
@@ -66,30 +107,84 @@ const Section1 = () => {
                   }}
                   gap="0.25em"
                 >
-                  {[
-                    "포트폴리오를 한눈에 정리할 수 있는",
-                    "로드맵으로 시작해보세요 !",
-                  ].map((text, index) => (
-                    <Typography
-                      variant="h5"
-                      color="black"
-                      display="inline-block"
-                      whiteSpace="nowrap"
-                      key={`main-slogan-${index}`}
-                      sx={{
-                        fontSize: {
-                          xs: theme.typography.subtitle1.fontSize,
-                          md: theme.typography.h6.fontSize,
-                          lg: theme.typography.h5.fontSize,
-                        },
-                      }}
-                    >
-                      {text}
-                    </Typography>
-                  ))}
+                  <Typography
+                    variant="h4"
+                    color="black"
+                    display="inline-block"
+                    whiteSpace="nowrap"
+                  >
+                    당신만을 위한 맞춤형 진로 계획, 지금 시작해보세요!
+                  </Typography>
                 </Stack>
               </MotionWrapper>
+
+              {/* 배경 이미지 */}
+              <Box
+                component="img"
+                src={RunningManImage}
+                position="absolute"
+                width={{
+                  xs: "100%",
+                  sm: "auto",
+                }}
+                height={{
+                  xs: "auto",
+                  sm: "60vh",
+                }}
+                top={0}
+                right={0}
+                zIndex={-1}
+                sx={{
+                  filter: {
+                    xs: "blur(5px)",
+                    md: "none",
+                  },
+                }}
+              />
             </Stack>
+
+            {/* 버튼 */}
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{
+                padding: {
+                  xs: 3,
+                  md: 4,
+                },
+                paddingX: {
+                  xs: 5,
+                  md: 10,
+                },
+                borderRadius: 5,
+                alignSelf: {
+                  xs: "center",
+                  md: "flex-start",
+                },
+                position: "relative",
+                zIndex: 2,
+              }}
+              onClick={handleStartButtonClick}
+            >
+              <Typography variant="h4" color="white" fontWeight={500}>
+                바로 시작하기
+              </Typography>
+            </Button>
+
+            {/* 아래 화살표 */}
+            <DownloadRoundedIcon
+              color="primary"
+              sx={{
+                position: "absolute",
+                bottom: 40,
+                left: "50%",
+                transform: "translate(-50%, 50%)",
+                fontSize: "80px",
+                clipPath: "inset(0 0 30% 0)",
+                animation: `${arrowAnimation} 2s infinite ease-in-out`,
+                zIndex: 2,
+              }}
+            />
           </Stack>
         </MotionContainer>
       </Container>

@@ -1,5 +1,22 @@
 import { createTheme, responsiveFontSizes } from "@mui/material";
 
+// MUI Palette 확장
+declare module "@mui/material/styles" {
+  interface Palette {
+    black: Palette["primary"];
+  }
+  interface PaletteOptions {
+    black?: PaletteOptions["primary"];
+  }
+}
+
+// MUI Button 색상 확장
+declare module "@mui/material/Button" {
+  interface ButtonPropsColorOverrides {
+    black: true;
+  }
+}
+
 // MUI 테마
 export const theme = responsiveFontSizes(
   createTheme({
@@ -13,6 +30,9 @@ export const theme = responsiveFontSizes(
       text: {
         primary: "#404040",
         secondary: "#787878",
+      },
+      black: {
+        main: "#272727",
       },
     },
     typography: {

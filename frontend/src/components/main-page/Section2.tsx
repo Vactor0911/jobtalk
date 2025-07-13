@@ -1,4 +1,11 @@
-import { Box, Container, Paper, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
+import {
+  Container,
+  Paper,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import MotionContainer from "../framer-motion/MotionContainer";
 import MotionWrapper from "../framer-motion/MotionWrapper";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
@@ -8,35 +15,37 @@ import DirectionsRunRoundedIcon from "@mui/icons-material/DirectionsRunRounded";
 const Section2 = () => {
   const theme = useTheme();
 
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
 
   return (
     <Container maxWidth="xl">
       <MotionContainer>
-        <Stack height="100vh" justifyContent="space-evenly">
+        <Stack
+          minHeight="100vh"
+          justifyContent="space-evenly"
+          gap={5}
+          paddingY={8}
+        >
           {/* 헤더 */}
           <MotionWrapper>
             <Typography variant="h3" textAlign="center">
-              미래에 대한 설계는 어떻게 준비해야 할까요?
+              미래에 대한 설계, 이렇게 해보세요!
             </Typography>
           </MotionWrapper>
 
           {/* 진로 설계 단계 소개 */}
           <Stack
-            height={{
-              xs: "75%",
-              sm: "auto",
-            }}
             direction={{
               xs: "column",
-              sm: "row",
+              md: "row",
             }}
             justifyContent="space-between"
+            gap={5}
           >
             {[
               {
                 title: "계획",
-                description: "내가 관심있는 분야를 찾고 계획해요!",
+                description: "어떤걸 좋아하는지 함께 알아가봐요!",
                 icon: <EditRoundedIcon />,
               },
               {
@@ -50,99 +59,84 @@ const Section2 = () => {
                 icon: <DirectionsRunRoundedIcon />,
               },
             ].map((item, index) => (
-              <Box
-                key={`main-2nd-${index}`}
-                width={{
-                  xs: "100%",
-                  sm: "27%",
-                }}
-                height={{
-                  xs: "30%",
-                  sm: "100%",
+              <MotionWrapper
+                key={`section2-item-${index}`}
+                direction={isTablet ? "x" : "y"}
+                css={{
+                  width: isTablet ? "100%" : "27%",
+                  height: isTablet ? "auto" : "webkit-fill-available",
                 }}
               >
-                <MotionWrapper
-                  direction={isMobile ? "x" : "y"}
-                  css={{ width: "100%", height: "100%" }}
+                <Paper
+                  elevation={5}
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: {
+                      xs: 7,
+                      sm: 10,
+                      md: 15,
+                    },
+                  }}
                 >
-                  <Paper
-                    elevation={5}
-                    sx={{
-                      height: "100%",
-                      borderRadius: {
-                        xs: 8,
-                        sm: 12,
-                        md: 15,
-                      },
-                      "&:hover": {
-                        boxShadow: 15,
-                      },
+                  <Stack
+                    direction={{
+                      xs: "row",
+                      md: "column",
                     }}
+                    padding={{
+                      xs: 3,
+                      md: "10%",
+                    }}
+                    alignItems="center"
+                    paddingX="17%"
+                    gap={4}
                   >
+                    {/* 아이콘 */}
                     <Stack
-                      height="100%"
-                      direction={{
-                        xs: "row",
-                        sm: "column",
+                      height={{
+                        xs: "100px",
+                        md: "auto",
                       }}
+                      justifyContent="center"
                       alignItems="center"
-                      padding={{
-                        xs: 2,
-                        sm: "17%",
-                      }}
-                      paddingY={{
-                        xs: 0,
-                        sm: "12%",
-                      }}
-                      gap={{
-                        xs: 3,
-                        sm: 5,
+                      bgcolor={theme.palette.primary.main}
+                      borderRadius="50%"
+                      color="white"
+                      sx={{
+                        aspectRatio: "1 / 1",
+                        "& .MuiSvgIcon-root": {
+                          width: "70%",
+                          height: "70%",
+                        },
                       }}
                     >
-                      {/* 아이콘 */}
-                      <Stack
-                        justifyContent="center"
-                        alignItems="center"
-                        borderRadius="50%"
-                        bgcolor={theme.palette.primary.main}
-                        color="white"
-                        sx={{
-                          aspectRatio: "1 / 1",
-                          width: { xs: "auto", sm: "100%" },
-                          height: { xs: "60%", sm: "auto" },
-                          "& .MuiSvgIcon-root": {
-                            width: "70%",
-                            height: "70%",
-                          },
-                        }}
-                      >
-                        {item.icon}
-                      </Stack>
-
-                      <Stack
-                        textAlign={{
-                          xs: "left",
-                          sm: "center",
-                        }}
-                        gap={{
-                          xs: 2,
-                          sm: 5,
-                        }}
-                      >
-                        {/* 제목 */}
-                        <Typography variant="h3" color="primary">
-                          {item.title}
-                        </Typography>
-
-                        {/* 설명 */}
-                        <Typography variant="h5" color="black" fontWeight="400">
-                          {item.description}
-                        </Typography>
-                      </Stack>
+                      {item.icon}
                     </Stack>
-                  </Paper>
-                </MotionWrapper>
-              </Box>
+
+                    <Stack
+                      gap={{
+                        xs: 2,
+                        md: 4,
+                      }}
+                      textAlign={{
+                        xs: "left",
+                        md: "center",
+                      }}
+                    >
+                      {/* 제목 */}
+                      <Typography variant="h3" color="primary">
+                        {item.title}
+                      </Typography>
+
+                      {/* 내용 */}
+                      <Typography variant="h5" fontWeight={500}>
+                        {item.description}
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                </Paper>
+              </MotionWrapper>
             ))}
           </Stack>
         </Stack>

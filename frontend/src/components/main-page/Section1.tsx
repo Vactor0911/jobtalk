@@ -12,6 +12,8 @@ import MotionContainer from "../framer-motion/MotionContainer";
 import MotionWrapper from "../framer-motion/MotionWrapper";
 import DownloadRoundedIcon from "@mui/icons-material/DownloadRounded";
 import RunningManImage from "../../assets/images/running_man.png";
+import { useCallback } from "react";
+import { useNavigate } from "react-router";
 
 const arrowAnimation = keyframes`
   0%, 100% {
@@ -24,8 +26,14 @@ const arrowAnimation = keyframes`
 
 const Section1 = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  // 바로 시작하기 버튼 클릭
+  const handleStartButtonClick = useCallback(() => {
+    navigate("/login");
+  }, [navigate]);
 
   return (
     <Box bgcolor="white" position="relative">
@@ -156,6 +164,7 @@ const Section1 = () => {
                 position: "relative",
                 zIndex: 2,
               }}
+              onClick={handleStartButtonClick}
             >
               <Typography variant="h4" color="white" fontWeight={500}>
                 바로 시작하기

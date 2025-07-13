@@ -11,6 +11,8 @@ import SmartToyRoundedIcon from "@mui/icons-material/SmartToyRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
+import MotionWrapper from "../framer-motion/MotionWrapper";
+import MotionContainer from "../framer-motion/MotionContainer";
 
 const CHATS = [
   "다른 개발자나 디자이너 등과 협업하는 것을 선호하나요?",
@@ -149,12 +151,25 @@ const Section3 = () => {
   return (
     <Box bgcolor="white">
       <Container maxWidth="lg">
-        <Stack height="100vh" justifyContent="center" overflow="hidden">
+        <Stack
+          minHeight="100vh"
+          alignItems="center"
+          overflow="hidden"
+          position="relative"
+          paddingY={23}
+          gap={5}
+        >
+          {/* 배경 대화 상자 */}
           <Stack
             direction="row"
             justifyContent="space-between"
+            alignItems="center"
             paddingX={1}
-            position="relative"
+            position="absolute"
+            width="100%"
+            height="100%"
+            top={0}
+            left={0}
           >
             {/* 채팅 기록 1 */}
             <Stack
@@ -188,21 +203,34 @@ const Section3 = () => {
               <ChatBox message={CHATS[1]} isBot={false} />
               <ChatBox message={CHATS[2]} isBot={true} />
             </Stack>
+          </Stack>
 
-            {/* 채팅 애니메이션 */}
+          {/* 헤더 */}
+          <MotionContainer>
+            <MotionWrapper>
+              <Typography
+                variant="h3"
+                textAlign="center"
+                position="relative"
+                zIndex={2}
+              >
+                잡톡AI와 이야기하며, 함께 알아가요!
+              </Typography>
+            </MotionWrapper>
+          </MotionContainer>
+
+          {/* 채팅 애니메이션 */}
+          <Stack height="65vh">
             <Paper
               sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
                 borderRadius: 5,
-                zIndex: 3,
                 boxShadow: {
                   xs: 15,
                   sm: "0 0 30px 20px rgba(0, 0, 0, 0.2)",
                 },
                 overflow: "hidden",
+                position: "relative",
+                zIndex: 1,
               }}
             >
               <Stack
@@ -210,7 +238,6 @@ const Section3 = () => {
                 layout
                 width={{ xs: "75vw", md: "50vw" }}
                 maxWidth={600}
-                height="60vh"
                 padding={{
                   xs: 2,
                   sm: 3,

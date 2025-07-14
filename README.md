@@ -101,4 +101,5 @@
 <br />
 
 ## 🔨 Structure | 구조
-![소프트웨어 구조도](https://github.com/user-attachments/assets/be643740-5a3c-47e3-adc9-23984c4a54ef)
+![소프트웨어 구조도](https://github.com/user-attachments/assets/7e1edb25-0e1b-4003-82fc-32fc21f0b634)
+

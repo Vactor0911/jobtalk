@@ -19,7 +19,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import WorkRoundedIcon from "@mui/icons-material/WorkRounded";
 import { useAtom } from "jotai";
 import { jobTalkLoginStateAtom, profileImageAtom } from "../state";
@@ -62,6 +62,7 @@ const MenuButton = (props: MenuButtonProps) => {
 const Header = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const location = useLocation();
 
   const [loginState, setLoginState] = useAtom(jobTalkLoginStateAtom);
   const menuAnchorElement = useRef<HTMLButtonElement | null>(null);
@@ -196,6 +197,12 @@ const Header = () => {
 
   // 로고 클릭
   const handleLogoClick = useCallback(() => {
+    // 임베디드 페이지이면 새로운 창 팝업
+    if (location.pathname === "/embeded") {
+      window.open("https://vactor0911.github.io/jobtalk/", "_blank");
+      return;
+    }
+
     // 로그인 상태이면 워크스페이스로 이동
     if (loginState.isLoggedIn) {
       navigate("/workspace");
@@ -204,10 +211,16 @@ const Header = () => {
 
     // 로그인 상태가 아니면 메인 페이지로 이동
     navigate("/");
-  }, [loginState.isLoggedIn, navigate]);
+  }, [location.pathname, loginState.isLoggedIn, navigate]);
 
   // 프로필 버튼 클릭
   const handleProfileButtonClick = useCallback(() => {
+    // 임베디드 페이지이면 새로운 창 팝업
+    if (location.pathname === "/embeded") {
+      window.open("https://vactor0911.github.io/jobtalk/", "_blank");
+      return;
+    }
+
     // 로그인 상태이면 메뉴 열기
     if (loginState.isLoggedIn) {
       // 메뉴를 열 때 최신 프로필 이미지 가져오기
@@ -220,7 +233,13 @@ const Header = () => {
 
     // 로그인 상태가 아니면 로그인 페이지로 이동
     navigate("/login");
-  }, [loginState.isLoggedIn, navigate, isMenuOpen, fetchUserInfo]);
+  }, [
+    location.pathname,
+    loginState.isLoggedIn,
+    navigate,
+    isMenuOpen,
+    fetchUserInfo,
+  ]);
 
   // 메뉴 닫기
   const handleMenuClose = useCallback(() => {

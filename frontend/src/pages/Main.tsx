@@ -60,7 +60,11 @@ const Main = () => {
 
   useEffect(() => {
     // 페이지 리다이렉트 함수 호출
-    redirectPage();
+    const isRedirected = redirectPage();
+    // 리다이렉트가 성공한 경우, 더 이상 진행하지 않음
+    if (isRedirected) {
+      return;
+    }
 
     // 로그인 상태가 true이면 워크스페이스로 리다이렉트
     if (loginState.isLoggedIn) {

@@ -1,7 +1,9 @@
 # 🤖 잡톡 JobTalk 💬
 
 <div align="center">
-    <div style="display: flex; flex-direction: column;">
+    <div style="display: flex;">
+        <img src="https://github.com/user-attachments/assets/2fad70b7-1c08-4d7d-8f11-dd64c45cef36" alt="잡톡" style="height: 400px;" />
+        <img src="https://github.com/user-attachments/assets/42f227e4-4290-4ded-bc2f-d7a6b7cdb694" alt="잡톡" style="height: 400px;" />
     </div>
     <h3>AI 기반 진로 로드맵 설계 솔루션, 잡톡</h3>
     <p>잡톡 AI와 함께 원하는 진로를 그려보세요!</p>
@@ -99,3 +101,4 @@
 <br />
 
 ## 🔨 Structure | 구조
+![소프트웨어 구조도](https://github.com/user-attachments/assets/be643740-5a3c-47e3-adc9-23984c4a54ef)

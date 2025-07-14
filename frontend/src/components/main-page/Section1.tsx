@@ -68,7 +68,7 @@ const Section1 = () => {
       <Container maxWidth="xl">
         <MotionContainer>
           <Stack
-            minHeight="calc(100vh - 64px)"
+            minHeight="calc(90vh - 64px)"
             justifyContent="space-around"
             paddingY={5}
             paddingBottom="140px"

@@ -14,6 +14,7 @@ import TokenRefresher from "./components/TokenRefresher";
 import FindPassword from "./pages/FindPassword";
 import ChangePassword from "./pages/ChangePassword";
 import { SnackbarProvider } from "notistack";
+import Embeded from "./pages/Embeded";
 
 const App = () => {
   return (
@@ -33,6 +34,7 @@ const App = () => {
               <Route path="/workspace/:uuid" element={<Workspace />} />
               <Route path="/change-password" element={<ChangePassword />} />
               <Route path="/find-password" element={<FindPassword />} />
+              <Route path="/embeded" element={<Embeded />} />
               <Route path="/*" element={<Navigate to="/" replace />} />
             </Routes>
           </TokenRefresher>

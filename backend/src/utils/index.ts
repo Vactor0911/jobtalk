@@ -39,6 +39,27 @@ export const refreshTokenLimiter = rateLimit({
   },
 });
 
+// 사용자별(로그인) 로드맵 챗봇 전용 Rate Limiter
+export const roadmapChatbotLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5분
+  max: 10, // 5분에 10회
+  keyGenerator: (req) => {
+    // 로그인 사용자라면 userUuid, 아니면 IP
+    return req.user?.userUuid || req.ip;
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: (req: any, res: any) => {
+    const resetTime = Math.ceil(
+      (res.getHeader("RateLimit-Reset") as number) / 60
+    );
+    return {
+      success: false,
+      message: `로드맵 챗봇은 5분에 최대 10회까지만 질문할 수 있습니다. \n${resetTime}분 후에 다시 시도해주세요.`,
+    };
+  },
+});
+
 // CSRF 미들웨어 내보내기
 export const csrfProtection = csrfProtectionUtil;
 export { csrfTokenMiddleware };

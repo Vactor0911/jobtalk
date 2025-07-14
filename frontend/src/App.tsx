@@ -20,7 +20,7 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
 
-      <SnackbarProvider maxSnack={3} autoHideDuration={5000}>
+      <SnackbarProvider maxSnack={3} autoHideDuration={3000}>
         <BrowserRouter basename="/jobtalk">
           <TokenRefresher>
             <Header />
@@ -30,7 +30,7 @@ const App = () => {
               <Route path="/register" element={<Register />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/workspace" element={<MyWorkspace />} />
-              <Route path="/workspace/:workspaceId" element={<Workspace />} />
+              <Route path="/workspace/:uuid" element={<Workspace />} />
               <Route path="/change-password" element={<ChangePassword />} />
               <Route path="/find-password" element={<FindPassword />} />
               <Route path="/*" element={<Navigate to="/" replace />} />

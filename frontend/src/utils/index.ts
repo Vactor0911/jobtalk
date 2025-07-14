@@ -38,6 +38,27 @@ export const isEmailValid = (email: string) => {
 };
 
 /**
+ * 비밀번호 형식이 올바른지 확인하는 함수
+ * - 8자리 이상
+ * - 영문, 숫자, 특수문자(!@#$%^&*?) 포함
+ * - 허용된 문자만 사용
+ * @param password 비밀번호
+ * @returns 올바른 형식이면 true, 아니면 false
+ */
+export const isPasswordValid = (password: string): boolean => {
+  if (!password) return false;
+  // 허용된 특수문자만 포함
+  const allowedSymbolsForPassword = /^[a-zA-Z0-9!@#$%^&*?]*$/;
+  // 8자리 이상, 숫자 1개 이상, 특수문자 1개 이상, 대문자 제한 없음
+  const strongPassword =
+    password.length >= 8 &&
+    /[0-9]/.test(password) &&
+    /[!@#$%^&*?]/.test(password) &&
+    allowedSymbolsForPassword.test(password);
+  return strongPassword;
+};
+
+/**
  * 랜덤 색상 코드를 반환하는 함수
  * @param seed 랜덤 시드를 지정할 수 있는 선택적 매개변수
  * @returns 랜덤 색상 코드
@@ -68,4 +89,21 @@ export const getRandomColor = (seed?: string | number): string => {
 
   const randInt = Math.floor(Math.random() * COLORS.length);
   return COLORS[randInt];
+};
+
+export const MAX_MESSAGE_LENGTH = 100; // 채팅 메시지 길이 제한
+
+/**
+ * 채팅 메시지가 유효한지 확인하는 함수
+ * @param message 채팅 메시지
+ * @returns 메시지가 유효한지 여부
+ */
+export const isChatMessageValid = (message: string) => {
+  // 메시지가 비어있거나 길이가 초과하는 경우
+  if (!message || message.length > MAX_MESSAGE_LENGTH) {
+    return false;
+  }
+
+  // 메시지 형식이 올바른 경우
+  return true;
 };

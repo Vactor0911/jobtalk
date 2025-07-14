@@ -22,7 +22,7 @@ import {
 import { useNavigate } from "react-router";
 import WorkRoundedIcon from "@mui/icons-material/WorkRounded";
 import { useAtom } from "jotai";
-import { jobTalkLoginStateAtom } from "../state";
+import { jobTalkLoginStateAtom, profileImageAtom } from "../state";
 import axiosInstance, {
   getCsrfToken,
   SERVER_HOST,
@@ -68,7 +68,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // 프로필 이미지와 닉네임 상태
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useAtom(profileImageAtom);
   const [userName, setUserName] = useState<string>("");
   const [imageVersion, setImageVersion] = useState(0);
 
@@ -111,7 +111,7 @@ const Header = () => {
       setProfileImage(null);
       setUserName(loginState.userName || "");
     }
-  }, [loginState.isLoggedIn, loginState.userName]);
+  }, [loginState.isLoggedIn, loginState.userName, setProfileImage]);
 
   // 실시간 프로필 업데이트 이벤트 리스너
   useEffect(() => {
@@ -154,7 +154,7 @@ const Header = () => {
         handleNicknameUpdate as EventListener
       );
     };
-  }, []);
+  }, [setProfileImage]);
 
   // 로그인 상태가 변경될 때마다 사용자 정보 가져오기
   useEffect(() => {
@@ -166,7 +166,7 @@ const Header = () => {
       setUserName("");
       setImageVersion(0);
     }
-  }, [loginState.isLoggedIn, fetchUserInfo]);
+  }, [loginState.isLoggedIn, fetchUserInfo, setProfileImage]);
 
   // 프로필 이미지 요소
   const profileAvatar = useMemo(() => {
@@ -196,8 +196,15 @@ const Header = () => {
 
   // 로고 클릭
   const handleLogoClick = useCallback(() => {
+    // 로그인 상태이면 워크스페이스로 이동
+    if (loginState.isLoggedIn) {
+      navigate("/workspace");
+      return;
+    }
+
+    // 로그인 상태가 아니면 메인 페이지로 이동
     navigate("/");
-  }, [navigate]);
+  }, [loginState.isLoggedIn, navigate]);
 
   // 프로필 버튼 클릭
   const handleProfileButtonClick = useCallback(() => {
@@ -259,7 +266,7 @@ const Header = () => {
       setImageVersion(0);
       navigate("/login");
     }
-  }, [handleMenuClose, navigate, setLoginState]);
+  }, [handleMenuClose, navigate, setLoginState, setProfileImage]);
 
   return (
     <>
@@ -269,10 +276,12 @@ const Header = () => {
         sx={{
           backgroundColor: "white",
           boxShadow: `0px 2px 4px -1px ${theme.palette.primary.main}`,
+          zIndex: 1200,
         }}
       >
         <Toolbar
           sx={{
+            height: "64px",
             justifyContent: "space-between",
           }}
         >
@@ -286,7 +295,7 @@ const Header = () => {
               cursor: "pointer",
             }}
           >
-            <Typography variant="h4" color="primary">
+            <Typography variant="h4" color="primary" fontSize="2rem">
               JobTalk
             </Typography>
             <WorkRoundedIcon fontSize="large" color="primary" />
@@ -322,14 +331,28 @@ const Header = () => {
           transform: "translateY(8px)",
         }}
       >
-        <Stack padding={2} width={250} gap={1}>
+        <Stack
+          padding={2}
+          width={{
+            xs: "100%",
+            sm: "320px",
+          }}
+          gap={1}
+        >
           {/* 헤더 */}
-          <Stack direction="row" alignItems="center" gap={1}>
+          <Stack direction="row" alignItems="center" gap={1} overflow="hidden">
             {/* 프로필 이미지 */}
             {profileAvatar}
 
             {/* 닉네임 */}
-            <Typography variant="h6">
+            <Typography
+              variant="h6"
+              width="50%"
+              whiteSpace="nowrap"
+              textOverflow="ellipsis"
+              overflow="hidden"
+              flex={1}
+            >
               {userName || loginState.userName || "사용자"}
             </Typography>
 

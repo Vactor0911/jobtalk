@@ -27,6 +27,7 @@ import { useNavigate } from "react-router";
 import { setAccessToken } from "../utils/accessToken";
 import axiosInstance, { getCsrfToken } from "../utils/axiosInstance";
 import { enqueueSnackbar } from "notistack";
+import { isEmailValid } from "../utils";
 
 // 로그인 상태 타입 정의 (기존 코드 참조)
 interface LoginState {
@@ -117,7 +118,7 @@ const Login = () => {
       });
 
       // 메인 페이지로 이동
-      navigate("/"); // 메인 페이지 또는 대시보드로 이동
+      navigate("/workspace"); // 워크스페이스 페이지로 이동
     },
     [email, isLoginStateSave, navigate, setLoginState]
   );
@@ -132,14 +133,12 @@ const Login = () => {
       return;
     }
 
-    // if (!isEmailValid(email)) {
-    //   setSnackbar({
-    //     open: true,
-    //     message: "올바른 이메일 형식이 아닙니다.",
-    //     severity: "warning",
-    //   });
-    //   return;
-    // }
+    if (!isEmailValid(email)) {
+      enqueueSnackbar("올바른 이메일 형식이 아닙니다.", {
+        variant: "warning",
+      });
+      return;
+    }
 
     setIsLoginLoading(true);
 
@@ -199,11 +198,7 @@ const Login = () => {
   // 로그인된 상태라면 이전 페이지로 이동
   useLayoutEffect(() => {
     if (loginState.isLoggedIn) {
-      if (window.history.length > 1) {
-        navigate(-1); // 이전 페이지로 이동
-      } else {
-        navigate("/", { replace: true }); // 이전 페이지가 없으면 홈으로 이동
-      }
+      navigate("/workspace", { replace: true });
     }
   }, [loginState.isLoggedIn, navigate]);
 

@@ -420,6 +420,14 @@ const Register = () => {
         return;
       }
 
+      // 이메일이 올바르지 않다면 종료
+      if (!isEmailValid(email)) {
+        enqueueSnackbar("유효한 이메일 주소를 입력해주세요.", {
+          variant: "error",
+        });
+        return;
+      }
+
       // 이메일 인증 확인
       if (!isConfirmCodeChecked) {
         enqueueSnackbar("이메일 인증이 완료되지 않았습니다.", {

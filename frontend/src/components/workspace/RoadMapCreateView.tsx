@@ -1,4 +1,4 @@
-import { Box, Stack, Typography } from "@mui/material";
+import { Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import LoadingBar from "../LoadingBar";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,6 +16,9 @@ const slideVariants = {
 const LoadingText = (props: LoadingTextProps) => {
   const { items } = props;
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -32,11 +35,12 @@ const LoadingText = (props: LoadingTextProps) => {
   const currentItem = items[index];
 
   return (
-    <Box
+    <Stack
       width="100%"
+      justifyContent="center"
       sx={{
         position: "relative",
-        height: "3rem",
+        height: "9rem",
         overflow: "hidden",
       }}
     >
@@ -48,20 +52,23 @@ const LoadingText = (props: LoadingTextProps) => {
           animate="center"
           exit="exit"
           transition={{ duration: 0.6, ease: "easeInOut" }}
-          style={{ position: "absolute", width: "100%" }}
+          style={{
+            position: "absolute",
+            width: "100%",
+          }}
         >
           <Typography
-            variant="h3"
+            variant={isMobile ? "h4" : "h3"}
             color="text.secondary"
             textAlign="center"
             fontWeight={500}
-            sx={{ lineHeight: "3rem" }}
+            sx={{ lineHeight: "3rem", textWrap: "pretty" }}
           >
             {currentItem}
           </Typography>
         </motion.div>
       </AnimatePresence>
-    </Box>
+    </Stack>
   );
 };
 
@@ -78,13 +85,13 @@ const RoadMapCreateView = (props: RoadMapCreateViewProps) => {
     const interval = setInterval(() => {
       setLoadingPercentage((prev) => {
         if (!roadmapCreated) {
-          return Math.min(prev + Math.random() * 1.5, 80);
+          return Math.min(prev + Math.max(0.5, Math.random()) * 2, 80);
         } else {
           clearInterval(interval);
           return 100;
         }
       });
-    }, Math.max(1000, Math.random() * 2000));
+    }, Math.max(500, Math.random() * 1500));
 
     if (roadmapCreated) {
       clearInterval(interval);
@@ -107,21 +114,29 @@ const RoadMapCreateView = (props: RoadMapCreateViewProps) => {
       {/* 로딩 텍스트 */}
       <LoadingText
         items={[
-          "잡톡 AI가 문서 정리하는중...",
-          "로드맵에 노드 그리는중...",
-          "노드를 선으로 연결하는중...",
-          // TODO: 로딩 문구 추가
+          "잡톡 AI가 자료를 정리하는 중...",
+          "로드맵에 영감을 불어넣는 중...",
+          "잡톡 AI가 폴더를 뒤적거리는 중...",
+          "로드맵에 필요한 정보를 검색하는 중...",
+          "예쁜 로드맵을 만들기 위해 고민하는 중...",
+          "잡톡 AI가 로드맵에 노드를 그리는 중...",
+          "떨어뜨린 색연필을 줍는 중...",
+          "잡톡 AI가 그리면서 마실 커피 타는중...",
+          "노드를 선으로 연결하는 중...",
         ]}
       />
 
       <Stack width="100%" gap={2}>
         {/* 로딩바 */}
-        <LoadingBar percentage={loadingPercentage} />
+        <LoadingBar percentage={roadmapCreated ? 100 : loadingPercentage} />
 
         <Typography
           variant="subtitle1"
           color="text.secondary"
           textAlign="center"
+          sx={{
+            textWrap: "pretty",
+          }}
         >
           로드맵 생성은 약 30초 정도 소요됩니다. 잠시만 기다려주세요.
         </Typography>

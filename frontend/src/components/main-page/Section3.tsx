@@ -15,14 +15,20 @@ import MotionWrapper from "../framer-motion/MotionWrapper";
 import MotionContainer from "../framer-motion/MotionContainer";
 
 const CHATS = [
-  "다른 개발자나 디자이너 등과 협업하는 것을 선호하나요?",
-  "응, 특히나 열심히만 하는게 아니라 일할 때 본인이 해야할 것을 다 마치고 다른 업무들도 알아서 하는 사람을 선호해.",
-  "코드를 작성하고 시스템 구조를 설계할 때 논리적으로 접근하는 것을 좋아하나요?",
-  "응, 논리적으로 접근하는 것을 좋아해. 특히나 시스템 구조를 설계할 때는 논리적인 접근이 필수적이지.",
-  "새로운 기술이나 도구를 배우는 것을 즐기나요?",
-  "응, 새로운 기술이나 도구를 배우는 것을 즐겨. 특히나 최신 기술 트렌드에 관심이 많아.",
-  "프로젝트를 진행할 때, 문제 해결을 위해 창의적인 방법을 찾는 것을 좋아하나요?",
-  "응, 문제 해결을 위해 창의적인 방법을 찾는 것을 좋아해. 특히나 복잡한 문제를 해결할 때는 창의적인 접근이 필요하지.",
+  "프로그래밍을 시작하게 된 계기가 무엇인가요?",
+  "고등학교 때 HTML로 간단한 웹페이지를 만들고 나서 흥미를 느꼈어요.",
+  "어떤 개발 분야에 특히 관심이 있나요? 프론트엔드, 백엔드, 풀스택 중에 하나를 골라주세요.",
+  "프론트엔드 디자인과 사용자 인터페이스에 흥미가 가장 많아요.",
+  "개발을 할 때 가장 재미있거나 성취감을 느끼는 순간은 언제인가요?",
+  "기능이 제대로 작동하고 화면에 잘 표현될 때 정말 뿌듯해요.",
+  "코딩 외에 관심 있는 활동이나 취미가 있다면 어떤 것이 있나요?",
+  "UI 디자인 관련 유튜브 보거나, Figma로 인터페이스 시안 만드는 걸 좋아해요.",
+  "협업 프로젝트를 해본 경험이 있나요? 있었다면 어떤 역할을 맡았나요?",
+  "대학교 1학년 때 팀 과제로 간단한 웹페이지 만들면서 프론트엔드 역할 했어요.",
+  "새로운 기술이나 프레임워크를 배울 때 어떤 방식으로 접근하나요?",
+  "유튜브 강의와 공식 문서를 같이 보면서 직접 코드를 따라 쳐봐요.",
+  "개발자로서 어떤 점이 가장 중요하다고 생각하나요?",
+  "기술도 중요하지만, 사용자를 이해하고 꾸준히 배우는 자세가 더 중요하다고 생각해요.",
 ];
 
 // 대화상자 컴포넌트
@@ -182,9 +188,9 @@ const Section3 = () => {
                 filter: "blur(2px)",
               }}
             >
-              <ChatBox message={CHATS[0]} isBot={true} />
-              <ChatBox message={CHATS[1]} isBot={false} />
               <ChatBox message={CHATS[2]} isBot={true} />
+              <ChatBox message={CHATS[3]} isBot={false} />
+              <ChatBox message={CHATS[4]} isBot={true} />
             </Stack>
 
             {/* 채팅 기록 2 */}
@@ -199,9 +205,9 @@ const Section3 = () => {
                 filter: "blur(2px)",
               }}
             >
-              <ChatBox message={CHATS[0]} isBot={true} />
-              <ChatBox message={CHATS[1]} isBot={false} />
-              <ChatBox message={CHATS[2]} isBot={true} />
+              <ChatBox message={CHATS[7]} isBot={false} />
+              <ChatBox message={CHATS[8]} isBot={true} />
+              <ChatBox message={CHATS[9]} isBot={false} />
             </Stack>
           </Stack>
 

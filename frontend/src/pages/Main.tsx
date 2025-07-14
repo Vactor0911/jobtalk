@@ -15,10 +15,12 @@ import Section1 from "../components/main-page/Section1";
 import Section2 from "../components/main-page/Section2";
 import Section3 from "../components/main-page/Section3";
 import Section4 from "../components/main-page/Section4";
+import { useRedirectPage } from "../utils";
 
 const Main = () => {
   const navigate = useNavigate();
   const theme = useTheme();
+  const redirectPage = useRedirectPage();
 
   const loginState = useAtomValue(jobTalkLoginStateAtom);
 
@@ -56,12 +58,15 @@ const Main = () => {
     })
   );
 
-  // 로그인 상태이면 워크스페이스로 이동
   useEffect(() => {
+    // 페이지 리다이렉트 함수 호출
+    redirectPage();
+
+    // 로그인 상태가 true이면 워크스페이스로 리다이렉트
     if (loginState.isLoggedIn) {
       navigate("/workspace");
     }
-  }, [loginState.isLoggedIn, navigate]);
+  }, [loginState.isLoggedIn, navigate, redirectPage]);
 
   // 로그인 상태이면 렌더 중지
   if (loginState.isLoggedIn) {

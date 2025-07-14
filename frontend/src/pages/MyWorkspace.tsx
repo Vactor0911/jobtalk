@@ -167,15 +167,24 @@ const MyWorkspace = () => {
                 >
                   <Stack
                     width="100%"
-                    height="20vh"
+                    height={{
+                      xs: "auto",
+                      sm: "20vh",
+                    }}
                     minHeight="180px"
                     padding={2}
-                    direction="row"
+                    direction={{
+                      xs: "column",
+                      sm: "row",
+                    }}
                     gap={2}
                   >
                     {/* 미리보기 이미지 */}
                     <Box
-                      height="100%"
+                      height={{
+                        xs: "130px",
+                        sm: "100%",
+                      }}
                       borderRadius={4}
                       sx={{
                         aspectRatio: "1 / 1",
@@ -184,7 +193,13 @@ const MyWorkspace = () => {
                     />
 
                     {/* 워크스페이스 정보 */}
-                    <Stack textAlign="left" paddingY={2}>
+                    <Stack
+                      textAlign="left"
+                      paddingY={{
+                        xs: 0,
+                        sm: 2,
+                      }}
+                    >
                       {/* 워크스페이스명 */}
                       <Typography variant="h6">
                         워크스페이스 {index + 1}

@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import type { LoginState } from "../state";
 import { setAccessToken } from "./accessToken";
 
@@ -106,4 +107,24 @@ export const isChatMessageValid = (message: string) => {
 
   // 메시지 형식이 올바른 경우
   return true;
+};
+
+/**
+ * GitHub Pages에서 404 에러 페이지로 리다이렉트된 경우 URL을 파싱하여 원래의 페이지로 리다이렉트하는 훅
+ */
+export const useRedirectPage = () => {
+  const navigate = useNavigate();
+
+  return () => {
+    const currentUrl = window.location.href; // 현재 URL 가져오기
+
+    // 404.html에서 반환된 URL의 형식이 아닌 경우 종료
+    if (!currentUrl.includes("/?/")) {
+      return;
+    }
+
+    // 404.html에서 반환된 URL 파싱
+    const url = currentUrl.split("/?/")[1];
+    navigate(url, { replace: true }); // 원래의 페이지로 리다이렉트
+  };
 };

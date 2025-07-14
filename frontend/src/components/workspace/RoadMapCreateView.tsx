@@ -1,4 +1,4 @@
-import { Box, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import LoadingBar from "../LoadingBar";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";

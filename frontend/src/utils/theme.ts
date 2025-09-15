@@ -22,10 +22,10 @@ export const theme = responsiveFontSizes(
   createTheme({
     palette: {
       primary: {
-        main: "#ff8551",
+        main: "#6caad0",
       },
       secondary: {
-        main: "#faf0e4",
+        main: "#b9d7e9",
       },
       text: {
         primary: "#404040",

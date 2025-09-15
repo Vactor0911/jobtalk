@@ -411,7 +411,7 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
       html: `
       <div style="font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif; max-width:500px; margin:0 auto;">
         <!-- 헤더 -->
-        <div style="background-color:#ff8551; color:white; padding:20px; text-align:left;">
+        <div style="background-color:#6caad0; color:white; padding:20px; text-align:left;">
           <h1 style="margin:0; font-size:24px; font-weight:bold;">${emailContent.title}</h1>
         </div>
         
@@ -422,8 +422,8 @@ export const sendVerifyEmail = async (req: Request, res: Response) => {
           </p>
           
           <!-- 인증번호 박스 -->
-          <div style="background-color:#faf0e4; padding:20px; text-align:center; margin-bottom:30px; border-radius:4px;">
-            <h2 style="font-size:38px; letter-spacing:10px; color:#ff8551; margin:0; font-weight:bold;">${verificationCode}</h2>
+          <div style="background-color:#b9d7e9; padding:20px; text-align:center; margin-bottom:30px; border-radius:4px;">
+            <h2 style="font-size:38px; letter-spacing:10px; color:#6caad0; margin:0; font-weight:bold;">${verificationCode}</h2>
           </div>
           
           <!-- 안내문구 -->

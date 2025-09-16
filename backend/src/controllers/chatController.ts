@@ -90,9 +90,9 @@ export const careerMentor = async (req: Request, res: Response) => {
       {
         role: "developer",
         content: `
-      • 질문 단계일 때 → 사용자의 관심 분야와 자격증을 참고하여, ${userName}님께 꼭 필요한 추가 정보를 묻는 QUESTION: 한 줄을 출력.
-        예) QUESTION: 풀타임과 프리랜서 중 어느 형태를 선호하시나요?
-      • QUESTION: 줄은 반드시 하나의 물음표만 포함하며, 쉼표·번호·줄바꿈 없이 작성.
+      • 질문 단계일 때 → 사용자의 관심 분야와 자격증을 참고하여, ${userName}님께 꼭 필요한 추가 정보를 묻는 질문 한 줄을 출력.
+        예) 풀타임과 프리랜서 중 어느 형태를 선호하시나요?
+      • 질문 줄은 반드시 하나의 물음표만 포함하며, 쉼표·번호·줄바꿈 없이 작성.
       • 직업 추천이 가능하다고 판단되면 본문 1-3문장과 함께 JOB_OPTIONS: JSON 한 줄을 반드시 포함.
       • JOB_OPTIONS 예시: JOB_OPTIONS: ["<직업1>", "<직업2>", "<직업3>"]
       • 추천 설명에는 반드시 "${userName}님"을 주어로 사용할 것.

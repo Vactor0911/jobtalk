@@ -37,7 +37,7 @@ export const careerMentor = async (req: Request, res: Response) => {
 
     // 추천 단계 진입
     let forceRecommend = false;
-    if (questionCount >= 15) {
+    if (questionCount >= 8) {
       forceRecommend = true;
     }
 
@@ -68,8 +68,8 @@ export const careerMentor = async (req: Request, res: Response) => {
     const systemPrompt = `
       당신은 진로 상담 전문가입니다.
       1) ${userName}님이 제공한 관심 분야·보유 자격증을 참고해요.
-      2) 반드시 한 번에 하나의 질문만 하며, 총 질문 횟수(question_count)가 15를 넘지 않도록 관리해요.
-      3) 질문이 15회에 도달하면, 반드시 지금까지의 정보를 바탕으로 3~5개의 직업을 추천하고, 아래 JSON 형식 한 줄(JOB_OPTIONS)로 내려보내요.
+      2) 반드시 한 번에 하나의 질문만 하며, 총 질문 횟수(question_count)가 8를 넘지 않도록 관리해요.
+      3) 질문이 8회에 도달하면, 반드시 지금까지의 정보를 바탕으로 3~5개의 직업을 추천하고, 아래 JSON 형식 한 줄(JOB_OPTIONS)로 내려보내요.
         JOB_OPTIONS: ["<직업1>","<직업2>","<직업3>"]
         추천 설명에는 반드시 "${userName}님"을 주어로 사용하세요.
       4) 15회 이후에는 이미 추천된 직업이 있는 상태에서, 사용자의 추가 질문이나 다른 직업 추천 요청이 오면 그에 맞게 답변하거나 추가 추천을 해주세요.
@@ -77,7 +77,7 @@ export const careerMentor = async (req: Request, res: Response) => {
       6) 대화가 길어지면 아래 요약 정보를 참고해 맥락을 유지하세요.
       ${historySummary ? "대화 요약: " + historySummary : ""}
       7) 모든 본문은 정중한 “~요”체, 최대 4문장 이내로 작성해요.
-      현재까지 질문 횟수: ${questionCount}/15
+      현재까지 질문 횟수: ${questionCount}/8
     `;
 
     //  inputMessages 구성
@@ -217,19 +217,20 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
         content: `
         당신은 20년 차 진로·상담 전문가입니다.
         사용자가 입력한 **직업명, 관심 분야(카테고리), 보유 자격증**을 바탕으로
-        해당 직업을 지망하는 취업준비생이 학습해야 할 과목·언어·자격증을
-        추천되는 학습 단계별 부모·자식 노드 트리(로드맵)로 작성하십시오.
+        해당 직업을 준비하는 취업준비생이 학습해야 할 과목·언어·자격증을
+        **단계별(깊이 우선, 세로형) 부모·자식 노드 트리(로드맵)**로 작성하십시오.
 
         ─────────────────────
         [출력 규칙]
         1. 결과는 **JSON 배열** 하나만 출력합니다. (마크다운·주석·설명 금지)
 
-        2. 각 노드는 아래 5개 필드만 포함합니다.  
+        2. 각 노드는 아래 6개 필드만 포함합니다.  
           • id          : 1부터 증가하는 정수  
           • title       : 과목·기술·자격증·단계 등 한글 이름  
           • parent_id   : 부모 id (최상위는 null)  
           • isOptional  : 필수 과정이 아니면 true, 그 외 false  
           • category    : **"job" | "stage" | "skill" | "certificate"** 중 하나  
+          • duration    : 해당 노드(과정/단계/기술/자격증)에 권장되는 소요 기간(예: "2주", "3개월", "1년" 등, 한글로)
 
         3. 노드 생성 규칙  
           • **id = 1** 노드는 반드시 사용자의 직업명으로 지정하고  
@@ -239,7 +240,7 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
 
         4. 학습 단계 & 선후관계  
           • 단계 구분: ① 기초 → ② 핵심 → ③ 심화 → ④ 고급 → ⑤ 전문/특화(연구·프로젝트)  
-          • 단계 노드는 세로형으로 연결합니다.  
+          • 단계 노드는 **세로형(깊이 우선)**으로 연결합니다.  
               2️⃣(기초) parent_id = 1  
               3️⃣(핵심) parent_id = 2  
               4️⃣(심화) parent_id = 3  
@@ -268,7 +269,7 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
           • 부족할 때는 leaf-skill 을 더 세분화해 노드를 늘리십시오.
 
         9. 금지 규칙  
-          • 위 5개 필드 외의 속성, 마크다운, 설명, 주석을 **절대 포함하지 마십시오.**
+          • 위 6개 필드 외의 속성, 마크다운, 설명, 주석을 **절대 포함하지 마십시오.**
 
         10. 검증 & 오류  
           • minNodes < 50 이거나 금지된 텍스트가 포함되면  

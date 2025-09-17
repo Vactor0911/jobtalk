@@ -468,7 +468,7 @@ const ChatbotView = (props: ChatbotViewProps) => {
 
     loadChatHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataLoaded, uuid, updateWorkspaceChat, fetchChatHistory, saveMessageToWorkspace, firstMessageSent]);
+  }, [dataLoaded, uuid, updateWorkspaceChat, fetchChatHistory, saveMessageToWorkspace, firstMessageSent, interestCategory, userCertificates, userName]);
 
   // 로드맵 저장 핸들러
   const handleSaveRoadmap = useCallback(

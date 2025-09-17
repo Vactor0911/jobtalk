@@ -18,7 +18,7 @@ interface Chat {
 }
 
 // 최대 대화 횟수
-const MAX_CHAT_COUNT = 18;
+const MAX_CHAT_COUNT = 11; // 기본 8회 + 추가 3회
 
 // AI 응답에서 직업 옵션 추출 함수
 const extractJobOptions = (message: string): string[] | null => {
@@ -80,6 +80,7 @@ const ChatbotView = (props: ChatbotViewProps) => {
   const [, setForceRecommendCount] = useState(0); // 직업 추천 강제 카운트
   const [isRecommendLimit, setIsRecommendLimit] = useState(false); // 직업 추천 제한 여부
   const [recommendedJobs, setRecommendedJobs] = useState<string[]>([]); // 추천된 직업 목록
+  const [firstMessageSent, setFirstMessageSent] = useState(false); // 첫 메시지 전송 여부
 
   // 프로필 이미지와 닉네임 상태
   const [userName, setUserName] = useState<string>("");
@@ -387,7 +388,7 @@ const ChatbotView = (props: ChatbotViewProps) => {
   // 첫 대화 또는 대화 기록 불러오기
   useEffect(() => {
     // 필요한 데이터가 로드되기 전에는 실행하지 않음
-    if (!dataLoaded) return;
+    if (!dataLoaded || firstMessageSent) return;
 
     // 워크스페이스 대화 모드로 업데이트
     updateWorkspaceChat();
@@ -398,8 +399,9 @@ const ChatbotView = (props: ChatbotViewProps) => {
       const hasHistory = await fetchChatHistory();
 
       // 대화 기록이 없으면 첫 대화 시작
-      if (!hasHistory) {
+      if (!hasHistory && !firstMessageSent) {
         // 첫 메시지 텍스트
+        setFirstMessageSent(true); // 첫 메시지 전송 플래그 ON
         const initialMessage = "안녕하세요, 진로 상담을 시작해 볼게요!";
 
         try {
@@ -415,6 +417,7 @@ const ChatbotView = (props: ChatbotViewProps) => {
               certificates: userCertificates,
               workspaceUuid: uuid,
               userName: userName,
+              previousResponseId: null, // 첫 메시지임을 명확히
             },
             {
               headers: {
@@ -464,16 +467,8 @@ const ChatbotView = (props: ChatbotViewProps) => {
     };
 
     loadChatHistory();
-  }, [
-    dataLoaded,
-    updateWorkspaceChat,
-    fetchChatHistory,
-    saveMessageToWorkspace,
-    interestCategory,
-    userCertificates,
-    uuid,
-    userName,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataLoaded, uuid, updateWorkspaceChat, fetchChatHistory, saveMessageToWorkspace, firstMessageSent, interestCategory, userCertificates, userName]);
 
   // 로드맵 저장 핸들러
   const handleSaveRoadmap = useCallback(

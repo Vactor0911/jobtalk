@@ -37,7 +37,7 @@ export const careerMentor = async (req: Request, res: Response) => {
 
     // 추천 단계 진입
     let forceRecommend = false;
-    if (questionCount >= 15) {
+    if (questionCount >= 8) {
       forceRecommend = true;
     }
 
@@ -65,20 +65,24 @@ export const careerMentor = async (req: Request, res: Response) => {
     const isFirstMessage = !previousResponseId && questionCount === 0;
 
     // systemPrompt 생성 (항상 DB의 historySummary 사용)
-    const systemPrompt = `
+    let systemPrompt = "";
+    if (forceRecommend) {
+      systemPrompt = `
       당신은 진로 상담 전문가입니다.
-      1) ${userName}님이 제공한 관심 분야·보유 자격증을 참고해요.
-      2) 반드시 한 번에 하나의 질문만 하며, 총 질문 횟수(question_count)가 15를 넘지 않도록 관리해요.
-      3) 질문이 15회에 도달하면, 반드시 지금까지의 정보를 바탕으로 3~5개의 직업을 추천하고, 아래 JSON 형식 한 줄(JOB_OPTIONS)로 내려보내요.
-        JOB_OPTIONS: ["<직업1>","<직업2>","<직업3>"]
-        추천 설명에는 반드시 "${userName}님"을 주어로 사용하세요.
-      4) 15회 이후에는 이미 추천된 직업이 있는 상태에서, 사용자의 추가 질문이나 다른 직업 추천 요청이 오면 그에 맞게 답변하거나 추가 추천을 해주세요.
-      5) 추가 질문/추천 요청은 최대 3회까지만 허용하며, 이후에는 직업 선택만 가능하다고 안내하세요.
-      6) 대화가 길어지면 아래 요약 정보를 참고해 맥락을 유지하세요.
+      지금까지 수집한 정보를 바탕으로 반드시 직업을 추천하세요.
+      추가 정보 질문 없이, 추천 직업과 그 이유를 1~3문장으로 설명하세요.
+      추천 직업은 JOB_OPTIONS: ["직업1", "직업2", "직업3"] 형식으로 반드시 포함하세요.
+      답변은 항상 "~요" 체로, 3~5줄 이내로 간결하게 작성하세요.
       ${historySummary ? "대화 요약: " + historySummary : ""}
-      7) 모든 본문은 정중한 “~요”체, 최대 4문장 이내로 작성해요.
-      현재까지 질문 횟수: ${questionCount}/15
     `;
+    } else {
+      systemPrompt = `
+      당신은 진로 상담 전문가입니다.
+      사용자가 제공한 관심 분야, 보유 자격증, 그리고 대화 요약(historySummary)을 참고하여 필요한 정보를 묻거나 직업을 추천하세요.
+      질문은 항상 한 번에 하나만, "~요"체로 3~5줄 내외로 정중하게 작성하세요.
+      ${historySummary ? "대화 요약: " + historySummary : ""}
+    `;
+    }
 
     //  inputMessages 구성
     let inputMessages = [
@@ -86,12 +90,13 @@ export const careerMentor = async (req: Request, res: Response) => {
       {
         role: "developer",
         content: `
-          • 질문 단계일 때는 본문 없이 QUESTION: 한 줄만 출력.
-            예) QUESTION: 풀타임과 프리랜서 중 어느 형태를 선호하시나요?
-          • QUESTION: 줄은 딱 하나의 물음표만 포함하며 쉼표·번호·줄바꿈 없이 작성.
-          • 추천 단계에서는 본문 1-3문장 + JOB_OPTIONS: JSON 한 줄.
-          • 어떤 단계에서든 규칙을 절대 어기지 말 것.
-        `,
+      • 질문 단계일 때 → 사용자의 관심 분야와 자격증을 참고하여, ${userName}님께 꼭 필요한 추가 정보를 묻는 질문 한 줄을 출력.
+        예) 풀타임과 프리랜서 중 어느 형태를 선호하시나요?
+      • 질문 줄은 반드시 하나의 물음표만 포함하며, 쉼표·번호·줄바꿈 없이 작성.
+      • 직업 추천이 가능하다고 판단되면 본문 1-3문장과 함께 JOB_OPTIONS: JSON 한 줄을 반드시 포함.
+      • JOB_OPTIONS 예시: JOB_OPTIONS: ["<직업1>", "<직업2>", "<직업3>"]
+      • 추천 설명에는 반드시 "${userName}님"을 주어로 사용할 것.
+    `,
       },
     ];
 
@@ -100,17 +105,23 @@ export const careerMentor = async (req: Request, res: Response) => {
       inputMessages.push({
         role: "user",
         content: `안녕하세요! 진로 상담을 받고 싶은 학생입니다. 
-          제가 보유한 자격증은 ${certificates}이고, 
-          관심 분야는 ${interests}입니다. 
-          ${message}
-          답변은 항상 "~요" 체로, 3~5줄 내외로 간결하게 작성하세요.`,
+        제가 보유한 자격증은 ${certificates}이고, 
+        관심 분야는 ${interests}입니다. 
+        ${message}
+
+        ${userName}님의 정보를 기반으로, 어떤 추가 정보가 필요한지 분석하고 꼭 필요한 질문만 해주세요.
+        답변은 항상 "~요" 체로, 3~5줄 이내로 간결하게 작성하세요.`,
       });
     } else {
-      // 질문 15회 전/후/추가 3회 모두 사용자의 입력을 그대로 전달
       inputMessages.push({
         role: "user",
-        content: `${message}
-          답변은 항상 "~요" 체로, 3~5줄 내외로 간결하게 작성하세요.`,
+        content: `
+        ${message}
+
+        ${userName}님의 정보를 기반으로, 어떤 추가 정보가 필요한지 분석하고 꼭 필요한 질문만 해주세요.
+        만약 수집된 정보로 직업 추천이 충분하다면, 직업을 추천해주세요.
+        답변은 항상 "~요" 체로, 3~5줄 이내로 간결하게 작성하세요.
+            `,
       });
     }
 
@@ -217,19 +228,20 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
         content: `
         당신은 20년 차 진로·상담 전문가입니다.
         사용자가 입력한 **직업명, 관심 분야(카테고리), 보유 자격증**을 바탕으로
-        해당 직업을 지망하는 취업준비생이 학습해야 할 과목·언어·자격증을
-        추천되는 학습 단계별 부모·자식 노드 트리(로드맵)로 작성하십시오.
+        해당 직업을 준비하는 취업준비생이 학습해야 할 과목·언어·자격증을
+        **단계별(깊이 우선, 세로형) 부모·자식 노드 트리(로드맵)**로 작성하십시오.
 
         ─────────────────────
         [출력 규칙]
         1. 결과는 **JSON 배열** 하나만 출력합니다. (마크다운·주석·설명 금지)
 
-        2. 각 노드는 아래 5개 필드만 포함합니다.  
+        2. 각 노드는 아래 6개 필드만 포함합니다.  
           • id          : 1부터 증가하는 정수  
           • title       : 과목·기술·자격증·단계 등 한글 이름  
           • parent_id   : 부모 id (최상위는 null)  
           • isOptional  : 필수 과정이 아니면 true, 그 외 false  
           • category    : **"job" | "stage" | "skill" | "certificate"** 중 하나  
+          • duration    : 해당 노드(과정/단계/기술/자격증)에 권장되는 소요 기간(예: "2주", "3개월", "1년" 등, 한글로)
 
         3. 노드 생성 규칙  
           • **id = 1** 노드는 반드시 사용자의 직업명으로 지정하고  
@@ -239,7 +251,7 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
 
         4. 학습 단계 & 선후관계  
           • 단계 구분: ① 기초 → ② 핵심 → ③ 심화 → ④ 고급 → ⑤ 전문/특화(연구·프로젝트)  
-          • 단계 노드는 세로형으로 연결합니다.  
+          • 단계 노드는 **세로형(깊이 우선)**으로 연결합니다.  
               2️⃣(기초) parent_id = 1  
               3️⃣(핵심) parent_id = 2  
               4️⃣(심화) parent_id = 3  
@@ -268,11 +280,12 @@ export const generateCareerRoadmap = async (req: Request, res: Response) => {
           • 부족할 때는 leaf-skill 을 더 세분화해 노드를 늘리십시오.
 
         9. 금지 규칙  
-          • 위 5개 필드 외의 속성, 마크다운, 설명, 주석을 **절대 포함하지 마십시오.**
+          • 위 6개 필드 외의 속성, 마크다운, 설명, 주석을 **절대 포함하지 마십시오.**
 
         10. 검증 & 오류  
           • minNodes < 50 이거나 금지된 텍스트가 포함되면  
-            출력은 오직 한 단어 **“오류”** 만 적으십시오.
+            최대한 노드를 세분화하여 50개 이상이 되도록 다시 시도하십시오.  
+            그래도 불가능하면 생성 가능한 최대한의 노드로 출력하십시오.
         `,
       },
       {

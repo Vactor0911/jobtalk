@@ -242,7 +242,7 @@ const MyWorkspace = () => {
         <Typography variant="subtitle1" color="text.secondary">
           계정당 최대 3개의 워크스페이스를 사용할 수 있습니다.
           <br />
-          생성된 워크스페이스는 경진대회 기간 종료 후 즉시 삭제됩니다.
+          생성된 워크스페이스 데이터는 대회 종료 후 즉시 삭제됩니다.
         </Typography>
       </Stack>
     </Container>

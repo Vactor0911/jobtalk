@@ -2,8 +2,8 @@
 
 <div align="center">
     <div style="display: flex;">
-        <img src="https://github.com/user-attachments/assets/2fad70b7-1c08-4d7d-8f11-dd64c45cef36" alt="잡톡" style="width: 100px;" />
-        <img src="https://github.com/user-attachments/assets/42f227e4-4290-4ded-bc2f-d7a6b7cdb694" alt="잡톡" style="width: 300px;" />
+        <img src="https://github.com/user-attachments/assets/f27ed59f-217b-4ccc-9ce3-9b92adc1b54a" alt="잡톡" style="width: 100px;" />
+        <img src="https://github.com/user-attachments/assets/e3eb1969-814b-47de-a62e-48a67d2c457a" alt="잡톡" style="width: 300px;" />
     </div>
     <h3>AI 기반 진로 로드맵 설계 솔루션, 잡톡</h3>
     <p>잡톡 AI와 함께 원하는 진로를 그려보세요!</p>
@@ -11,11 +11,6 @@
         JobTalk 바로가기
     </a>
 </div>
-
-<br />
-
-> [!WARNING]
-> 경진대회 기간이 종료되어 본 서비스를 이용하실 수 없습니다.
 
 <br />
 
@@ -63,6 +58,7 @@
         <th style="text-align: center;">[ 팀장 ]<br />프론트엔드 / 서버</th>
         <th style="text-align: center;">백엔드 / DB</th>
         <th style="text-align: center;">UX/UI 디자인</th>
+        <th style="text-align: center;">프롬프트 엔지니어링</th>
     <tr>
     <tr>
         <td>
@@ -74,6 +70,9 @@
         <td>
             <a href="https://github.com/JSukhen2" target="_blank"><img src="https://avatars.githubusercontent.com/u/151798040?v=4" alt="JSukhen2" width="100"></a>
         </td>
+        <td>
+            <a href="https://github.com/hanataba227" target="_blank"><img src="https://avatars.githubusercontent.com/u/30544681?v=4" alt="hanataba227" width="100"></a>
+        </td>
     </tr>
     <tr>
         <td style="text-align: center;">
@@ -84,6 +83,9 @@
         </td>
         <td style="text-align: center;">
             <a href="https://github.com/JSukhen2" target="_blank">JSukhen2</a>
+        </td>
+        <td style="text-align: center;">
+            <a href="https://github.com/hanataba227" target="_blank">hanataba227</a>
         </td>
     </tr>
 </table>

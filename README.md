@@ -2,8 +2,8 @@
 
 <div align="center">
     <div style="display: flex;">
-        <img src="https://github.com/user-attachments/assets/2fad70b7-1c08-4d7d-8f11-dd64c45cef36" alt="잡톡" style="width: 100px;" />
-        <img src="https://github.com/user-attachments/assets/42f227e4-4290-4ded-bc2f-d7a6b7cdb694" alt="잡톡" style="width: 300px;" />
+        <img src="https://github.com/user-attachments/assets/f27ed59f-217b-4ccc-9ce3-9b92adc1b54a" alt="잡톡" style="width: 100px;" />
+        <img src="https://github.com/user-attachments/assets/e3eb1969-814b-47de-a62e-48a67d2c457a" alt="잡톡" style="width: 300px;" />
     </div>
     <h3>AI 기반 진로 로드맵 설계 솔루션, 잡톡</h3>
     <p>잡톡 AI와 함께 원하는 진로를 그려보세요!</p>

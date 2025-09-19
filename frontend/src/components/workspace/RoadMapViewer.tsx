@@ -1,5 +1,10 @@
 import { Box, Paper, Stack, Typography, useTheme } from "@mui/material";
-import { Controls, ReactFlow, type ReactFlowInstance } from "@xyflow/react";
+import {
+  Controls,
+  ReactFlow,
+  type ReactFlowInstance,
+  Position,
+} from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -22,6 +27,8 @@ interface Node {
   type?: string;
   data: { label: JSX.Element | string };
   position: { x: number; y: number };
+  sourcePosition?: Position;
+  targetPosition?: Position;
   style: {
     backgroundColor: string;
     border: string;
@@ -195,38 +202,67 @@ const RoadMapViewer = ({
         }
       });
 
-      // 루트 노드 찾기
-      const rootNodes = nodes.filter((node) => {
+      // 단계 카테고리 노드 찾기
+      const stageNodes = nodes.filter((node) => {
         const data = idToNode.get(node.id);
-        return !data?.parent_id;
+        return data?.category === "stage";
       });
 
       // 재귀적으로 위치 계산
-      let currentX = 0;
+      let currentY = 1;
       const nodePositions: Record<string, { x: number; y: number }> = {};
 
-      const setPositions = (nodeId: string, depth: number) => {
+      const setPositions = (
+        nodeId: string,
+        depth: number,
+        direction: number
+      ) => {
         const children = childrenMap[nodeId] || [];
 
+        // 노드 엣지 위치 수정
+        const nodeData = nodes.find((n) => n.id === nodeId);
+        if (nodeData) {
+          nodeData.sourcePosition =
+            direction === 1 ? Position.Right : Position.Left;
+          nodeData.targetPosition =
+            direction === 1 ? Position.Left : Position.Right;
+        }
+
         if (children.length === 0) {
-          // 리프 노드를 현재 x에 위치
-          nodePositions[nodeId] = { x: currentX * 200, y: depth * 150 };
-          currentX += 1;
+          // 리프 노드를 현재 y에 위치
+          nodePositions[nodeId] = {
+            x: depth * 200 * direction,
+            y: currentY * 80,
+          };
+          currentY += 1;
         } else {
           // 자식 먼저 배치
           const childXs: number[] = [];
-          children.forEach((childId) => {
-            setPositions(childId, depth + 1);
-            childXs.push(nodePositions[childId].x);
-          });
+          children
+            .filter((child) => idToNode.get(child)?.category !== "stage")
+            .forEach((childId) => {
+              setPositions(childId, depth + 1, direction);
+              childXs.push(nodePositions[childId].y);
+            });
+
           // 부모는 자식들의 x의 중앙에 위치
           const minX = Math.min(...childXs);
           const maxX = Math.max(...childXs);
-          nodePositions[nodeId] = { x: (minX + maxX) / 2, y: depth * 150 };
+          nodePositions[nodeId] = {
+            x: depth * 200 * direction,
+            y: (minX + maxX) / 2,
+          };
         }
       };
 
-      rootNodes.forEach((node) => setPositions(node.id, 0));
+      // 각 단계 노드를 중심으로 좌우로 배치
+      stageNodes.forEach((node, index) => {
+        const direction = index % 2 === 0 ? 1 : -1;
+        setPositions(node.id, 0, direction);
+
+        node.sourcePosition = direction === 1 ? Position.Right : Position.Left;
+        node.targetPosition = Position.Top;
+      });
 
       // 노드에 position 할당
       return nodes.map((node) => ({

@@ -58,7 +58,7 @@
         <th style="text-align: center;">[ 팀장 ]<br />프론트엔드 / 서버</th>
         <th style="text-align: center;">백엔드 / DB</th>
         <th style="text-align: center;">UX/UI 디자인</th>
-        <th style="text-align: center;">프롬프트 엔지니어링</th>
+        <th style="text-align: center;">AI 서비스 기획</th>
     <tr>
     <tr>
         <td>

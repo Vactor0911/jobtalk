@@ -14,11 +14,6 @@
 
 <br />
 
-> [!WARNING]
-> 경진대회 기간이 종료되어 본 서비스를 이용하실 수 없습니다.
-
-<br />
-
 ## 📖 Description | 설명
 
 > 앞으로 무슨 일을 해야 하지?
@@ -63,6 +58,7 @@
         <th style="text-align: center;">[ 팀장 ]<br />프론트엔드 / 서버</th>
         <th style="text-align: center;">백엔드 / DB</th>
         <th style="text-align: center;">UX/UI 디자인</th>
+        <th style="text-align: center;">프롬프트 엔지니어링</th>
     <tr>
     <tr>
         <td>
@@ -74,6 +70,9 @@
         <td>
             <a href="https://github.com/JSukhen2" target="_blank"><img src="https://avatars.githubusercontent.com/u/151798040?v=4" alt="JSukhen2" width="100"></a>
         </td>
+        <td>
+            <a href="https://github.com/hanataba227" target="_blank"><img src="https://avatars.githubusercontent.com/u/30544681?v=4" alt="hanataba227" width="100"></a>
+        </td>
     </tr>
     <tr>
         <td style="text-align: center;">
@@ -84,6 +83,9 @@
         </td>
         <td style="text-align: center;">
             <a href="https://github.com/JSukhen2" target="_blank">JSukhen2</a>
+        </td>
+        <td style="text-align: center;">
+            <a href="https://github.com/hanataba227" target="_blank">hanataba227</a>
         </td>
     </tr>
 </table>

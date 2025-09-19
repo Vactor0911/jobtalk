@@ -239,7 +239,7 @@ const RoadMapViewer = ({
           // 자식 먼저 배치
           const childXs: number[] = [];
           children
-            .filter((child) => idToNode.get(child).category !== "stage")
+            .filter((child) => idToNode.get(child)?.category !== "stage")
             .forEach((childId) => {
               setPositions(childId, depth + 1, direction);
               childXs.push(nodePositions[childId].y);

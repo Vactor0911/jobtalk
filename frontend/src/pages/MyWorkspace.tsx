@@ -75,6 +75,7 @@ const MyWorkspace = () => {
 
       // 날짜 포맷터 - 한국어 형식으로 날짜와 시간 표시
       const formatter = new Intl.DateTimeFormat("ko-KR", {
+        timeZone: "Asia/Seoul",
         year: "numeric",
         month: "long",
         day: "numeric",

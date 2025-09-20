@@ -129,3 +129,21 @@ export const useRedirectPage = () => {
     return true; // 리다이렉트 성공
   };
 };
+
+/**
+ * KST로 날짜 문자열을 파싱하는 함수
+ * @param date 날짜 문자열
+ * @returns KST로 파싱된 날짜 객체
+ */
+export const parseKST = (date: string) => {
+  if (!date) return new Date(NaN);
+  // ISO 공백을 "T"로 통일
+  const isoish = date.replace(" ", "T");
+
+  // 이미 오프셋/Z가 있으면 그대로 사용
+  if (/[+-]\d{2}:?\d{2}$|Z$/i.test(isoish)) {
+    return new Date(isoish);
+  }
+
+  return new Date(`${isoish}+09:00`);
+};

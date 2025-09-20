@@ -8,7 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
-import { getRandomColor } from "../utils";
+import { getRandomColor, parseKST } from "../utils";
 import { enqueueSnackbar } from "notistack";
 import { useNavigate } from "react-router";
 import axiosInstance from "../utils/axiosInstance";
@@ -70,8 +70,8 @@ const MyWorkspace = () => {
   // 생성/수정 시간 표시 포맷 함수
   const formatDateDisplay = useCallback(
     (createdAt: string, updatedAt: string) => {
-      const created = new Date(createdAt);
-      const updated = new Date(updatedAt);
+      const created = parseKST(createdAt);
+      const updated = parseKST(updatedAt);
 
       // 날짜 포맷터 - 한국어 형식으로 날짜와 시간 표시
       const formatter = new Intl.DateTimeFormat("ko-KR", {

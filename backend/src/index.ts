@@ -43,12 +43,17 @@ dotenv.config();
 const PORT = Number(process.env.SERVER_PORT); // 서버가 실행될 포트 번호
 
 const app = express();
+
+// 신뢰할 프록시 설정
+app.set("trust proxy", 2);
+
+// CORS 설정, credentials는 프론트와 백엔드의 쿠키 공유를 위해 필요
 app.use(
   cors({
     origin: process.env.SERVER_CORS_ORIGIN, // CORS 허용 도메인 설정
     credentials: true,
   })
-); // CORS 설정, credentials는 프론트와 백엔드의 쿠키 공유를 위해 필요
+);
 
 app.use(
   helmet({

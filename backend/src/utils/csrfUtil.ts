@@ -19,6 +19,9 @@ export const csrfProtection = (
 
   // 요청 헤더에서 CSRF 토큰 가져오기
   const csrfToken = req.headers["x-csrf-token"] as string;
+  console.log("요청 헤더의 CSRF 토큰:", csrfToken);
+  console.log("쿠키의 CSRF 토큰:", req.signedCookies["csrf-token"]);
+  console.log("서로 다른지 확인:", csrfToken !== req.signedCookies["csrf-token"]);
 
   // 쿠키에서 CSRF 토큰 가져오기
   const csrfCookie = req.signedCookies["csrf-token"];

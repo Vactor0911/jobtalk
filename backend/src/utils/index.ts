@@ -1,8 +1,5 @@
 import rateLimit from "express-rate-limit"; // 요청 제한 미들웨어
-import {
-  csrfTokenMiddleware,
-  csrfProtection as csrfProtectionUtil,
-} from "./csrfUtil";
+import { csrfTokenMiddleware } from "./csrfUtil";
 
 // 일반 API용 Rate Limiter
 export const limiter = rateLimit({
@@ -61,7 +58,6 @@ export const roadmapChatbotLimiter = rateLimit({
 });
 
 // CSRF 미들웨어 내보내기
-export const csrfProtection = csrfProtectionUtil;
 export { csrfTokenMiddleware };
 
 /**

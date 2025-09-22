@@ -12,5 +12,13 @@ export default defineConfig({
   server: {
     port: 3000,
     allowedHosts: ["0.tcp.jp.ngrok.io"],
+    proxy: {
+      "/api": {
+        target: process.env.VITE_SERVER_HOST,
+        changeOrigin: true,
+        secure: false,
+        rewrite: (p) => p.replace(/^\/api/, ""),
+      },
+    },
   },
 });

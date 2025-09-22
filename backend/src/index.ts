@@ -1,4 +1,5 @@
-import express, { Request, Response } from "express";
+import "dotenv/config";
+import express, { NextFunction, Request, Response } from "express";
 import cors from "cors"; // CORS 설정을 위한 라이브러리
 import cookieParser from "cookie-parser"; // 쿠키 파싱을 위한 라이브러리
 import bodyParser from "body-parser"; // 요청 본문 파싱을 위한 라이브러리
@@ -15,9 +16,6 @@ import qualificationRoute from "./routes/qualificationRoute";
 import { dbPool } from "./config/db";
 import { syncQualificationsToDatabase } from "./controllers/qualificationController";
 import workspaceRoute from "./routes/workspaceRoute";
-
-// .env 파일 로드
-dotenv.config();
 
 // 환경변수가 하나라도 없으면 서버 실행 불가
 [
@@ -82,6 +80,18 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // CSRF 토큰 미들웨어 추가
 app.use(csrfTokenMiddleware);
+
+// csurf 전용 에러 핸들러 추가
+app.use((err: any, _req: Request, res: Response, next: NextFunction): void => {
+  if (err?.code === "EBADCSRFTOKEN") {
+    res.status(403).json({
+      success: false,
+      message: "CSRF 토큰이 유효하지 않습니다.",
+    });
+    return;
+  }
+  next(err);
+});
 
 // 서버 시작 후 자격증 데이터 확인 및 동기화
 const initializeQualifications = async () => {

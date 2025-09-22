@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors"; // CORS 설정을 위한 라이브러리
 import cookieParser from "cookie-parser"; // 쿠키 파싱을 위한 라이브러리
@@ -15,9 +16,6 @@ import qualificationRoute from "./routes/qualificationRoute";
 import { dbPool } from "./config/db";
 import { syncQualificationsToDatabase } from "./controllers/qualificationController";
 import workspaceRoute from "./routes/workspaceRoute";
-
-// .env 파일 로드
-dotenv.config();
 
 // 환경변수가 하나라도 없으면 서버 실행 불가
 [

@@ -218,10 +218,12 @@ const Login = () => {
       <Stack
         component="form"
         minHeight="calc(100vh - 64px)"
-        justifyContent="center"
+        justifyContent="space-between"
         paddingY={4}
         paddingBottom={10}
       >
+        <Box />
+
         <Stack gap={6}>
           {/* 로고 링크 버튼 */}
           <PlainLink to="/">
@@ -316,6 +318,16 @@ const Login = () => {
             </Stack>
           </Stack>
         </Stack>
+
+        {/* 쿠키 사용 안내 문구 */}
+        <Typography
+          variant="subtitle2"
+          color="text.secondary"
+          textAlign="center"
+          fontWeight={400}
+        >
+          원활한 서비스 이용을 위해 쿠키 사용에 동의해주세요.
+        </Typography>
       </Stack>
     </Container>
   );

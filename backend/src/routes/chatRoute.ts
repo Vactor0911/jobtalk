@@ -1,5 +1,5 @@
 import express from "express";
-import { csrfProtection, limiter, roadmapChatbotLimiter } from "../utils"; // 기존 rate limiter 사용
+import { limiter, roadmapChatbotLimiter } from "../utils"; // 기존 rate limiter 사용
 import {
   careerMentor,
   generateCareerRoadmap,
@@ -24,7 +24,6 @@ chatRoute.post(
 // 로드맵 생성 전용 API
 chatRoute.post(
   "/career/roadmap",
-  csrfProtection,
   limiter,
   authenticateToken,
   generateCareerRoadmap

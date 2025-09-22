@@ -7,15 +7,6 @@ export const generateCsrfToken = () => {
   return uuidv4();
 };
 
-// CSRF 보호 미들웨어
-export const csrfProtection = (
-  _req: Request,
-  _res: Response,
-  next: NextFunction
-) => {
-  return next();
-};
-
 // Request 객체에 csrfToken 메소드 추가 (기존 csurf와 호환성 유지)
 declare global {
   namespace Express {

@@ -18,7 +18,8 @@ export const getCsrfToken = async () => {
   return csrfTokenCache;
 };
 
-let isInterceptorInitialized = false; // 인터셉터 초기화 상태를 저장
+// 인터셉터 초기화 상태를 저장
+let isInterceptorInitialized = false;
 
 // 액세스 토큰이 만료되면 자동으로 갱신하는 인터셉터
 export const setupAxiosInterceptors = () => {
@@ -52,7 +53,7 @@ export const setupAxiosInterceptors = () => {
   axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
-      // 필요 시 403/CSRF 실패 시 캐시 초기화 등 처리
+      // 필요 시 403 / CSRF 실패 시 캐시 초기화 등 처리
       if (error.response?.status === 403) {
         csrfTokenCache = null;
       }

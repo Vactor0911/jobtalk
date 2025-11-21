@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { dbPool } from "../config/db";
+import { getRandWorkspaceName } from "../utils";
 
 // 사용자의 모든 워크스페이스 조회
 export const getAllWorkspaces = async (req: Request, res: Response) => {
@@ -727,5 +728,72 @@ export const getWorkspaceRoadmap = async (req: Request, res: Response) => {
       message: "로드맵 조회에 실패했습니다.",
       error: error.message,
     });
+  }
+};
+
+export const deleteWorkspace = async (req: Request, res: Response) => {
+  const { uuid } = req.params; // 워크스페이스 uuid
+  const user = req.user as { userUuid: string };
+  const connection = await dbPool.getConnection();
+
+  try {
+    // 트랜잭션 시작
+    await connection.beginTransaction();
+
+    // 워크스페이스 소유자 확인
+    const workspaces = await dbPool.query(
+      "SELECT id, status FROM workspace WHERE workspace_uuid = ? AND user_uuid = ? AND is_active = TRUE",
+      [uuid, user.userUuid]
+    );
+    if (workspaces.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "워크스페이스를 찾을 수 없거나 권한이 없습니다.",
+      });
+      return;
+    } else if (workspaces[0].status === "waiting") {
+      res.status(400).json({
+        success: false,
+        message: "대화가 시작되지 않은 워크스페이스는 삭제할 수 없습니다.",
+      });
+      return;
+    }
+
+    // 워크스페이스 삭제
+    await connection.execute(
+      `
+        DELETE FROM workspace
+        WHERE workspace_uuid = ? AND user_uuid = ?
+      `,
+      [uuid, user.userUuid]
+    );
+
+    // 워크스페이스 생성
+    const workspaceName = getRandWorkspaceName();
+    await connection.execute(
+      `INSERT INTO workspace 
+        (user_uuid, name, status, chat_topic, is_active) 
+        VALUES (?, ?, 'waiting', NULL, TRUE)`,
+      [user.userUuid, workspaceName]
+    );
+
+    // 트랜잭션 커밋
+    await connection.commit();
+
+    // 성공 응답 전송
+    res.status(200).json({
+      success: true,
+      message: "워크스페이스가 성공적으로 삭제되었습니다.",
+    });
+  } catch (error: any) {
+    await connection.rollback();
+
+    console.error("워크스페이스 삭제 오류:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "워크스페이스 삭제에 실패했습니다.",
+    });
+  } finally {
+    connection.release();
   }
 };

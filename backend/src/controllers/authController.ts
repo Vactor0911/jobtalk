@@ -8,14 +8,9 @@ import jwt from "jsonwebtoken"; // JWT 토큰 생성 및 검증 라이브러리
 import multer from "multer"; // 파일 업로드를 위한 라이브러리
 import fs from "fs"; // 파일 시스템 모듈
 import path from "path"; // 경로 조작을 위한 모듈
+import { getRandWorkspaceName } from "../utils";
 
 const allowedSymbolsForPassword = /^[a-zA-Z0-9!@#$%^&*?]*$/; // 허용된 문자만 포함하는지 확인
-
-const workspaceNames = [
-  "안녕하세요! 진로 상담이 궁금해요 💬",
-  "새로운 꿈을 찾고 있어요 ✨",
-  "나만의 로드맵을 만들어볼까요? 🗺️",
-];
 
 // 사용자 회원가입
 export const register = async (req: Request, res: Response) => {
@@ -97,7 +92,7 @@ export const register = async (req: Request, res: Response) => {
         `INSERT INTO workspace 
         (user_uuid, name, status, chat_topic, is_active) 
         VALUES (?, ?, 'waiting', NULL, TRUE)`,
-        [userUuid, workspaceNames[i]]
+        [userUuid, getRandWorkspaceName()]
       );
     }
 

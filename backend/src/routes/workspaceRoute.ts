@@ -1,6 +1,7 @@
 import express from "express";
 import { limiter } from "../utils"; // 기존 rate limiter 사용
 import {
+  deleteWorkspace,
   getAllWorkspaces,
   getRoadmapChatbotChats,
   getWorkspaceAndUserBasicInfo,
@@ -94,5 +95,8 @@ workspaceRoute.get(
   authenticateToken,
   getWorkspaceRoadmap
 );
+
+// 워크스페이스 uuid로 워크스페이스 삭제
+workspaceRoute.delete(`/:uuid`, limiter, authenticateToken, deleteWorkspace);
 
 export default workspaceRoute;

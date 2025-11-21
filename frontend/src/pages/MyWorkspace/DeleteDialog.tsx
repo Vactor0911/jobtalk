@@ -24,12 +24,12 @@ const DeleteDialog = (props: DeleteDialogProp) => {
   const { workspace, fetchWorkspaces, setDeleteWorkspaceIndex, sx, ...other } =
     props;
 
-  const [workspaceName, setWorkspaceNmae] = useState("");
+  const [workspaceName, setWorkspaceName] = useState("");
 
   // 워크스페이스 업데이트
   useEffect(() => {
     if (workspace) {
-      setWorkspaceNmae(workspace.name);
+      setWorkspaceName(workspace.name);
     }
   }, [workspace]);
 

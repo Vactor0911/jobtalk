@@ -90,6 +90,7 @@ const MyWorkspace = () => {
           <Stack gap={4}>
             {workspaces.map((workspace, index) => (
               <WorkspaceItem
+                key={workspace.uuid}
                 workspace={workspace}
                 number={index + 1}
                 onDelete={() => setDeleteWorkspaceIndex(index)}

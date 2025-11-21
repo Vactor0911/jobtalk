@@ -125,7 +125,7 @@ const WorkspaceItem = (props: WorkspaceItemProps) => {
             borderRadius={4}
             sx={{
               aspectRatio: "1 / 1",
-              backgroundColor: getRandomColor(),
+              backgroundColor: getRandomColor(workspace.uuid),
             }}
           />
 

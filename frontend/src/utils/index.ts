@@ -84,7 +84,6 @@ export const getRandomColor = (seed?: string | number): string => {
       const hash = seed
         .split("")
         .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      console.log("hash:", hash);
       return COLORS[hash % COLORS.length];
     } else if (typeof seed === "number") {
       return COLORS[seed % COLORS.length];

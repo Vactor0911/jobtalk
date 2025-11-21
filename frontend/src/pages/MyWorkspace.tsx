@@ -3,6 +3,7 @@ import {
   ButtonBase,
   CircularProgress,
   Container,
+  IconButton,
   Paper,
   Stack,
   Typography,
@@ -14,6 +15,7 @@ import { useNavigate } from "react-router";
 import axiosInstance from "../utils/axiosInstance";
 import { useSetAtom } from "jotai";
 import { workspaceStepAtom } from "../state";
+import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 
 // 워크스페이스 인터페이스 정의
 interface Workspace {
@@ -65,6 +67,28 @@ const MyWorkspace = () => {
       navigate(`/workspace/${uuid}`);
     },
     [navigate]
+  );
+
+  // 워크스페이스 삭제 버튼 클릭
+  const handleDeleteButtonClick = useCallback(
+    async (e: React.MouseEvent<HTMLButtonElement>, uuid: string) => {
+      e.stopPropagation();
+
+      // 워크스페이스 삭제
+      try {
+        await axiosInstance.delete(`/workspace/${uuid}`);
+        fetchWorkspaces();
+        enqueueSnackbar("워크스페이스를 성공적으로 삭제했습니다.", {
+          variant: "success",
+        });
+      } catch (err) {
+        console.error(err);
+        enqueueSnackbar("워크스페이스를 삭제하지 못했습니다.", {
+          variant: "error",
+        });
+      }
+    },
+    [fetchWorkspaces]
   );
 
   // 생성/수정 시간 표시 포맷 함수
@@ -160,6 +184,7 @@ const MyWorkspace = () => {
                     boxShadow: 6,
                     transform: "scale(1.02)",
                   },
+                  position: "relative",
                 }}
               >
                 <ButtonBase
@@ -234,6 +259,29 @@ const MyWorkspace = () => {
                     </Stack>
                   </Stack>
                 </ButtonBase>
+
+                {/* 워크스페이스 삭제 버튼 */}
+                <Box
+                  display={workspace.status !== "waiting" ? "block" : "none"}
+                  position="absolute"
+                  top={{
+                    xs: 16,
+                    sm: 8,
+                  }}
+                  right={{
+                    xs: 16,
+                    sm: 8,
+                  }}
+                  borderRadius="50%"
+                >
+                  <IconButton
+                    onClick={(e) => {
+                      handleDeleteButtonClick(e, workspace.uuid);
+                    }}
+                  >
+                    <DeleteRoundedIcon />
+                  </IconButton>
+                </Box>
               </Paper>
             ))}
           </Stack>

@@ -736,7 +736,7 @@ export const deleteWorkspace = async (req: Request, res: Response) => {
   const user = req.user as { userUuid: string };
   const connection = await dbPool.getConnection();
 
-  // test 계정의 첫 번째 워크스페이스는 삭제 불가
+  // test 계정의 기본 워크스페이스는 삭제 불가
   if (
     user.userUuid === "26710add-be9c-11f0-9eb0-668079403453" &&
     uuid === "4dbaa705-c9d8-11f0-9eb0-668079403453"
